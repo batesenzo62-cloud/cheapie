@@ -211,6 +211,9 @@
   .live-tag{
     color:var(--hop-dark); font-weight:800; text-transform:uppercase; letter-spacing:0.03em;
   }
+  .stale-tag{
+    color:var(--muted); font-weight:700; letter-spacing:0.02em; cursor:help;
+  }
 
   .bottomnav{
     flex:0 0 60px;
@@ -613,10 +616,23 @@ function valueLine(r){
   return `$${r.pricePerLitre.toFixed(2)}/L`;
 }
 
+// These four chains are only scraped monthly (Firecrawl credits are the
+// limiting factor — see scrape-chain-stores.yml), unlike everything else
+// in the app which refreshes every 4 hours. Worth a quiet heads-up rather
+// than labelling month-old data "Live" the same as everything else.
+const MONTHLY_REFRESH_CHAINS = ['Liquorland', 'Woolworths', 'New World', "PAK'nSAVE"];
+
+function isMonthlyRefreshChain(storeName){
+  return !!storeName && MONTHLY_REFRESH_CHAINS.some(c => storeName.startsWith(c));
+}
+
 function cardHtml(r, isBest, sublineOverride){
   const heading = r.productName || r.store;
+  const freshnessTag = isMonthlyRefreshChain(r.store)
+    ? '<span class="stale-tag" title="Refreshed monthly, not live — may not reflect current specials">~monthly</span>'
+    : '<span class="live-tag">Live</span>';
   const subline = sublineOverride !== undefined ? sublineOverride
-    : `${r.km !== null ? r.km.toFixed(1) + ' km away · ' : 'Ships NZ-wide · '}${r.store}${r.category ? ' · ' + r.category : ''} <span class="live-tag">Live</span>`;
+    : `${r.km !== null ? r.km.toFixed(1) + ' km away · ' : 'Ships NZ-wide · '}${r.store}${r.category ? ' · ' + r.category : ''} ${freshnessTag}`;
   return `
     ${isBest ? '<div class="ribbon">Best value</div>' : ''}
     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
