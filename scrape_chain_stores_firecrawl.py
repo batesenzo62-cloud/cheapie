@@ -188,8 +188,11 @@ def main():
         time.sleep(2)
 
     if not all_products:
-        print("No products found — share the printed error above with Claude to debug.")
-        return
+        # A real failure (e.g. Firecrawl out of credits), not just "nothing
+        # matched" — must exit non-zero so this is actually visible (e.g. in
+        # a scheduled GitHub Actions run) instead of looking like a quiet
+        # success that happened to write zero rows.
+        raise SystemExit("No products found across any target — see the errors printed above.")
 
     with open("chain_store_prices.csv", "w", newline="", encoding="utf-8") as f:
         fieldnames = list(all_products[0].keys())

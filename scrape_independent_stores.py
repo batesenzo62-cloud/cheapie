@@ -360,8 +360,10 @@ def main():
         time.sleep(2)
 
     if not all_products:
-        print("No products found at all. Check the sites manually.")
-        return
+        # Every one of 7+ independent targets failing at once means something
+        # is fundamentally broken (network, IP block, etc.), not just one
+        # site's markup changing — exit non-zero so this can't pass silently.
+        raise SystemExit("No products found across any target. Check the sites manually.")
 
     with open("independent_store_prices.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=all_products[0].keys())

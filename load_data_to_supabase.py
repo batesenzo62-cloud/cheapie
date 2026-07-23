@@ -145,8 +145,7 @@ def main():
     all_rows = [r for r in all_rows if r["product_name"] and r["price"] is not None]
 
     if not all_rows:
-        print("No valid rows found to upload.")
-        return
+        raise SystemExit("No valid rows found to upload — both CSVs were empty or missing.")
 
     # A single upsert statement errors if the same (store_name, product_name)
     # key appears twice in one batch ("ON CONFLICT DO UPDATE command cannot
@@ -164,8 +163,10 @@ def main():
     if response.status_code in (200, 201):
         print(f"Done. Upserted {len(all_rows)} products to Supabase.")
     else:
-        print(f"Something went wrong (status {response.status_code}):")
-        print(response.text)
+        # Must actually fail the process (not just print) — otherwise this
+        # error is invisible to anything checking the exit code, including
+        # the GitHub Actions run that's meant to surface it.
+        raise SystemExit(f"Upsert failed (status {response.status_code}): {response.text}")
 
 
 if __name__ == "__main__":
