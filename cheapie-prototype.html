@@ -297,9 +297,12 @@
 
     <div class="view" id="view-search">
       <div style="padding:20px 20px 14px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
-          <span class="tagmark"></span>
-          <div class="wordmark" style="font-size:19px; text-align:left;">Cheapie 🍺</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="tagmark"></span>
+            <div class="wordmark" style="font-size:19px; text-align:left;">Cheapie 🍺</div>
+          </div>
+          <div id="freshnessIndicator" style="font-size:10.5px; font-weight:600; color:var(--muted); text-align:right;"></div>
         </div>
         <div class="search-row">
           <span style="opacity:0.5;">⌕</span>
@@ -465,6 +468,34 @@ const POPULAR_SEARCH_TERMS = [
 function pickRandom(pool, n){
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, n);
+}
+
+function relativeTimeFrom(isoString){
+  const then = new Date(isoString.replace(' ', 'T') + (isoString.includes('Z') ? '' : 'Z'));
+  const minutes = Math.round((Date.now() - then.getTime()) / 60000);
+  if(minutes < 1) return 'just now';
+  if(minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.round(minutes / 60);
+  if(hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+async function loadFreshnessIndicator(){
+  const el = document.getElementById('freshnessIndicator');
+  if(!el) return;
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/products?select=fetched_at&fetched_at=not.is.null&order=fetched_at.desc&limit=1`, {
+      headers: { apikey: SUPABASE_ANON_KEY }
+    });
+    const rows = resp.ok ? await resp.json() : [];
+    if(rows.length && rows[0].fetched_at){
+      el.textContent = `Prices updated\n${relativeTimeFrom(rows[0].fetched_at)}`;
+      el.style.whiteSpace = 'pre-line';
+    }
+  } catch(err){
+    console.error(err);
+  }
 }
 
 async function loadPopularSearches(){
@@ -929,6 +960,7 @@ function enableDragScroll(el){
 }
 
 loadPopularSearches();
+loadFreshnessIndicator();
 </script>
 </body>
 </html>
