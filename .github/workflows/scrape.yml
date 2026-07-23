@@ -1,10 +1,12 @@
-name: Scrape and refresh prices
+name: Scrape independent stores and refresh prices
 
 on:
   schedule:
     # Every 4 hours — a starting point within the 3-6h range, kept polite
     # to the retailers we're scraping. Adjust if it turns out too often
-    # or not often enough.
+    # or not often enough. Firecrawl chain-store scraping runs on its own,
+    # much rarer schedule — see scrape-chain-stores.yml — since it costs
+    # real API credits and this one doesn't.
     - cron: '0 */4 * * *'
   workflow_dispatch: {}
 
@@ -24,25 +26,8 @@ jobs:
       - name: Scrape independent stores
         run: python3 scrape_independent_stores.py
 
-      # Allowed to fail without stopping the run — a Firecrawl credit/rate
-      # issue shouldn't block the (free, reliable) independent-store data
-      # from still refreshing. The last step below still fails the overall
-      # run if this step failed, so it stays visible rather than silent.
-      - name: Scrape chain stores (Firecrawl)
-        id: chain_scrape
-        continue-on-error: true
-        env:
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-        run: python3 scrape_chain_stores_firecrawl.py
-
       - name: Load into Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python3 load_data_to_supabase.py
-
-      - name: Fail run if the chain-store scrape had a problem
-        if: steps.chain_scrape.outcome == 'failure'
-        run: |
-          echo "::error::Chain-store (Firecrawl) scrape failed this run — independent-store data was still refreshed. Check the 'Scrape chain stores' step above for details."
-          exit 1
