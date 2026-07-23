@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CHEAPIE — clickable prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root{
+    --ink:#1C140C;
+    --paper:#FBF6EA;
+    --paper-2:#F4E8CC;
+    --gold:#E29B26;
+    --gold-dark:#A15D0E;
+    --red:#C4331F;
+    --line:#E8D9B0;
+    --muted:#9C8F6E;
+    --white:#FFFFFF;
+    --hop:#5C7A3B;
+    --hop-dark:#3E5527;
+    --foam:#FFFBF0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 18% 22%, rgba(226,155,38,0.16) 0 3px, transparent 3.2px) 0 0/64px 64px repeat,
+      radial-gradient(circle at 62% 68%, rgba(226,155,38,0.12) 0 2px, transparent 2.2px) 0 0/64px 64px repeat,
+      var(--paper-2);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:48px 16px;
+    min-height:100vh;
+  }
+  .caption{
+    text-align:center;
+    color:var(--ink);
+    opacity:0.55;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    margin-top:18px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+  }
+  .stage{ display:flex; flex-direction:column; align-items:center; }
+
+  .phone{
+    width:380px;
+    height:800px;
+    background:var(--ink);
+    border-radius:36px;
+    padding:14px;
+    box-shadow: 0 30px 60px -20px rgba(21,21,21,0.5);
+    position:relative;
+  }
+  .screen{
+    width:100%; height:100%;
+    background:var(--paper);
+    border-radius:24px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    height:44px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 24px;
+    font-family:'Inter',sans-serif;
+    font-size:13px; font-weight:700; color:var(--ink);
+  }
+  .view{
+    position:absolute; inset:0; top:44px;
+    display:none;
+    flex-direction:column;
+    opacity:0;
+    transition:opacity 200ms ease;
+  }
+  .view.active{ display:flex; opacity:1; }
+
+  .awning{
+    height:20px; width:100%; flex:0 0 auto;
+    background:var(--gold);
+    -webkit-mask-image: radial-gradient(circle at 9px 18px, transparent 8px, black 8.5px);
+    mask-image: radial-gradient(circle at 9px 18px, transparent 8px, black 8.5px);
+    -webkit-mask-size:18px 18px;
+    mask-size:18px 18px;
+    -webkit-mask-repeat:repeat-x;
+    mask-repeat:repeat-x;
+    -webkit-mask-position:bottom;
+    mask-position:bottom;
+  }
+
+  .wordmark{
+    font-family:'Archivo Black',sans-serif;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+    text-align:center;
+    text-transform:uppercase;
+  }
+
+  .tagmark{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px;
+    background:repeating-conic-gradient(var(--ink) 0deg 8deg, var(--gold) 8deg 16deg);
+    border-radius:50%;
+    position:relative;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+  }
+  .tagmark::after{
+    content:"";
+    position:absolute; left:50%; top:50%;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--paper);
+    transform:translate(-50%,-50%);
+  }
+
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    letter-spacing:0.01em;
+    border:none;
+    cursor:pointer;
+    border-radius:4px;
+    transition:transform 120ms ease, background 150ms ease;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn-primary{
+    background:var(--ink); color:var(--paper);
+    padding:16px; width:100%; font-size:14px;
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .btn-primary:hover{ background:#2B2B2B; }
+  .btn-ghost{
+    background:transparent; color:var(--ink);
+    opacity:0.55; padding:12px; width:100%; font-size:13px;
+    font-weight:600;
+  }
+
+  .perforation{
+    height:16px; width:100%;
+    background-image: radial-gradient(circle at center, var(--paper-2) 3px, transparent 3.2px);
+    background-size:16px 16px;
+    background-repeat:repeat-x;
+    background-position:center;
+    border-top:2px dashed var(--line);
+    border-bottom:2px dashed var(--line);
+  }
+
+  .chip{
+    font-family:'Inter',sans-serif;
+    font-size:13px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.03em;
+    padding:9px 16px;
+    border:2px solid var(--ink);
+    border-radius:4px;
+    color:var(--ink);
+    background:transparent;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active, .chip:hover{ background:var(--ink); color:var(--paper); }
+
+  .search-row{
+    display:flex; align-items:center; gap:10px;
+    background:var(--white);
+    border:2px solid var(--ink);
+    padding:13px 16px;
+    border-radius:4px;
+  }
+  .search-row input{
+    border:none; outline:none; background:transparent;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:500;
+    flex:1; color:var(--ink);
+  }
+  .search-row input::placeholder{ color:var(--muted); }
+
+  .card{
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:4px;
+    padding:14px 16px;
+    position:relative;
+    cursor:pointer;
+    transition:transform 120ms ease;
+  }
+  .card:hover{ transform:translateY(-2px); }
+  .card.best{
+    border:2px solid var(--gold-dark);
+    background:linear-gradient(180deg, #FCE7B8, var(--white) 45%);
+  }
+  .card.best .price{ color:var(--gold-dark); }
+  .ribbon{
+    position:absolute; top:-11px; left:14px;
+    background:var(--hop-dark); color:var(--foam);
+    font-family:'Inter',sans-serif;
+    font-size:10.5px; font-weight:800; letter-spacing:0.04em;
+    padding:4px 10px;
+    text-transform:uppercase;
+    border-radius:3px;
+    transform:rotate(-3deg);
+  }
+
+  .price{ font-family:'Archivo Black',sans-serif; }
+  .strike{ text-decoration:line-through; color:var(--red); }
+  .live-tag{
+    color:var(--hop-dark); font-weight:800; text-transform:uppercase; letter-spacing:0.03em;
+  }
+
+  .bottomnav{
+    flex:0 0 60px;
+    border-top:2px solid var(--ink);
+    display:flex;
+    background:var(--paper);
+  }
+  .navitem{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; font-family:'Inter',sans-serif; font-size:10.5px; font-weight:700;
+    color:var(--muted); cursor:pointer; letter-spacing:0.02em; text-transform:uppercase;
+  }
+  .navitem.active{ color:var(--ink); }
+
+  #nearbyMap{ width:100%; flex:1; }
+  .store-sheet{
+    position:absolute; left:0; right:0; bottom:60px;
+    background:var(--paper); border-top:2px solid var(--ink); border-radius:16px 16px 0 0;
+    height:65%; display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform 220ms ease;
+    padding:10px 20px 0; z-index:1000;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+  }
+  .store-sheet.open{ transform:translateY(0); }
+  .store-sheet-handle{
+    width:36px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 12px;
+    flex:0 0 auto;
+  }
+  #storeSheetBody{
+    flex:1; min-height:0; overflow-y:auto; padding-bottom:20px;
+  }
+  .store-marker-pin{
+    background:var(--gold); border:2px solid var(--ink); border-radius:50% 50% 50% 0;
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+    font-size:13px; transform:rotate(45deg); box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  }
+  .store-marker-pin span{ transform:rotate(-45deg); }
+  .user-location-dot{
+    width:16px; height:16px; border-radius:50%;
+    background:#2B6CB0; border:3px solid var(--white); box-shadow:0 0 0 2px #2B6CB0;
+  }
+  .leaflet-popup-content-wrapper{ border-radius:6px; font-family:'Inter',sans-serif; }
+
+  ::-webkit-scrollbar{ display:none; }
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="phone">
+  <div class="screen">
+
+    <div class="statusbar">
+      <span>9:41</span>
+      <span style="letter-spacing:0.15em;">●●●</span>
+    </div>
+
+    <div class="view active" id="view-age">
+      <div class="awning"></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 32px; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+          <span class="tagmark"></span>
+          <div class="wordmark" style="font-size:38px;">Cheapie 🍺</div>
+        </div>
+        <div style="font-family:'Inter',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.14em; color:var(--gold-dark); text-transform:uppercase; margin-bottom:28px;">New Zealand · booze price finder</div>
+        <div style="font-family:'Inter',sans-serif; font-size:14px; text-align:center; color:var(--ink); line-height:1.6; max-width:260px;">
+          You must be 18 or older to use Cheapie in New Zealand.
+        </div>
+      </div>
+      <div style="padding:20px 24px 32px;">
+        <button class="btn btn-primary" onclick="show('view-search')">I'm 18 or older</button>
+        <button class="btn btn-ghost" onclick="show('view-blocked')">I'm under 18</button>
+      </div>
+    </div>
+
+    <div class="view" id="view-blocked">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 40px; gap:14px; text-align:center;">
+        <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">Cheapie is only for people 18 and over.</div>
+        <div style="font-family:'Inter',sans-serif; font-size:13px; color:var(--muted);">Come back when you're of legal drinking age in New Zealand.</div>
+      </div>
+      <div style="padding:20px 24px 32px;">
+        <button class="btn btn-ghost" onclick="show('view-age')">Go back</button>
+      </div>
+    </div>
+
+    <div class="view" id="view-search">
+      <div style="padding:20px 20px 14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
+          <span class="tagmark"></span>
+          <div class="wordmark" style="font-size:19px; text-align:left;">Cheapie 🍺</div>
+        </div>
+        <div class="search-row">
+          <span style="opacity:0.5;">⌕</span>
+          <input id="searchInput" placeholder="Search a bottle, brand or style" onkeydown="if(event.key==='Enter')doSearch()">
+        </div>
+      </div>
+
+      <div style="padding:2px 20px 12px; display:flex; gap:8px; overflow-x:auto;">
+        <div class="chip" onclick="quickSearch('Beer','beer')">🍺 Beer</div>
+        <div class="chip" onclick="quickSearch('Wine','wine')">Wine</div>
+        <div class="chip" onclick="quickSearch('Spirits','spirits')">Spirits</div>
+        <div class="chip" onclick="quickSearch('RTD','rtd')">RTD</div>
+      </div>
+
+      <div class="perforation" style="margin:6px 0 14px;"></div>
+
+      <div style="padding:0 20px; font-family:'Inter',sans-serif; font-size:11.5px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">
+        Popular searches
+      </div>
+      <div id="popularSearchesList" style="padding:0 20px; display:flex; flex-direction:column; gap:10px; overflow-y:auto;">
+        <div style="font-size:12px; color:var(--muted); padding:8px 0;">Loading popular searches…</div>
+      </div>
+
+      <div style="flex:1;"></div>
+      <div class="bottomnav">
+        <div class="navitem active"><span>🔍</span>Search</div>
+        <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
+        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-results">
+      <div style="padding:18px 20px 10px; display:flex; align-items:center; gap:12px;">
+        <span onclick="show('view-search')" style="font-size:18px; cursor:pointer; color:var(--ink); font-weight:700;">←</span>
+        <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);" id="resultsTitle">Results</div>
+      </div>
+      <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;" id="resultsSubtitle"></div>
+      <div class="perforation" style="margin:10px 0;"></div>
+      <div id="resultsList" style="padding:0 20px 16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1;"></div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
+        <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
+        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-detail">
+      <div style="padding:18px 20px 10px; display:flex; align-items:center; gap:12px;">
+        <span onclick="show('view-results')" style="font-size:18px; cursor:pointer; color:var(--ink); font-weight:700;">←</span>
+        <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);" id="detailStore">Store</div>
+      </div>
+      <div style="padding:8px 20px; flex:1; display:flex; flex-direction:column; gap:16px;">
+        <div style="background:var(--paper-2); border:2px solid var(--ink); height:150px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; color:var(--muted); letter-spacing:0.05em; text-transform:uppercase;">
+          Map placeholder
+        </div>
+        <div id="detailBody" style="font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); line-height:1.7;"></div>
+        <div style="flex:1;"></div>
+        <button class="btn btn-primary" id="detailActionBtn" onclick="alert('Prototype only — this would open Maps for directions.')">Get directions</button>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
+        <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
+        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-nearby">
+      <div style="padding:18px 20px 10px; flex:0 0 auto; display:flex; align-items:center; gap:12px;">
+        <span onclick="show('view-search')" style="font-size:18px; cursor:pointer; color:var(--ink); font-weight:700;">←</span>
+        <div>
+          <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">Nearby stores</div>
+          <div style="font-size:12px; color:var(--muted); font-weight:500;" id="nearbyStatus">Finding your location…</div>
+        </div>
+      </div>
+      <div id="nearbyMap"></div>
+      <div class="store-sheet" id="storeSheet">
+        <div class="store-sheet-handle" onclick="closeStoreSheet()"></div>
+        <div id="storeSheetBody"></div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
+        <div class="navitem active"><span>📍</span>Nearby</div>
+        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-account">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:0 40px; text-align:center; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--muted);">
+        Accounts aren't part of v1 — this tab is a placeholder for later.
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
+        <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
+        <div class="navitem active"><span>👤</span>Account</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<div class="caption">Cheapie — real scraped prices, updated periodically · New Zealand</div>
+
+<script>
+const SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b";
+
+let userLocation = null;
+let nearbyMap = null;
+let userMarker = null;
+let storesCache = null;
+
+function haversineKm(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function requestUserLocation(){
+  if(userLocation) return userLocation;
+  if(!navigator.geolocation) return null;
+  try{
+    const pos = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
+    });
+    userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    return userLocation;
+  } catch(err){
+    console.warn('Geolocation unavailable:', err.message);
+    return null;
+  }
+}
+
+function chainNameFor(storeName){
+  const knownChains = ['Liquorland', 'Super Liquor', 'Big Barrel', 'Black Bull Liquor', 'Vino Fino', 'Thirsty Liquor'];
+  return knownChains.find(c => storeName.startsWith(c)) || storeName;
+}
+
+function show(id){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id === 'view-nearby') initNearbyMap();
+}
+
+function quickSearch(term, category){
+  document.getElementById('searchInput').value = term;
+  doSearch(term, category);
+}
+
+// Well-known NZ liquor brands likely to have real stock in the database —
+// stands in for genuine "most searched" analytics, which we don't have
+// yet. TODO: once real search-frequency tracking exists, replace this
+// static pool with an actual popularity query.
+const POPULAR_SEARCH_TERMS = [
+  'Corona', 'Heineken', 'Export Gold', "Monteith's", 'Garage Project', 'Steinlager', 'Tui',
+  'Church Road', 'Villa Maria', 'Lindauer', 'Jacob’s Creek',
+  "Jack Daniel's", 'Absolut', 'Jim Beam', 'Smirnoff', 'Bacardi',
+  'Cruiser', 'Long White', 'Woodstock'
+];
+
+function pickRandom(pool, n){
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
+
+async function loadPopularSearches(){
+  const container = document.getElementById('popularSearchesList');
+  if(!container || container.dataset.loaded) return;
+  container.dataset.loaded = 'true';
+
+  const terms = pickRandom(POPULAR_SEARCH_TERMS, 8);
+  const orClause = terms.map(t => `product_name.ilike.*${encodeURIComponent(t)}*`).join(',');
+
+  let picks = [];
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/products?select=product_name&or=(${orClause})&limit=200`, {
+      headers: { apikey: SUPABASE_ANON_KEY }
+    });
+    const rows = resp.ok ? await resp.json() : [];
+    const used = new Set();
+    for(const term of terms){
+      if(picks.length >= 4) break;
+      const match = rows.find(r => r.product_name.toLowerCase().includes(term.toLowerCase()) && !used.has(r.product_name));
+      if(match){
+        picks.push(match.product_name);
+        used.add(match.product_name);
+      }
+    }
+  } catch(err){
+    console.error(err);
+  }
+
+  container.innerHTML = '';
+  if(!picks.length){
+    container.innerHTML = '<div style="font-size:12px; color:var(--muted); padding:8px 0;">Search for a bottle, brand or style above.</div>';
+    return;
+  }
+  picks.forEach(name => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:12px 16px;';
+    card.onclick = () => quickSearch(name);
+    card.innerHTML = `
+      <span style="font-size:13.5px; font-weight:600;">${name}</span>
+      <span style="opacity:0.4;">›</span>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function fetchLiveProducts(category, query){
+  let url = `${SUPABASE_URL}/rest/v1/products?select=*,stores(id,name,address,latitude,longitude)&order=price_per_litre.asc.nullslast,price.asc`;
+  if(category){
+    url += `&category=eq.${category}`;
+  }
+  if(query && query.trim().length && query.toLowerCase() !== category){
+    url += `&product_name=ilike.*${encodeURIComponent(query.trim())}*`;
+  }
+  const resp = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY
+    }
+  });
+  if(!resp.ok) throw new Error('Supabase request failed: ' + resp.status);
+  return resp.json();
+}
+
+function mapDbRow(row){
+  const store = row.stores || null;
+  const km = (store && userLocation)
+    ? haversineKm(userLocation.lat, userLocation.lon, store.latitude, store.longitude)
+    : null;
+  return {
+    store: row.store_name,
+    category: row.category,
+    address: store ? store.address : "Ships NZ-wide",
+    km: km,
+    price: Number(row.price),
+    was: row.was_price !== null ? Number(row.was_price) : null,
+    fetched: row.fetched_at ? row.fetched_at.slice(0, 10) : "recently",
+    url: row.source_url,
+    productName: row.product_name,
+    unitCount: row.unit_count || 1,
+    unitVolumeMl: row.unit_volume_ml !== null && row.unit_volume_ml !== undefined ? Number(row.unit_volume_ml) : null,
+    pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null
+  };
+}
+
+function isNonAlcoholic(name){
+  if(!name) return false;
+  return /\b0\.0%|\bzero\b|non[\s-]?alcoholic|alcohol[\s-]?free/i.test(name);
+}
+
+// Whether to show a secondary value line at all — hidden only for
+// non-alcoholic drinks, regardless of category. Ranking/sorting still uses
+// the underlying price-per-litre for these products either way; this only
+// controls what's rendered on the card.
+function showsValueLine(r){
+  return !isNonAlcoholic(r.productName || r.store);
+}
+
+function valueLine(r){
+  if(!showsValueLine(r)) return '';
+  if(r.pricePerLitre === null || r.pricePerLitre === undefined){
+    return '<span style="font-style:italic;">Value comparison unavailable</span>';
+  }
+  // Wine/spirits aren't shopped in per-litre terms — per-100mL reads more
+  // naturally for bottle sizes in that range. Beer/RTD keep the
+  // per-can + per-litre format, since that's the normal way people compare
+  // pack deals.
+  if(r.category === 'spirits' || r.category === 'wine'){
+    return `$${(r.pricePerLitre / 10).toFixed(2)}/100mL`;
+  }
+  if(r.unitCount > 1){
+    const perUnit = r.price / r.unitCount;
+    return `$${perUnit.toFixed(2)}/can · $${r.pricePerLitre.toFixed(2)}/L`;
+  }
+  return `$${r.pricePerLitre.toFixed(2)}/L`;
+}
+
+function cardHtml(r, isBest, sublineOverride){
+  const heading = r.productName || r.store;
+  const subline = sublineOverride !== undefined ? sublineOverride
+    : `${r.km !== null ? r.km.toFixed(1) + ' km away · ' : 'Ships NZ-wide · '}${r.store}${r.category ? ' · ' + r.category : ''} <span class="live-tag">Live</span>`;
+  return `
+    ${isBest ? '<div class="ribbon">Best value</div>' : ''}
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin-bottom:3px;">${heading}</div>
+        <div style="font-size:12px; color:var(--muted); font-weight:500;">${subline}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="price" style="font-size:19px; color:var(--ink);">$${r.price.toFixed(2)}</div>
+        ${r.was ? `<div class="strike" style="font-size:12px; font-weight:600;">was $${r.was.toFixed(2)}</div>` : ''}
+        ${showsValueLine(r) ? `<div style="font-size:11px; color:var(--muted); font-weight:600; margin-top:2px;">${valueLine(r)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function makeCard(r, isBest, sublineOverride){
+  const card = document.createElement('div');
+  card.className = 'card' + (isBest ? ' best' : '');
+  card.onclick = () => openDetail(r);
+  card.innerHTML = cardHtml(r, isBest, sublineOverride);
+  return card;
+}
+
+function sectionHeader(text){
+  const h = document.createElement('div');
+  h.style.cssText = "padding:8px 2px 2px; font-family:'Inter',sans-serif; font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);";
+  h.textContent = text;
+  return h;
+}
+
+function renderResults(results){
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  if(!results.length) return;
+
+  // Only tag a "best value" item when every result is genuinely the same
+  // product — comparing prices across dissimilar products would be
+  // misleading.
+  const sameProduct = results.length > 1 &&
+    results.every(r => r.productName === results[0].productName);
+  // Rank by price-per-litre when it's available — always, regardless of
+  // category or display formatting (non-alcoholic drinks hide the figure
+  // on the card but still rank by it under the hood). Otherwise fall back
+  // to raw price — still fair, since this only ever compares identical
+  // products, just at different stores.
+  const usablePpl = r => (r.pricePerLitre !== null && r.pricePerLitre !== undefined) ? r.pricePerLitre : null;
+  const cheapest = sameProduct ? (() => {
+    const withPpl = results.filter(r => usablePpl(r) !== null);
+    const pool = withPpl.length ? withPpl : results;
+    const metric = withPpl.length ? usablePpl : (r => r.price);
+    return pool.reduce((min, r) => metric(r) < metric(min) ? r : min, pool[0]);
+  })() : null;
+
+  // Physical, distance-linked results are ranked closest-first; online
+  // catalogue results (no confirmed branch) rank by price-per-litre
+  // (cheapest first, unavailable/not-applicable ones pushed to the end
+  // rather than hidden) — kept as its own group rather than blended into
+  // nearby's distance-based ranking.
+  const nearby = results.filter(r => r.km !== null).sort((a,b) => a.km - b.km);
+  const online = results.filter(r => r.km === null).sort((a,b) => {
+    const aPpl = usablePpl(a), bPpl = usablePpl(b);
+    if(aPpl !== null && bPpl !== null) return aPpl - bPpl;
+    if(aPpl !== null) return -1;
+    if(bPpl !== null) return 1;
+    return a.price - b.price;
+  });
+
+  if(nearby.length){
+    if(online.length) list.appendChild(sectionHeader('Near you'));
+    nearby.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+  }
+  if(online.length){
+    if(nearby.length) list.appendChild(sectionHeader('Online — ships NZ-wide'));
+    online.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+  }
+}
+
+function showEmptyResults(message){
+  document.getElementById('resultsList').innerHTML = `
+    <div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">${message}</div>
+  `;
+}
+
+async function doSearch(term, forcedCategory){
+  const query = term || document.getElementById('searchInput').value || '';
+
+  document.getElementById('resultsTitle').textContent = query.length ? query : 'Results';
+  show('view-results');
+  document.getElementById('resultsSubtitle').textContent = 'Searching live database…';
+  document.getElementById('resultsList').innerHTML = '';
+
+  await requestUserLocation(); // best effort — doesn't block the search if denied/unavailable
+
+  try{
+    const rows = await fetchLiveProducts(forcedCategory || null, query);
+    if(rows && rows.length){
+      const nearCount = userLocation ? rows.filter(r => r.stores).length : 0;
+      document.getElementById('resultsSubtitle').textContent = nearCount
+        ? `${rows.length} real products found — ${nearCount} at stores near you, sorted by distance`
+        : `${rows.length} real products found in your database, sorted by price`;
+      renderResults(rows.map(mapDbRow));
+      return;
+    }
+    document.getElementById('resultsSubtitle').textContent = 'No products found';
+    showEmptyResults(`No products matched${query.length ? ` "${query}"` : ''}. Try a different search or category.`);
+  } catch(err){
+    console.error(err);
+    document.getElementById('resultsSubtitle').textContent = 'Couldn’t reach the database';
+    showEmptyResults('Something went wrong loading live prices. Try again in a moment.');
+  }
+}
+
+function openDetail(r){
+  document.getElementById('detailStore').textContent = r.store;
+  const distanceLine = r.km !== null
+    ? `<div style="margin-bottom:4px;"><strong>Distance:</strong> ${r.km.toFixed(1)} km from your location</div>`
+    : `<div style="margin-bottom:4px;"><strong>Delivery:</strong> ${r.address}</div>`;
+  const provenanceLine = `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; color:var(--muted);">Live from your Supabase database${r.url ? ', sourced from ' + new URL(r.url).hostname : ''}, last fetched ${r.fetched}.</div>`;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="price" style="font-size:24px; color:var(--ink); margin-bottom:4px;">$${r.price.toFixed(2)}</div>
+    ${r.was ? `<div style="color:var(--muted); text-decoration:line-through; margin-bottom:10px; font-weight:600;">was $${r.was.toFixed(2)}, per store catalogue</div>` : '<div style="margin-bottom:10px;"></div>'}
+    ${r.productName ? `<div style="margin-bottom:4px;"><strong>Product:</strong> ${r.productName}</div>` : ''}
+    ${distanceLine}
+    <div style="margin-bottom:4px;"><strong>Availability:</strong> Live price</div>
+    ${provenanceLine}
+  `;
+  const actionBtn = document.getElementById('detailActionBtn');
+  if(r.url){
+    actionBtn.textContent = 'Visit product page ↗';
+    actionBtn.onclick = () => window.open(r.url, '_blank');
+  } else {
+    actionBtn.textContent = 'Get directions';
+    actionBtn.onclick = () => alert('Prototype only — this would open Maps for directions.');
+  }
+  show('view-detail');
+}
+
+function iconForStore(name){
+  const n = name.toLowerCase();
+  const isSupermarket = n.includes('woolworths') || n.includes('new world') || n.includes("pak'nsave") || n.includes('countdown');
+  const emoji = isSupermarket ? '🛒' : '🍾';
+  return L.divIcon({
+    className: 'store-marker',
+    html: `<div class="store-marker-pin"><span>${emoji}</span></div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 26]
+  });
+}
+
+async function initNearbyMap(){
+  const status = document.getElementById('nearbyStatus');
+
+  if(!nearbyMap){
+    nearbyMap = L.map('nearbyMap').setView([-39.49, 176.91], 12); // default center until location is known: Napier
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(nearbyMap);
+
+    // The store sheet overlays the map — without this, Leaflet's own
+    // gesture handling can swallow scroll/click events meant for the
+    // sheet, since it listens on the map container regardless of what's
+    // visually on top of it.
+    const sheet = document.getElementById('storeSheet');
+    L.DomEvent.disableScrollPropagation(sheet);
+    L.DomEvent.disableClickPropagation(sheet);
+  }
+
+  if(!storesCache){
+    status.textContent = 'Loading stores…';
+    try{
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/stores?select=*`, { headers: { apikey: SUPABASE_ANON_KEY } });
+      storesCache = resp.ok ? await resp.json() : [];
+    } catch(err){
+      console.error(err);
+      storesCache = [];
+    }
+    storesCache.forEach(store => {
+      const marker = L.marker([store.latitude, store.longitude], { icon: iconForStore(store.name) }).addTo(nearbyMap);
+      marker.bindTooltip(store.name);
+      marker.on('click', () => showStoreSheet(store));
+    });
+  }
+
+  status.textContent = 'Finding your location…';
+  const loc = await requestUserLocation();
+  if(loc){
+    status.textContent = `${storesCache.length} stores loaded`;
+    nearbyMap.setView([loc.lat, loc.lon], 13);
+    if(!userMarker){
+      userMarker = L.marker([loc.lat, loc.lon], {
+        icon: L.divIcon({ className: 'user-marker', html: '<div class="user-location-dot"></div>', iconSize: [16,16], iconAnchor: [8,8] })
+      }).addTo(nearbyMap);
+    } else {
+      userMarker.setLatLng([loc.lat, loc.lon]);
+    }
+  } else {
+    status.textContent = `Enable location to see stores near you · showing ${storesCache.length} nationwide`;
+  }
+
+  setTimeout(() => nearbyMap.invalidateSize(), 200); // map was hidden (display:none) during init
+}
+
+let currentStoreRows = [];
+let currentStoreInfo = null;
+
+function renderStoreProductList(rows){
+  const container = document.getElementById('storeProductList');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const term = (document.getElementById('storeSearchInput')?.value || '').trim();
+
+  if(!rows.length){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:12px; color:var(--muted); padding:8px 0 4px;';
+    empty.textContent = term ? 'No matching products at this store.' : 'No products found for this store yet.';
+    container.appendChild(empty);
+    return;
+  }
+
+  // The full list is always loaded (so search can find anything the store
+  // carries), but rendering hundreds of cards at once for a big chain-wide
+  // fallback would be janky — only cap the unfiltered default view.
+  const DISPLAY_CAP = 30;
+  const shown = (!term && rows.length > DISPLAY_CAP) ? rows.slice(0, DISPLAY_CAP) : rows;
+
+  shown.forEach(row => {
+    const r = { ...mapDbRow(row), address: currentStoreInfo.address };
+    container.appendChild(makeCard(r, false, row.category));
+  });
+
+  if(shown.length < rows.length){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:11px; color:var(--muted); padding:6px 2px 2px; text-align:center;';
+    note.textContent = `Showing cheapest ${shown.length} of ${rows.length} — search above to find more`;
+    container.appendChild(note);
+  }
+}
+
+function filterStoreProducts(){
+  const term = document.getElementById('storeSearchInput').value.trim().toLowerCase();
+  const filtered = term
+    ? currentStoreRows.filter(row => (row.product_name || '').toLowerCase().includes(term))
+    : currentStoreRows;
+  renderStoreProductList(filtered);
+}
+
+async function showStoreSheet(store){
+  const sheet = document.getElementById('storeSheet');
+  const body = document.getElementById('storeSheetBody');
+  currentStoreInfo = store;
+  currentStoreRows = [];
+  body.innerHTML = `
+    <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink); margin-bottom:2px;">${store.name}</div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:14px;">${store.address}</div>
+    <div style="font-size:12px; color:var(--muted); font-weight:600;">Loading products…</div>
+  `;
+  sheet.classList.add('open');
+
+  let rows = [];
+  let confirmedBranch = true;
+  try{
+    // No limit here — the store-sheet search box filters this list
+    // client-side, so it needs the store's/chain's full catalogue loaded
+    // up front, not just a capped preview (a small cap meant searching
+    // "export" could come up empty even when they stock it).
+    let resp = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&store_id=eq.${store.id}&order=price.asc`, { headers: { apikey: SUPABASE_ANON_KEY } });
+    rows = resp.ok ? await resp.json() : [];
+    if(!rows.length){
+      confirmedBranch = false;
+      const chain = chainNameFor(store.name);
+      resp = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`, { headers: { apikey: SUPABASE_ANON_KEY } });
+      rows = resp.ok ? await resp.json() : [];
+    }
+  } catch(err){
+    console.error(err);
+  }
+
+  currentStoreRows = rows;
+
+  const disclaimer = (!confirmedBranch && rows.length)
+    ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chainNameFor(store.name)} catalogue prices — not confirmed for this specific store.</div>`
+    : '';
+
+  body.innerHTML = `
+    <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink); margin-bottom:2px;">${store.name}</div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">${store.address}</div>
+    <div class="search-row" style="margin-bottom:10px;">
+      <span style="opacity:0.5;">⌕</span>
+      <input id="storeSearchInput" placeholder="Search this store's deals" oninput="filterStoreProducts()">
+    </div>
+    ${disclaimer}
+    <div id="storeProductList" style="display:flex; flex-direction:column; gap:10px;"></div>
+  `;
+
+  enableDragScroll(body);
+  renderStoreProductList(rows);
+}
+
+function closeStoreSheet(){
+  document.getElementById('storeSheet').classList.remove('open');
+}
+
+function enableDragScroll(el){
+  // Scrollbars are hidden site-wide for the phone-mockup look, and this
+  // prototype is mostly driven with a mouse on desktop rather than touch —
+  // native click-and-drag doesn't scroll an overflow:auto div on desktop
+  // (it just selects text), so drag-to-scroll has to be implemented by hand.
+  if(el.dataset.dragScrollBound) return;
+  el.dataset.dragScrollBound = 'true';
+
+  let isDown = false;
+  let moved = false;
+  let startY = 0;
+  let startScrollTop = 0;
+
+  el.addEventListener('mousedown', (e) => {
+    if(e.target.closest('input, button')) return; // don't hijack typing/clicking controls
+    isDown = true;
+    moved = false;
+    startY = e.pageY;
+    startScrollTop = el.scrollTop;
+  });
+  window.addEventListener('mouseup', () => { isDown = false; });
+  window.addEventListener('mousemove', (e) => {
+    if(!isDown) return;
+    const dy = e.pageY - startY;
+    if(Math.abs(dy) > 4) moved = true;
+    if(moved){
+      e.preventDefault();
+      el.scrollTop = startScrollTop - dy;
+    }
+  });
+  // Swallow the click that follows a drag, so dragging over a card doesn't
+  // also register as tapping it open.
+  el.addEventListener('click', (e) => {
+    if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; }
+  }, true);
+}
+
+loadPopularSearches();
+</script>
+</body>
+</html>

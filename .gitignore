@@ -1,0 +1,10 @@
+# Scraped output — regenerated on every run, not source data.
+# Keeping these out of version control avoids noisy diffs on every
+# scheduled GitHub Actions run.
+*.csv
+
+# OS junk
+.DS_Store
+
+# Leftover stray file from early exploration, not part of the app
+cheapie-prototype.txt
