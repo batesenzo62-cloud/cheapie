@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/fuse.js@7.0.0/dist/fuse.min.js" integrity="sha256-42IbU8t3tOwwbexB7ZVRHm3YDRf65aBPPjRtIUufj5I=" crossorigin=""></script>
 <style>
   :root{
     --ink:#1C140C;
@@ -21,6 +22,10 @@
     --hop:#5C7A3B;
     --hop-dark:#3E5527;
     --foam:#FFFBF0;
+    --tier-green:#2F9E44;
+    --tier-yellow:#F2B705;
+    --tier-red:#D0333F;
+    --tier-grey:#ABABAB;
   }
   *{box-sizing:border-box;}
   body{
@@ -251,6 +256,13 @@
     font-size:13px; transform:rotate(45deg); box-shadow:0 2px 4px rgba(0,0,0,0.3);
   }
   .store-marker-pin span{ transform:rotate(-45deg); }
+  /* Map price-search tiers — deliberately a traffic-light palette, distinct
+     from the ribbon system's gold/hop-green "Best value" styling, so this
+     reads as its own map-specific comparison rather than a duplicate cue. */
+  .store-marker-pin.tier-green{ background:var(--tier-green); }
+  .store-marker-pin.tier-yellow{ background:var(--tier-yellow); }
+  .store-marker-pin.tier-red{ background:var(--tier-red); }
+  .store-marker-pin.tier-grey{ background:var(--tier-grey); }
   .user-location-dot{
     width:16px; height:16px; border-radius:50%;
     background:#2B6CB0; border:3px solid var(--white); box-shadow:0 0 0 2px #2B6CB0;
@@ -343,6 +355,7 @@
         <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);" id="resultsTitle">Results</div>
       </div>
       <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;" id="resultsSubtitle"></div>
+      <div id="packSizeChips" style="display:none; flex-wrap:wrap; gap:6px; padding:0 20px 6px;"></div>
       <div class="perforation" style="margin:10px 0;"></div>
       <div id="resultsList" style="padding:0 20px 16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1;"></div>
       <div class="bottomnav">
@@ -380,9 +393,37 @@
           <div style="font-size:12px; color:var(--muted); font-weight:500;" id="nearbyStatus">Finding your location…</div>
         </div>
       </div>
+      <div style="padding:0 20px 10px; flex:0 0 auto;">
+        <div class="search-row">
+          <span style="opacity:0.5;">⌕</span>
+          <input id="nearbyMapSearchInput" placeholder="Compare a product's price on the map" oninput="onNearbyMapSearchInput()">
+          <span id="nearbyMapSearchClear" onclick="clearNearbyMapSearch()" style="display:none; opacity:0.5; cursor:pointer; font-weight:700; padding-left:2px;">✕</span>
+        </div>
+        <select id="nearbyRegionSelect" onchange="onNearbyRegionChange()" style="width:100%; margin-top:8px; background:var(--white); border:2px solid var(--ink); border-radius:4px; padding:10px 12px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:var(--ink);">
+          <option value="all">All of NZ</option>
+          <option value="Northland">Northland</option>
+          <option value="Auckland">Auckland</option>
+          <option value="Waikato">Waikato</option>
+          <option value="Bay of Plenty">Bay of Plenty</option>
+          <option value="Gisborne">Gisborne</option>
+          <option value="Hawke's Bay">Hawke's Bay</option>
+          <option value="Taranaki">Taranaki</option>
+          <option value="Manawatū-Whanganui">Manawatū-Whanganui</option>
+          <option value="Wellington">Wellington</option>
+          <option value="Tasman">Tasman</option>
+          <option value="Nelson">Nelson</option>
+          <option value="Marlborough">Marlborough</option>
+          <option value="West Coast">West Coast</option>
+          <option value="Canterbury">Canterbury</option>
+          <option value="Otago">Otago</option>
+          <option value="Southland">Southland</option>
+        </select>
+        <div id="nearbySuburbChips" style="display:none; flex-wrap:wrap; gap:6px; margin-top:8px; max-height:110px; overflow-y:auto; padding:2px;"></div>
+        <div id="nearbyMapSearchStatus" style="font-size:11px; color:var(--muted); font-weight:600; margin-top:6px; min-height:14px;"></div>
+      </div>
       <div id="nearbyMap"></div>
       <div class="store-sheet" id="storeSheet">
-        <div class="store-sheet-handle" onclick="closeStoreSheet()"></div>
+        <div class="store-sheet-handle"></div>
         <div id="storeSheetBody"></div>
       </div>
       <div class="bottomnav">
@@ -416,6 +457,8 @@ let userLocation = null;
 let nearbyMap = null;
 let userMarker = null;
 let storesCache = null;
+let storeMarkers = {}; // store.id -> Leaflet marker, so the map search can recolor pins in place
+let storesById = {};
 
 function haversineKm(lat1, lon1, lat2, lon2){
   const R = 6371;
@@ -442,8 +485,14 @@ async function requestUserLocation(){
 }
 
 function chainNameFor(storeName){
-  const knownChains = ['Liquorland', 'Super Liquor', 'Big Barrel', 'Black Bull Liquor', 'Vino Fino', 'Thirsty Liquor'];
-  return knownChains.find(c => storeName.startsWith(c)) || storeName;
+  const knownChains = ['Liquorland', 'Super Liquor', 'Big Barrel', 'Black Bull Liquor', 'Vino Fino', 'Thirsty Liquor', 'Bottle-O'];
+  // Case-insensitive match (e.g. "THIRSTY LIQUOR TARADALE" is the one
+  // all-caps branch name in the stores table and wouldn't match a plain
+  // startsWith) — but return the chain's canonical-case name, since that's
+  // what's actually stored in products.store_name and what the fallback
+  // query below matches against.
+  const lower = storeName.toLowerCase();
+  return knownChains.find(c => lower.startsWith(c.toLowerCase())) || storeName;
 }
 
 function show(id){
@@ -546,6 +595,16 @@ async function loadPopularSearches(){
   });
 }
 
+// 2026-08-10: capped at 6000 rows (ordered cheapest-first, same as
+// before) rather than fetching literally every matching row — confirmed
+// directly that "Beer" alone was 52,176 rows nationwide, taking 35 real
+// seconds over 55 sequential requests and then rendering 52,176 DOM cards.
+// The full-catalogue callers of fetchAllRows (store sheet, chain
+// fallback) still fetch everything — this cap is specific to the main
+// Search tab's browse/search, where renderResults() only ever surfaces a
+// near-you-scoped, price-sorted handful of results anyway (see its
+// MIN_NEARBY_RESULTS/DISPLAY_CAP), so there's no benefit to the other
+// ~46,000 rows even being in memory, only cost.
 async function fetchLiveProducts(category, query){
   let url = `${SUPABASE_URL}/rest/v1/products?select=*,stores(id,name,address,latitude,longitude)&order=price_per_litre.asc.nullslast,price.asc`;
   if(category){
@@ -554,18 +613,16 @@ async function fetchLiveProducts(category, query){
   if(query && query.trim().length && query.toLowerCase() !== category){
     url += `&product_name=ilike.*${encodeURIComponent(query.trim())}*`;
   }
-  const resp = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY
-    }
-  });
-  if(!resp.ok) throw new Error('Supabase request failed: ' + resp.status);
-  return resp.json();
+  return fetchAllRows(url, 6000);
 }
 
 function mapDbRow(row){
   const store = row.stores || null;
-  const km = (store && userLocation)
+  // Coordinates only exist when the row has a confirmed store_id join —
+  // independent of whether userLocation is available, so "Get directions"
+  // can still work even when the user denied/never granted geolocation.
+  const hasCoords = !!(store && store.latitude != null && store.longitude != null);
+  const km = (hasCoords && userLocation)
     ? haversineKm(userLocation.lat, userLocation.lon, store.latitude, store.longitude)
     : null;
   return {
@@ -573,6 +630,8 @@ function mapDbRow(row){
     category: row.category,
     address: store ? store.address : "Ships NZ-wide",
     km: km,
+    lat: hasCoords ? store.latitude : null,
+    lng: hasCoords ? store.longitude : null,
     price: Number(row.price),
     was: row.was_price !== null ? Number(row.was_price) : null,
     fetched: row.fetched_at ? row.fetched_at.slice(0, 10) : "recently",
@@ -604,14 +663,15 @@ function valueLine(r){
   }
   // Wine/spirits aren't shopped in per-litre terms — per-100mL reads more
   // naturally for bottle sizes in that range. Beer/RTD keep the
-  // per-can + per-litre format, since that's the normal way people compare
-  // pack deals.
+  // per-drink + per-litre format, since that's the normal way people compare
+  // pack deals — "per drink" rather than "per can", since plenty of these
+  // multi-packs are bottles, not cans.
   if(r.category === 'spirits' || r.category === 'wine'){
     return `$${(r.pricePerLitre / 10).toFixed(2)}/100mL`;
   }
   if(r.unitCount > 1){
     const perUnit = r.price / r.unitCount;
-    return `$${perUnit.toFixed(2)}/can · $${r.pricePerLitre.toFixed(2)}/L`;
+    return `$${perUnit.toFixed(2)}/drink · $${r.pricePerLitre.toFixed(2)}/L`;
   }
   return `$${r.pricePerLitre.toFixed(2)}/L`;
 }
@@ -666,6 +726,46 @@ function sectionHeader(text){
   return h;
 }
 
+// Rank by price-per-litre when it's available — always, regardless of
+// category or display formatting (non-alcoholic drinks hide the figure on
+// the card but still rank by it under the hood). Otherwise fall back to
+// raw price.
+function usablePpl(r){
+  return (r.pricePerLitre !== null && r.pricePerLitre !== undefined) ? r.pricePerLitre : null;
+}
+function byValue(a, b){
+  const aPpl = usablePpl(a), bPpl = usablePpl(b);
+  if(aPpl !== null && bPpl !== null) return aPpl - bPpl;
+  if(aPpl !== null) return -1;
+  if(bPpl !== null) return 1;
+  return a.price - b.price;
+}
+
+// 2026-08-10: "Near you" used to mean "any physical row with coordinates
+// at all", sorted closest-first — for a specific single product that's
+// fine, but for a category browse (Beer/Wine/Spirits/RTD chips, or any
+// broad search) it meant EVERY physical store nationwide counted as
+// "near you" (confirmed directly: 49,833 of 52,176 "Beer" rows), just
+// sorted so the truly-close ones happened to be first in an enormous list
+// — in practice indistinguishable from "shows cheapest nationwide", which
+// is exactly what was reported. Now genuinely scoped to a real radius
+// around the user, widening only as far as needed to find a reasonable
+// number of options (never landing on literally the whole country) —
+// see fetchLiveProducts for why the number of candidate rows for a big
+// category is capped upstream in the first place.
+const NEARBY_RADIUS_STEPS_KM = [15, 30, 60, 120, 250, 9000];
+const MIN_NEARBY_RESULTS = 6;
+
+function scopeToNearbyRadius(nearbyAll){
+  for(const radius of NEARBY_RADIUS_STEPS_KM){
+    const within = nearbyAll.filter(r => r.km <= radius);
+    if(within.length >= MIN_NEARBY_RESULTS || radius === NEARBY_RADIUS_STEPS_KM[NEARBY_RADIUS_STEPS_KM.length - 1]){
+      return within;
+    }
+  }
+  return nearbyAll;
+}
+
 function renderResults(results){
   const list = document.getElementById('resultsList');
   list.innerHTML = '';
@@ -676,12 +776,6 @@ function renderResults(results){
   // misleading.
   const sameProduct = results.length > 1 &&
     results.every(r => r.productName === results[0].productName);
-  // Rank by price-per-litre when it's available — always, regardless of
-  // category or display formatting (non-alcoholic drinks hide the figure
-  // on the card but still rank by it under the hood). Otherwise fall back
-  // to raw price — still fair, since this only ever compares identical
-  // products, just at different stores.
-  const usablePpl = r => (r.pricePerLitre !== null && r.pricePerLitre !== undefined) ? r.pricePerLitre : null;
   const cheapest = sameProduct ? (() => {
     const withPpl = results.filter(r => usablePpl(r) !== null);
     const pool = withPpl.length ? withPpl : results;
@@ -689,27 +783,42 @@ function renderResults(results){
     return pool.reduce((min, r) => metric(r) < metric(min) ? r : min, pool[0]);
   })() : null;
 
-  // Physical, distance-linked results are ranked closest-first; online
-  // catalogue results (no confirmed branch) rank by price-per-litre
-  // (cheapest first, unavailable/not-applicable ones pushed to the end
-  // rather than hidden) — kept as its own group rather than blended into
-  // nearby's distance-based ranking.
-  const nearby = results.filter(r => r.km !== null).sort((a,b) => a.km - b.km);
-  const online = results.filter(r => r.km === null).sort((a,b) => {
-    const aPpl = usablePpl(a), bPpl = usablePpl(b);
-    if(aPpl !== null && bPpl !== null) return aPpl - bPpl;
-    if(aPpl !== null) return -1;
-    if(bPpl !== null) return 1;
-    return a.price - b.price;
-  });
+  // Both groups now rank by value (cheapest/best-per-litre first) rather
+  // than "Near you" ranking by raw distance — genuinely comparing prices
+  // among your real nearby options is closer to what "cheapest near you"
+  // means than just "whichever of them happens to be geographically
+  // closest, regardless of price".
+  let nearby = results.filter(r => r.km !== null);
+  const online = results.filter(r => r.km === null).sort(byValue);
+  if(nearby.length) nearby = scopeToNearbyRadius(nearby).sort(byValue);
 
-  if(nearby.length){
-    if(online.length) list.appendChild(sectionHeader('Near you'));
-    nearby.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+  // Never render thousands of cards even after the radius scoping above —
+  // the point of this screen is surfacing the best handful of options, not
+  // an exhaustive nationwide catalogue dump (confirmed directly: an
+  // unbounded category browse rendered 52,176 DOM cards before this fix).
+  const DISPLAY_CAP = 40;
+  const shownNearby = nearby.slice(0, DISPLAY_CAP);
+  const shownOnline = online.slice(0, DISPLAY_CAP);
+
+  if(shownNearby.length){
+    if(shownOnline.length) list.appendChild(sectionHeader('Near you'));
+    shownNearby.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+    if(shownNearby.length < nearby.length){
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:11px; color:var(--muted); padding:6px 2px 2px; text-align:center;';
+      note.textContent = `Showing best ${shownNearby.length} of ${nearby.length} nearby`;
+      list.appendChild(note);
+    }
   }
-  if(online.length){
-    if(nearby.length) list.appendChild(sectionHeader('Online — ships NZ-wide'));
-    online.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+  if(shownOnline.length){
+    if(shownNearby.length) list.appendChild(sectionHeader('Online — ships NZ-wide'));
+    shownOnline.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+    if(shownOnline.length < online.length){
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:11px; color:var(--muted); padding:6px 2px 2px; text-align:center;';
+      note.textContent = `Showing best ${shownOnline.length} of ${online.length} online`;
+      list.appendChild(note);
+    }
   }
 }
 
@@ -719,6 +828,57 @@ function showEmptyResults(message){
   `;
 }
 
+// Every result from the most recent search, unfiltered — kept so the pack
+// size chips (below) can filter/re-render instantly client-side rather
+// than re-querying the database each time.
+let currentSearchResults = [];
+let currentPackSize = null; // null = no filter (show every pack size)
+
+// 2026-08-10: lets you narrow a search to one specific pack size (6/12/24
+// pack, single, etc.) when the matched products actually come in more than
+// one — e.g. searching "Steinlager" turns up singles, 6-packs, 12-packs
+// and 24-packs all mixed together today, and comparing a single can's
+// price against a 24-pack's isn't a like-for-like comparison anyone
+// actually wants. When every match happens to share the same pack size
+// already, there's no real choice to offer, so the chip row stays hidden
+// entirely rather than showing a single, pointless option.
+function populatePackSizeChips(results){
+  const container = document.getElementById('packSizeChips');
+  container.innerHTML = '';
+  currentPackSize = null;
+
+  const sizes = [...new Set(results.map(r => r.unitCount).filter(n => n !== null && n !== undefined))].sort((a, b) => a - b);
+  if(sizes.length <= 1){
+    container.style.display = 'none';
+    return;
+  }
+
+  const allChip = document.createElement('div');
+  allChip.className = 'chip active';
+  allChip.textContent = 'All sizes';
+  allChip.style.cssText = 'padding:6px 12px; font-size:11px;';
+  allChip.onclick = () => applyPackSizeFilter(null, allChip);
+  container.appendChild(allChip);
+
+  sizes.forEach(size => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = size === 1 ? 'Single' : `${size}-pack`;
+    chip.style.cssText = 'padding:6px 12px; font-size:11px;';
+    chip.onclick = () => applyPackSizeFilter(size, chip);
+    container.appendChild(chip);
+  });
+  container.style.display = 'flex';
+}
+
+function applyPackSizeFilter(size, chipEl){
+  currentPackSize = size;
+  document.querySelectorAll('#packSizeChips .chip').forEach(c => c.classList.remove('active'));
+  chipEl.classList.add('active');
+  const filtered = size === null ? currentSearchResults : currentSearchResults.filter(r => r.unitCount === size);
+  renderResults(filtered);
+}
+
 async function doSearch(term, forcedCategory){
   const query = term || document.getElementById('searchInput').value || '';
 
@@ -726,6 +886,8 @@ async function doSearch(term, forcedCategory){
   show('view-results');
   document.getElementById('resultsSubtitle').textContent = 'Searching live database…';
   document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('packSizeChips').style.display = 'none';
+  document.getElementById('packSizeChips').innerHTML = '';
 
   await requestUserLocation(); // best effort — doesn't block the search if denied/unavailable
 
@@ -734,9 +896,11 @@ async function doSearch(term, forcedCategory){
     if(rows && rows.length){
       const nearCount = userLocation ? rows.filter(r => r.stores).length : 0;
       document.getElementById('resultsSubtitle').textContent = nearCount
-        ? `${rows.length} real products found — ${nearCount} at stores near you, sorted by distance`
-        : `${rows.length} real products found in your database, sorted by price`;
-      renderResults(rows.map(mapDbRow));
+        ? `${rows.length} real products found — showing the best value near you`
+        : `${rows.length} real products found in your database, sorted by best value`;
+      currentSearchResults = rows.map(mapDbRow);
+      populatePackSizeChips(currentSearchResults);
+      renderResults(currentSearchResults);
       return;
     }
     document.getElementById('resultsSubtitle').textContent = 'No products found';
@@ -763,23 +927,43 @@ function openDetail(r){
     ${provenanceLine}
   `;
   const actionBtn = document.getElementById('detailActionBtn');
-  if(r.url){
+  actionBtn.style.display = '';
+  const hasCoords = r.lat !== null && r.lat !== undefined && r.lng !== null && r.lng !== undefined;
+  if(hasCoords){
+    // Real store location known — directions take priority over a product
+    // link, since "go get it" is the more useful action for a physical
+    // store even if we also happen to have a source URL for this row.
+    actionBtn.textContent = 'Get directions ↗';
+    actionBtn.onclick = () => {
+      let mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`;
+      // Include the user's own coordinates as the origin when we have them
+      // (from the Nearby tab's geolocation permission) so directions start
+      // from where they actually are; otherwise the maps app falls back to
+      // detecting current location itself, which still works fine.
+      if(userLocation){
+        mapsUrl += `&origin=${userLocation.lat},${userLocation.lon}`;
+      }
+      window.open(mapsUrl, '_blank');
+    };
+  } else if(r.url){
+    // No confirmed physical store (e.g. "Ships NZ-wide") — send them to buy
+    // it online instead of showing a directions button with nowhere to go.
     actionBtn.textContent = 'Visit product page ↗';
     actionBtn.onclick = () => window.open(r.url, '_blank');
   } else {
-    actionBtn.textContent = 'Get directions';
-    actionBtn.onclick = () => alert('Prototype only — this would open Maps for directions.');
+    actionBtn.style.display = 'none';
   }
   show('view-detail');
 }
 
-function iconForStore(name){
+function iconForStore(name, tierClass){
   const n = name.toLowerCase();
   const isSupermarket = n.includes('woolworths') || n.includes('new world') || n.includes("pak'nsave") || n.includes('countdown');
   const emoji = isSupermarket ? '🛒' : '🍾';
+  const cls = tierClass ? ` ${tierClass}` : '';
   return L.divIcon({
     className: 'store-marker',
-    html: `<div class="store-marker-pin"><span>${emoji}</span></div>`,
+    html: `<div class="store-marker-pin${cls}"><span>${emoji}</span></div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 26]
   });
@@ -814,9 +998,19 @@ async function initNearbyMap(){
       storesCache = [];
     }
     storesCache.forEach(store => {
+      // Overwrites whatever (often missing or inconsistently-spelled — see
+      // the note by REGION_CENTERS) region string came from the database,
+      // with one computed consistently for every store that has coordinates.
+      store.region = nearestRegion(store.latitude, store.longitude);
+      // Nearest real, geocoded town within that region (see REGION_TOWNS) —
+      // consolidates every branch actually near e.g. Napier under "Napier"
+      // regardless of what a particular chain happened to name that branch.
+      store.town = nearestTownInRegion(store);
       const marker = L.marker([store.latitude, store.longitude], { icon: iconForStore(store.name) }).addTo(nearbyMap);
       marker.bindTooltip(store.name);
       marker.on('click', () => showStoreSheet(store));
+      storeMarkers[store.id] = marker;
+      storesById[store.id] = store;
     });
   }
 
@@ -839,8 +1033,710 @@ async function initNearbyMap(){
   setTimeout(() => nearbyMap.invalidateSize(), 200); // map was hidden (display:none) during init
 }
 
+// Same vocabulary as the category chips on the Search screen — it's the
+// only real "category" taxonomy this app has. A term matching one of these
+// is a whole-category browse, not a single product, so there's no fair way
+// to price-rank it (comparing a $15 six-pack against a $40 bottle of gin
+// just because both matched "beer"... no, "spirits" — same problem the
+// results-list ribbon avoids by only ever comparing identical products).
+const NEARBY_MAP_SEARCH_CATEGORIES = ['beer', 'wine', 'spirits', 'rtd'];
+
+// 2026-08-07: region search deliberately does NOT use the stores table's
+// own `region` column — confirmed directly that column is a mess: ~170 of
+// 751 stores (mostly Bottle-O, added this session) have it null at all,
+// and what IS there has a dozen inconsistent spellings for the same real
+// region ("Manawatu-Whanganui" / "Manawatu - Wanganui" / "Manawatu/
+// Wanganui", etc. — looks like it was populated by several different
+// scrapers over time, each guessing its own format). Rather than write a
+// alias-normalization table that's guaranteed to miss some future variant,
+// every store is classified purely from its lat/lng — nearest official
+// NZ regional-council center wins. That's 100% coverage (anything with
+// coordinates gets a region) and never depends on what a particular
+// scraper happened to write into a text field.
+const REGION_CENTERS = {
+  "Northland": [-35.7275, 174.3235],
+  "Auckland": [-36.8485, 174.7633],
+  "Waikato": [-37.7870, 175.2793],
+  "Bay of Plenty": [-37.6878, 176.1651],
+  "Gisborne": [-38.6623, 178.0176],
+  "Hawke's Bay": [-39.4928, 176.9120],
+  "Taranaki": [-39.0556, 174.0752],
+  "Manawatū-Whanganui": [-40.3523, 175.6082],
+  "Wellington": [-41.2865, 174.7762],
+  "Tasman": [-41.1833, 173.0333],
+  "Nelson": [-41.2706, 173.2840],
+  "Marlborough": [-41.5134, 173.9612],
+  "West Coast": [-42.4500, 171.2100],
+  "Canterbury": [-43.5321, 172.6362],
+  "Otago": [-45.8788, 170.5028],
+  "Southland": [-46.4132, 168.3538],
+};
+
+// A reasonable zoom level for "look at this whole region" — smaller,
+// geographically compact regions (Nelson) get a closer zoom than large
+// sprawling ones (Canterbury, Waikato) so the view doesn't feel either
+// zoomed uselessly far out or clipped.
+const REGION_ZOOM = {
+  "Northland": 8, "Auckland": 10, "Waikato": 8, "Bay of Plenty": 9,
+  "Gisborne": 9, "Hawke's Bay": 9, "Taranaki": 9, "Manawatū-Whanganui": 8,
+  "Wellington": 10, "Tasman": 9, "Nelson": 11, "Marlborough": 9,
+  "West Coast": 7, "Canterbury": 7, "Otago": 8, "Southland": 8,
+};
+
+// 2026-08-10: suburb options were originally derived by stripping the
+// chain name off each store's own listed name (see the old
+// localityForStore, replaced below) — confirmed directly this was a real
+// problem, not just cosmetic: it fragmented one real town across several
+// different-looking chip labels purely because of how each chain happened
+// to name its branch ("Carlyle, Napier" / "Marewa, Napier" / "Tamatea,
+// Napier" / plain "Napier" were 4 separate options for what's really all
+// just Napier), and for chains that name branches after a street instead
+// of a suburb it surfaced literal road names as if they were places
+// ("Karamu Rd", "Gladstone Road"). Every entry below is a real town/
+// suburb, geocoded and spot-checked against its region's known extent
+// (caught and fixed two genuine geocoder mismatches this way: a
+// "Silverdale" that resolved to the Hamilton one instead of Auckland's,
+// and a "Patea" that resolved to an unrelated place at the bottom of the
+// South Island instead of the real South Taranaki town). Every store is
+// now assigned its single nearest entry from this list — see
+// nearestTownInRegion() — so results are consolidated by real place, not
+// by whichever text a particular chain's branch happened to be named.
+const REGION_TOWNS = {
+  "Northland": {
+    "Whangarei": [-35.7275, 174.3194],
+    "Kerikeri": [-35.2273, 173.9491],
+    "Kaitaia": [-35.1141, 173.264],
+    "Dargaville": [-35.9412, 173.8686],
+    "Kaikohe": [-35.4074, 173.8004],
+    "Paihia": [-35.2812, 174.0921],
+    "Kawakawa": [-35.38, 174.0672],
+    "Kaeo": [-35.1003, 173.7798],
+    "Ruakaka": [-35.8754, 174.4557],
+    "Waipu": [-35.985, 174.4475],
+    "Mangawhai": [-36.1132, 174.5978],
+    "Wellsford": [-36.2957, 174.5233],
+  },
+  "Auckland": {
+    "Auckland CBD": [-36.8489, 174.7652],
+    "Ponsonby": [-36.8502, 174.7421],
+    "Mount Eden": [-36.8816, 174.762],
+    "Newmarket": [-36.8674, 174.7781],
+    "Parnell": [-36.8555, 174.7806],
+    "Grey Lynn": [-36.8599, 174.7364],
+    "Remuera": [-36.8759, 174.8014],
+    "Ellerslie": [-36.8976, 174.815],
+    "Glen Innes": [-36.8779, 174.8568],
+    "Panmure": [-36.8988, 174.8551],
+    "Otahuhu": [-36.9468, 174.8458],
+    "Mangere": [-36.9708, 174.7995],
+    "Papatoetoe": [-36.9797, 174.8526],
+    "Manukau": [-37.0865, 174.7289],
+    "Manurewa": [-37.0213, 174.8971],
+    "Papakura": [-37.0643, 174.9447],
+    "Pukekohe": [-37.2006, 174.9037],
+    "Waiuku": [-37.2492, 174.7303],
+    "Howick": [-36.8957, 174.9286],
+    "Botany Downs": [-36.9102, 174.9195],
+    "Pakuranga": [-36.9152, 174.8745],
+    "Half Moon Bay": [-36.8851, 174.8993],
+    "Browns Bay": [-36.7156, 174.7482],
+    "Takapuna": [-36.7878, 174.773],
+    "Devonport": [-36.8297, 174.7975],
+    "Albany": [-36.7279, 174.7086],
+    "Glenfield": [-36.7822, 174.7223],
+    "Birkenhead": [-36.8099, 174.7251],
+    "Northcote": [-36.8011, 174.7452],
+    "Orewa": [-36.5858, 174.6915],
+    "Whangaparaoa": [-36.6203, 174.7214],
+    "Silverdale": [-36.6177, 174.6769],
+    "Henderson": [-36.8799, 174.6328],
+    "New Lynn": [-36.9085, 174.6838],
+    "Titirangi": [-36.9378, 174.6572],
+    "Glen Eden": [-36.9146, 174.6537],
+    "Te Atatu": [-36.8411, 174.6519],
+    "West Harbour": [-36.8195, 174.6321],
+    "Kumeu": [-36.7753, 174.5547],
+    "Waiheke Island": [-36.7931, 175.0884],
+    "Warkworth": [-36.3977, 174.6658],
+    "Helensville": [-36.6799, 174.4505],
+  },
+  "Waikato": {
+    "Hamilton": [-37.7879, 175.2818],
+    "Cambridge": [-37.8918, 175.4691],
+    "Te Awamutu": [-38.0102, 175.3258],
+    "Morrinsville": [-37.6582, 175.5281],
+    "Matamata": [-37.8096, 175.7733],
+    "Huntly": [-37.5584, 175.1588],
+    "Ngaruawahia": [-37.6663, 175.1501],
+    "Tokoroa": [-38.2169, 175.8705],
+    "Putaruru": [-38.0512, 175.7791],
+    "Taupo": [-38.6866, 176.0695],
+    "Turangi": [-38.9887, 175.809],
+    "Otorohanga": [-38.186, 175.2112],
+    "Te Kuiti": [-38.3342, 175.1657],
+    "Raglan": [-37.7998, 174.8682],
+    "Paeroa": [-37.3805, 175.6704],
+    "Thames": [-37.138, 175.5418],
+    "Whitianga": [-36.8332, 175.7025],
+    "Waihi": [-37.3915, 175.8404],
+    "Tuakau": [-37.2626, 174.9473],
+  },
+  "Bay of Plenty": {
+    "Tauranga": [-37.6859, 176.1675],
+    "Mount Maunganui": [-37.638, 176.1839],
+    "Papamoa": [-37.7026, 176.2844],
+    "Rotorua": [-38.1361, 176.2525],
+    "Whakatane": [-37.9519, 176.9946],
+    "Te Puke": [-37.7853, 176.327],
+    "Katikati": [-37.5522, 175.9154],
+    "Opotiki": [-38.0042, 177.2871],
+    "Edgecumbe": [-37.9764, 176.828],
+    "Kawerau": [-38.0857, 176.7033],
+  },
+  "Gisborne": {
+    "Gisborne": [-38.6613, 178.0206],
+  },
+  "Hawke's Bay": {
+    "Napier": [-39.4902, 176.9178],
+    "Taradale": [-39.5361, 176.8483],
+    "Hastings": [-39.6418, 176.8431],
+    "Havelock North": [-39.6702, 176.8771],
+    "Flaxmere": [-39.6251, 176.7862],
+    "Waipukurau": [-39.9956, 176.5567],
+    "Waipawa": [-39.9417, 176.5893],
+    "Wairoa": [-39.0394, 177.4271],
+    "Clive": [-39.5828, 176.9155],
+  },
+  "Taranaki": {
+    "New Plymouth": [-39.058, 174.0806],
+    "Hawera": [-39.5893, 174.2837],
+    "Stratford": [-39.3397, 174.2841],
+    "Inglewood": [-39.1562, 174.2076],
+    "Waitara": [-39.0028, 174.2364],
+    "Opunake": [-39.4547, 173.8602],
+    "Eltham": [-39.4282, 174.3048],
+    "Patea": [-39.7569, 174.4752],
+  },
+  "Manawatū-Whanganui": {
+    "Palmerston North": [-40.3563, 175.6112],
+    "Whanganui": [-39.9325, 175.0519],
+    "Feilding": [-40.2263, 175.5644],
+    "Levin": [-40.6218, 175.2866],
+    "Marton": [-40.0722, 175.3792],
+    "Taihape": [-39.6767, 175.7983],
+    "Dannevirke": [-40.2074, 176.0982],
+    "Pahiatua": [-40.4534, 175.8407],
+    "Woodville": [-40.3371, 175.8668],
+    "Ohakune": [-39.4169, 175.3996],
+    "Foxton": [-40.473, 175.2822],
+  },
+  "Wellington": {
+    "Wellington CBD": [-41.2821, 174.7759],
+    "Newtown": [-41.3121, 174.7815],
+    "Miramar": [-41.3164, 174.8166],
+    "Karori": [-41.2845, 174.7388],
+    "Johnsonville": [-41.2223, 174.8041],
+    "Tawa": [-41.1682, 174.8248],
+    "Porirua": [-41.1354, 174.8398],
+    "Titahi Bay": [-41.1087, 174.8375],
+    "Lower Hutt": [-41.2126, 174.9058],
+    "Petone": [-41.225, 174.879],
+    "Wainuiomata": [-41.3235, 174.9171],
+    "Upper Hutt": [-41.1241, 175.07],
+    "Paraparaumu": [-40.9145, 175.0062],
+    "Waikanae": [-40.8758, 175.0643],
+    "Otaki": [-40.7585, 175.147],
+    "Masterton": [-40.9496, 175.6594],
+    "Carterton": [-41.0243, 175.5259],
+    "Featherston": [-41.1168, 175.3227],
+    "Greytown": [-41.0806, 175.4605],
+  },
+  "Tasman": {
+    "Richmond": [-41.3381, 173.1872],
+    "Motueka": [-41.1125, 173.0095],
+    "Takaka": [-40.8575, 172.8062],
+    "Wakefield": [-41.4056, 173.0428],
+    "Murchison": [-41.7995, 172.3287],
+  },
+  "Nelson": {
+    "Nelson": [-41.2711, 173.2837],
+    "Stoke": [-41.3124, 173.2336],
+    "Tahunanui": [-41.2862, 173.2439],
+    "Atawhai": [-41.2371, 173.3171],
+  },
+  "Marlborough": {
+    "Blenheim": [-41.5119, 173.9546],
+    "Picton": [-41.2909, 174.0069],
+    "Renwick": [-41.5083, 173.829],
+    "Havelock": [-41.2786, 173.7677],
+  },
+  "West Coast": {
+    "Greymouth": [-42.4499, 171.208],
+    "Westport": [-41.7542, 171.6036],
+    "Hokitika": [-42.913, 170.9732],
+    "Reefton": [-42.1159, 171.8635],
+    "Fox Glacier": [-43.517, 170.1387],
+  },
+  "Canterbury": {
+    "Christchurch Central": [-43.5299, 172.6315],
+    "Riccarton": [-43.531, 172.5948],
+    "Papanui": [-43.4968, 172.6076],
+    "Hornby": [-43.5432, 172.5255],
+    "Halswell": [-43.5856, 172.5706],
+    "Sydenham": [-43.5462, 172.6375],
+    "Sumner": [-43.5711, 172.7614],
+    "Shirley": [-43.4996, 172.6611],
+    "Linwood": [-43.5333, 172.6736],
+    "Ferrymead": [-43.5574, 172.7022],
+    "Ashburton": [-43.9024, 171.7503],
+    "Timaru": [-44.393, 171.251],
+    "Rangiora": [-43.3032, 172.5961],
+    "Kaiapoi": [-43.3975, 172.613],
+    "Rolleston": [-43.5967, 172.385],
+    "Lincoln": [-43.6396, 172.486],
+    "Geraldine": [-44.0921, 171.2426],
+    "Methven": [-43.6324, 171.6473],
+    "Amberley": [-43.1513, 172.733],
+    "Akaroa": [-43.8043, 172.9678],
+  },
+  "Otago": {
+    "Dunedin": [-45.8741, 170.5036],
+    "Mosgiel": [-45.875, 170.3473],
+    "Queenstown": [-45.0322, 168.661],
+    "Wanaka": [-44.6942, 169.1365],
+    "Alexandra": [-45.2551, 169.3922],
+    "Cromwell": [-45.0371, 169.1973],
+    "Oamaru": [-45.1, 170.9698],
+    "Balclutha": [-46.2378, 169.7399],
+    "Roxburgh": [-45.5393, 169.3139],
+  },
+  "Southland": {
+    "Invercargill": [-46.4118, 168.3471],
+    "Gore": [-46.0984, 168.9448],
+    "Te Anau": [-45.4145, 167.7175],
+    "Winton": [-46.1414, 168.324],
+    "Bluff": [-46.5988, 168.3434],
+    "Riverton": [-46.351, 168.0203],
+  },
+};
+
+function nearestTownInRegion(store){
+  const towns = REGION_TOWNS[store.region];
+  if(!towns) return null;
+  let best = null, bestDist = Infinity;
+  for(const [name, [tLat, tLng]] of Object.entries(towns)){
+    const d = haversineKm(store.latitude, store.longitude, tLat, tLng);
+    if(d < bestDist){ bestDist = d; best = name; }
+  }
+  return best;
+}
+
+function nearestRegion(lat, lng){
+  let best = null, bestDist = Infinity;
+  for(const [name, [rLat, rLng]] of Object.entries(REGION_CENTERS)){
+    const d = haversineKm(lat, lng, rLat, rLng);
+    if(d < bestDist){ bestDist = d; best = name; }
+  }
+  return best;
+}
+
+let nearbyMapSearchDebounce = null;
+let nearbyMapSearchToken = 0; // guards against a slower earlier request resolving after a newer one
+let nearbyRegionResultRows = []; // every matched product+store pair in the current scope, for "See all results"
+let nearbyRegionResultLabel = '';
+
+// Same "price-per-litre first, raw price fallback" ranking rule used
+// throughout the app (renderResults' cheapest/"Best value" ribbon,
+// runNearbyMapSearch's status-line callout) — centralized here so both
+// places compute it identically instead of two copies quietly drifting
+// apart.
+function bestValueOf(mappedRows){
+  if(!mappedRows.length) return null;
+  const metric = r => (r.pricePerLitre !== null && r.pricePerLitre !== undefined) ? r.pricePerLitre : r.price;
+  return mappedRows.reduce((min, r) => metric(r) < metric(min) ? r : min, mappedRows[0]);
+}
+
+// Maps one raw search_products_fuzzy row (see enable_fuzzy_product_search.sql)
+// plus the specific store it was matched to into the same shape mapDbRow()
+// produces from a Supabase-joined row — mapDbRow can't be reused directly
+// here since these RPC rows never carry a joined `stores` object the way a
+// plain products-table fetch does; storesById (the map's own already-loaded
+// store cache) supplies the same address/coordinates instead.
+function mapRegionSearchRow(row, storeId){
+  const store = storesById[storeId];
+  const hasCoords = !!(store && store.latitude != null && store.longitude != null);
+  const km = (hasCoords && userLocation)
+    ? haversineKm(userLocation.lat, userLocation.lon, store.latitude, store.longitude)
+    : null;
+  return {
+    store: store ? store.name : row.store_name,
+    category: row.category,
+    address: store ? store.address : "Ships NZ-wide",
+    km: km,
+    lat: hasCoords ? store.latitude : null,
+    lng: hasCoords ? store.longitude : null,
+    price: Number(row.price),
+    was: row.was_price !== null && row.was_price !== undefined ? Number(row.was_price) : null,
+    fetched: row.fetched_at ? row.fetched_at.slice(0, 10) : "recently",
+    url: row.source_url,
+    productName: row.product_name,
+    unitCount: row.unit_count || 1,
+    unitVolumeMl: row.unit_volume_ml !== null && row.unit_volume_ml !== undefined ? Number(row.unit_volume_ml) : null,
+    pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null
+  };
+}
+
+// Opens the (otherwise single-store) bottom sheet with a ranked list of
+// every match in the current search scope instead of one store's
+// catalogue — reuses the same sheet/swipe-to-dismiss mechanism rather than
+// building a second one, but populates it independently of
+// showStoreSheet()/currentStoreInfo/currentStoreFuse, so it can't leave
+// that flow in a half-set state for whatever the user taps next.
+function showNearbyRegionResults(){
+  if(!nearbyRegionResultRows.length) return;
+  const sheet = document.getElementById('storeSheet');
+  const body = document.getElementById('storeSheetBody');
+
+  const sorted = [...nearbyRegionResultRows].sort((a, b) => {
+    const aPpl = (a.pricePerLitre !== null && a.pricePerLitre !== undefined) ? a.pricePerLitre : null;
+    const bPpl = (b.pricePerLitre !== null && b.pricePerLitre !== undefined) ? b.pricePerLitre : null;
+    if(aPpl !== null && bPpl !== null) return aPpl - bPpl;
+    if(aPpl !== null) return -1;
+    if(bPpl !== null) return 1;
+    return a.price - b.price;
+  });
+  const best = bestValueOf(nearbyRegionResultRows);
+
+  // Same rationale as renderStoreProductList's DISPLAY_CAP — rendering
+  // hundreds of cards at once for a nationwide "all of NZ" search would be
+  // janky for no benefit, since the point is finding the best one or two.
+  const DISPLAY_CAP = 50;
+  const shown = sorted.slice(0, DISPLAY_CAP);
+
+  body.innerHTML = `
+    <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink); margin-bottom:2px;">${nearbyRegionResultLabel}</div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:14px;">Ranked by best value — tap any result for directions.</div>
+    <div id="nearbyRegionResultsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+  `;
+  const list = document.getElementById('nearbyRegionResultsList');
+  shown.forEach(r => list.appendChild(makeCard(r, r === best)));
+  if(shown.length < sorted.length){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:11px; color:var(--muted); padding:6px 2px 2px; text-align:center;';
+    note.textContent = `Showing best ${shown.length} of ${sorted.length} matches`;
+    list.appendChild(note);
+  }
+
+  enableDragScroll(body);
+  sheet.classList.add('open');
+}
+
+function onNearbyMapSearchInput(){
+  clearTimeout(nearbyMapSearchDebounce);
+  const term = document.getElementById('nearbyMapSearchInput').value;
+  document.getElementById('nearbyMapSearchClear').style.display = term.trim().length ? 'inline' : 'none';
+  if(!term.trim().length){
+    nearbyMapSearchToken++; // invalidate any in-flight search so it can't overwrite this reset
+    resetNearbyMapPinColors();
+    return;
+  }
+  nearbyMapSearchDebounce = setTimeout(() => runNearbyMapSearch(term.trim()), 350);
+}
+
+function clearNearbyMapSearch(){
+  document.getElementById('nearbyMapSearchInput').value = '';
+  document.getElementById('nearbyMapSearchClear').style.display = 'none';
+  clearTimeout(nearbyMapSearchDebounce);
+  nearbyMapSearchToken++; // invalidate any in-flight search so it can't overwrite this reset
+  resetNearbyMapPinColors();
+}
+
+// True when store passes the currently-selected region AND (if one is
+// picked) suburb/locality filter — the single source of truth both the
+// map-coloring search and the plain region-browse status line below use,
+// so the two can never disagree about which stores are "in scope".
+// Which suburbs/localities are currently toggled on within the selected
+// region — a Set rather than a single value so more than one can be picked
+// at once (e.g. Napier AND Taradale together). Empty means "no suburb
+// filter, whole region" — the same as the old single-select's 'all'.
+let nearbySelectedSuburbs = new Set();
+
+function isStoreInScope(store){
+  if(!store) return false;
+  const region = document.getElementById('nearbyRegionSelect').value;
+  if(region === 'all') return true;
+  if(store.region !== region) return false;
+  if(nearbySelectedSuburbs.size && !nearbySelectedSuburbs.has(store.town)) return false;
+  return true;
+}
+
+// A region can be selected with no product search term active at all
+// (just "show me what's on the map in Otago") — pin colors go back to the
+// plain default gold rather than green/grey (there's no product match to
+// show in-stock/not-found for), but the status line still confirms the
+// region/suburb and a store count rather than going blank, so picking one
+// with an empty search box doesn't look like nothing happened.
+function resetNearbyMapPinColors(){
+  const status = document.getElementById('nearbyMapSearchStatus');
+  Object.keys(storeMarkers).forEach(id => {
+    storeMarkers[id].setIcon(iconForStore(storesById[id].name));
+  });
+  nearbyRegionResultRows = []; // no active search — nothing for a stray "See all" click to show
+  const region = document.getElementById('nearbyRegionSelect').value;
+  if(!status) return;
+  status.textContent = '';
+  if(region === 'all') return;
+  const count = Object.values(storesById).filter(isStoreInScope).length;
+  const place = nearbySelectedSuburbs.size ? [...nearbySelectedSuburbs].join(' + ') : region;
+  status.textContent = `Showing ${count} stores in ${place} — search a product above to find the best value.`;
+}
+
+// Rebuilds the suburb chip row for whichever region is now selected — see
+// nearestTownInRegion()/REGION_TOWNS for why this is real, geocoded towns
+// rather than text parsed from store names. Hidden entirely for "All of
+// NZ" (a suburb only makes sense once you've already narrowed to one
+// region).
+function populateSuburbChips(region){
+  const container = document.getElementById('nearbySuburbChips');
+  container.innerHTML = '';
+  nearbySelectedSuburbs = new Set(); // any suburbs picked for the PREVIOUS region no longer apply
+  if(region === 'all'){
+    container.style.display = 'none';
+    return;
+  }
+
+  // "All of {region}" — the same option the original single-select
+  // dropdown had, restored as its own chip (not just "zero chips selected
+  // = everything") so it's an actual visible, clickable option rather than
+  // an implicit state, and doubles as a one-tap way to clear every
+  // individually-selected suburb at once.
+  const allChip = document.createElement('div');
+  allChip.className = 'chip active';
+  allChip.textContent = `All of ${region}`;
+  allChip.style.cssText = 'padding:6px 12px; font-size:11px;';
+  allChip.onclick = () => {
+    nearbySelectedSuburbs.clear();
+    container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    allChip.classList.add('active');
+    flyToNearbyScope();
+    rerunNearbyAfterScopeChange();
+  };
+  container.appendChild(allChip);
+
+  const localities = new Set();
+  Object.values(storesById).forEach(store => {
+    if(store.region === region && store.town) localities.add(store.town);
+  });
+  [...localities].sort((a, b) => a.localeCompare(b)).forEach(loc => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = loc;
+    chip.style.cssText = 'padding:6px 12px; font-size:11px;'; // smaller than the category chips — there can be many more of these
+    chip.onclick = () => toggleNearbySuburb(loc, chip, allChip);
+    container.appendChild(chip);
+  });
+  container.style.display = 'flex';
+}
+
+function toggleNearbySuburb(suburb, chipEl, allChip){
+  if(nearbySelectedSuburbs.has(suburb)){
+    nearbySelectedSuburbs.delete(suburb);
+    chipEl.classList.remove('active');
+  } else {
+    nearbySelectedSuburbs.add(suburb);
+    chipEl.classList.add('active');
+  }
+  // "All of {region}" only makes sense as its own selected state when
+  // nothing more specific is picked — light up whichever is actually true.
+  allChip.classList.toggle('active', nearbySelectedSuburbs.size === 0);
+  flyToNearbyScope();
+  rerunNearbyAfterScopeChange();
+}
+
+function rerunNearbyAfterScopeChange(){
+  const term = document.getElementById('nearbyMapSearchInput').value.trim();
+  if(term.length){
+    runNearbyMapSearch(term);
+  } else {
+    resetNearbyMapPinColors();
+  }
+}
+
+// Centers/zooms the map on whatever's currently selected: the average
+// position of every store across all selected suburbs (closer zoom, since
+// even several suburbs together are still small relative to a whole
+// region), or the region's own fixed center when no suburb is picked.
+function flyToNearbyScope(){
+  const region = document.getElementById('nearbyRegionSelect').value;
+  if(region === 'all') return;
+  if(nearbySelectedSuburbs.size){
+    const matches = Object.values(storesById).filter(s => s.region === region && nearbySelectedSuburbs.has(s.town));
+    if(matches.length){
+      const avgLat = matches.reduce((sum, s) => sum + s.latitude, 0) / matches.length;
+      const avgLng = matches.reduce((sum, s) => sum + s.longitude, 0) / matches.length;
+      nearbyMap.flyTo([avgLat, avgLng], nearbySelectedSuburbs.size === 1 ? 13 : 12);
+    }
+  } else if(REGION_CENTERS[region]){
+    nearbyMap.flyTo(REGION_CENTERS[region], REGION_ZOOM[region] || 9);
+  }
+}
+
+function onNearbyRegionChange(){
+  const region = document.getElementById('nearbyRegionSelect').value;
+  populateSuburbChips(region);
+  flyToNearbyScope();
+  const term = document.getElementById('nearbyMapSearchInput').value.trim();
+  if(term.length){
+    runNearbyMapSearch(term); // re-scores/re-colors against the newly selected region
+  } else {
+    resetNearbyMapPinColors(); // no active product search — just update the region count/status
+  }
+}
+
+// 2026-08-03: replaced the old price-tiered green/yellow/red coloring —
+// after a week of chasing edge cases (statement timeouts, a few big chains'
+// duplicate branch rows crowding smaller chains out of the result cap, a
+// forced single "best" row per store landing on a pack size the app's own
+// comparison rules then rejected, ...), simplified to exactly what was
+// actually asked for: a store goes green if it stocks the searched
+// product, full stop — no price comparison, no pack-size rules, nothing
+// left for those rules to conflict with. Far fewer moving parts, far
+// fewer ways for this to quietly break again.
+async function runNearbyMapSearch(term){
+  const token = ++nearbyMapSearchToken;
+  const status = document.getElementById('nearbyMapSearchStatus');
+  status.textContent = 'Searching…';
+
+  if(NEARBY_MAP_SEARCH_CATEGORIES.includes(term.toLowerCase())){
+    resetNearbyMapPinColors();
+    status.textContent = `"${term}" is a whole category, not one product — showing the normal map instead.`;
+    return;
+  }
+
+  // Typo-tolerant (calls the search_products_fuzzy RPC — see
+  // enable_fuzzy_product_search.sql) so one wrong letter ("steinlger")
+  // doesn't look identical to a genuine "nobody stocks this" result.
+  let rows = [];
+  try{
+    const rpcUrl = `${SUPABASE_URL}/rest/v1/rpc/search_products_fuzzy`;
+    const rpcBody = { search_term: term };
+    const resp = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(rpcBody)
+    });
+    if(resp.ok){
+      rows = await resp.json();
+    } else {
+      // Surfaced loudly on purpose: a 404 here almost always means
+      // enable_fuzzy_product_search.sql hasn't been run yet, which would
+      // otherwise look identical to a real "nobody stocks this" result.
+      console.error('[nearbyMapSearch] RPC call failed:', resp.status, await resp.text());
+    }
+  } catch(err){
+    console.error(err);
+    if(token === nearbyMapSearchToken) status.textContent = 'Could not load results for that search.';
+    return;
+  }
+  if(token !== nearbyMapSearchToken) return; // a newer search started while this one was in flight
+
+  // Map pins grouped by chain name, so a store_name-only match (the common
+  // case — most rows aren't tied to one confirmed branch) marks every
+  // branch of that chain currently on the map, same "unconfirmed branch"
+  // approximation showStoreSheet already makes.
+  const idsByChain = {};
+  Object.keys(storesById).forEach(id => {
+    const chain = chainNameFor(storesById[id].name);
+    (idsByChain[chain] = idsByChain[chain] || []).push(id);
+  });
+
+  const matchedSet = new Set();
+  const matchesByStore = {}; // store_id -> matching rows at that store, kept for the cheapest-in-scope lookup below
+  rows.forEach(r => {
+    const targetIds = (r.store_id && storeMarkers[r.store_id])
+      ? [r.store_id] // confirmed exact-branch match
+      : (r.store_name && idsByChain[r.store_name]) ? idsByChain[r.store_name] : []; // chain catalogue, branch unconfirmed
+    targetIds.forEach(id => {
+      matchedSet.add(id);
+      (matchesByStore[id] = matchesByStore[id] || []).push(r);
+    });
+  });
+
+  // Region + suburb search (2026-08-07/10): scopes the same in-stock/
+  // not-found search above to one NZ region and, optionally, one or more
+  // real towns within it (nearbySelectedSuburbs — e.g. Napier AND Taradale
+  // together) — see isStoreInScope/REGION_CENTERS/REGION_TOWNS for why
+  // this is computed from coordinates against verified geocoded places
+  // rather than the DB's own region column or raw store-name text.
+  const region = document.getElementById('nearbyRegionSelect').value;
+  const place = (region !== 'all' && nearbySelectedSuburbs.size)
+    ? [...nearbySelectedSuburbs].join(' + ')
+    : region;
+
+  const coloredIds = [...matchedSet].filter(id => isStoreInScope(storesById[id]));
+  const totalCount = region === 'all'
+    ? Object.keys(storeMarkers).length
+    : Object.values(storesById).filter(isStoreInScope).length;
+
+  Object.keys(storeMarkers).forEach(id => {
+    const isMatch = matchedSet.has(id) && isStoreInScope(storesById[id]);
+    storeMarkers[id].setIcon(iconForStore(storesById[id].name, isMatch ? 'tier-green' : 'tier-grey'));
+  });
+
+  // Every matching product+store pair within scope, kept so "See all
+  // results" (below) can list and rank every real option rather than only
+  // ever surfacing the single best one — the whole point of this feature
+  // is not having to click through every pin by hand to find it yourself.
+  // Ranking itself reuses the same fair "price-per-litre first, raw price
+  // fallback" rule the main results list and store sheet already rank by,
+  // rather than reintroducing the map's own per-store price-tier coloring
+  // (removed 2026-08-03 after repeatedly breaking — see the note above
+  // this function). Pin colors stay simple green/grey regardless.
+  nearbyRegionResultRows = [];
+  coloredIds.forEach(id => {
+    (matchesByStore[id] || []).forEach(r => {
+      nearbyRegionResultRows.push(mapRegionSearchRow(r, id));
+    });
+  });
+  nearbyRegionResultLabel = region === 'all'
+    ? `"${term}" — best value nationwide`
+    : `"${term}" — best value in ${place}`;
+  const bestValue = nearbyRegionResultRows.length ? bestValueOf(nearbyRegionResultRows) : null;
+
+  let msg;
+  if(!coloredIds.length){
+    msg = region === 'all'
+      ? `No store on the map has "${term}" in stock right now.`
+      : `No store in ${place} has "${term}" in stock right now.`;
+  } else {
+    msg = region === 'all'
+      ? `${coloredIds.length} of ${totalCount} stores on the map have "${term}"`
+      : `${coloredIds.length} of ${totalCount} stores in ${place} have "${term}"`;
+    // "Best value" (ranked by price-per-litre, same rule the results list
+    // ribbon uses), not "cheapest" — a bigger pack can have a higher sticker
+    // price yet still be the better deal, so labelling this "cheapest"
+    // would read as wrong next to the raw prices shown elsewhere.
+    if(bestValue) msg += ` — best value: $${bestValue.price.toFixed(2)} at ${bestValue.store}`;
+    msg += '. Green in stock, grey not found.';
+  }
+  status.textContent = msg;
+  if(coloredIds.length){
+    // A real DOM element with its own bound handler, not string-concatenated
+    // into innerHTML — term is arbitrary user-typed text, and interpolating
+    // it into HTML rather than a text node would be a real (if low-stakes,
+    // since this only ever talks to the user's own Supabase project)
+    // injection risk for no reason.
+    const link = document.createElement('span');
+    link.textContent = ' See all results →';
+    link.style.cssText = 'text-decoration:underline; cursor:pointer; white-space:nowrap;';
+    link.onclick = showNearbyRegionResults;
+    status.appendChild(link);
+  }
+}
+
 let currentStoreRows = [];
 let currentStoreInfo = null;
+let currentStoreFuse = null;
 
 function renderStoreProductList(rows){
   const container = document.getElementById('storeProductList');
@@ -864,7 +1760,11 @@ function renderStoreProductList(rows){
   const shown = (!term && rows.length > DISPLAY_CAP) ? rows.slice(0, DISPLAY_CAP) : rows;
 
   shown.forEach(row => {
-    const r = { ...mapDbRow(row), address: currentStoreInfo.address };
+    // currentStoreInfo is the exact pin the user tapped to get here, so its
+    // coordinates are trustworthy even when this row itself has no store_id
+    // (most rows don't — see the nearbyMapSearch fix above) and mapDbRow's
+    // own join-based lat/lng comes back null.
+    const r = { ...mapDbRow(row), address: currentStoreInfo.address, lat: currentStoreInfo.latitude, lng: currentStoreInfo.longitude };
     container.appendChild(makeCard(r, false, row.category));
   });
 
@@ -877,11 +1777,55 @@ function renderStoreProductList(rows){
 }
 
 function filterStoreProducts(){
-  const term = document.getElementById('storeSearchInput').value.trim().toLowerCase();
-  const filtered = term
-    ? currentStoreRows.filter(row => (row.product_name || '').toLowerCase().includes(term))
+  const term = document.getElementById('storeSearchInput').value.trim();
+  // Fuse.js ranks by closeness rather than requiring an exact substring, so
+  // a typo like "steinlger" still finds "Steinlager" — it returns the exact
+  // same row objects untouched (just .item off each match), so real fields
+  // like in_stock aren't affected by matching being fuzzy now.
+  const filtered = term && currentStoreFuse
+    ? currentStoreFuse.search(term).map(result => result.item)
     : currentStoreRows;
   renderStoreProductList(filtered);
+}
+
+// Supabase/PostgREST caps a single response at 1000 rows by default —
+// harmless while every store/chain was under that, but Big Barrel alone is
+// now at 4,895 products post-coverage-fix, so a single unpaginated fetch
+// here was silently truncating to the first 1000 (confirmed via the
+// response's own Content-Range: 0-999/4895). Pages through with the Range
+// header until a short page confirms there's nothing left.
+//
+// 2026-08-10: maxRows is an optional early-stop, added for the category
+// chips on the main Search tab (Beer/Wine/Spirits/RTD) — confirmed
+// directly this was taking 35 real seconds and firing 55 sequential
+// requests for "Beer" alone (52,176 rows nationwide, and this session's
+// per-branch scraping is exactly what grew the table from ~4,475 rows to
+// this size). The store-sheet/chain-catalogue callers below still pass no
+// maxRows (default Infinity) — those genuinely need every row so the
+// search-within-store box can find anything the store stocks, so they're
+// unaffected.
+async function fetchAllRows(url, maxRows = Infinity){
+  const PAGE_SIZE = 1000;
+  let all = [];
+  let offset = 0;
+  while(true){
+    const resp = await fetch(url, {
+      headers: { apikey: SUPABASE_ANON_KEY, Range: `${offset}-${offset + PAGE_SIZE - 1}` }
+    });
+    if(!resp.ok){
+      // A total connection failure should still surface as an error (same
+      // as the plain fetch() this replaced) rather than look like a
+      // legitimate empty result — but if earlier pages already came back
+      // fine, keep what we have rather than lose it over one bad page.
+      if(offset === 0) throw new Error('Supabase request failed: ' + resp.status);
+      break;
+    }
+    const page = await resp.json();
+    all = all.concat(page);
+    if(page.length < PAGE_SIZE || all.length >= maxRows) break;
+    offset += PAGE_SIZE;
+  }
+  return all;
 }
 
 async function showStoreSheet(store){
@@ -898,24 +1842,39 @@ async function showStoreSheet(store){
 
   let rows = [];
   let confirmedBranch = true;
+  // The store_id lookup and the store_name fallback are two independent
+  // queries — a transient failure/timeout on the first one (seen for real:
+  // a one-off Postgres statement timeout right after a huge bulk upsert)
+  // must not skip the second. Previously both lived in one try/catch, so
+  // an error thrown by the first query jumped straight past the fallback
+  // entirely, leaving rows empty and showing "no products" even for a
+  // chain with a full catalogue on file.
   try{
     // No limit here — the store-sheet search box filters this list
     // client-side, so it needs the store's/chain's full catalogue loaded
     // up front, not just a capped preview (a small cap meant searching
     // "export" could come up empty even when they stock it).
-    let resp = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&store_id=eq.${store.id}&order=price.asc`, { headers: { apikey: SUPABASE_ANON_KEY } });
-    rows = resp.ok ? await resp.json() : [];
-    if(!rows.length){
-      confirmedBranch = false;
-      const chain = chainNameFor(store.name);
-      resp = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`, { headers: { apikey: SUPABASE_ANON_KEY } });
-      rows = resp.ok ? await resp.json() : [];
-    }
+    rows = await fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_id=eq.${store.id}&order=price.asc`);
   } catch(err){
-    console.error(err);
+    console.error('store_id lookup failed, falling back to chain catalogue:', err);
+  }
+  if(!rows.length){
+    confirmedBranch = false;
+    try{
+      const chain = chainNameFor(store.name);
+      rows = await fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`);
+    } catch(err){
+      console.error(err);
+    }
   }
 
   currentStoreRows = rows;
+  // threshold 0.25 — tested against this store's real 928-row catalogue:
+  // 0.15 misses genuine typos ("steinlaegr", "corana"); 0.35 starts pulling
+  // in unrelated products ("corana" matching "Coruba", "Canadian Club").
+  // 0.2-0.3 all produced identical clean results, so 0.25 sits comfortably
+  // in the middle of that range rather than right on either edge.
+  currentStoreFuse = new Fuse(rows, { keys: ['product_name'], threshold: 0.25, ignoreLocation: true });
 
   const disclaimer = (!confirmedBranch && rows.length)
     ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chainNameFor(store.name)} catalogue prices — not confirmed for this specific store.</div>`
@@ -937,8 +1896,51 @@ async function showStoreSheet(store){
 }
 
 function closeStoreSheet(){
-  document.getElementById('storeSheet').classList.remove('open');
+  const sheet = document.getElementById('storeSheet');
+  sheet.style.transform = ''; // clear any in-progress drag offset so the CSS transition takes over cleanly
+  sheet.classList.remove('open');
 }
+
+// Swipe-down-to-dismiss on the handle — previously the only way to close
+// this sheet was clicking a 36x4px bar via a plain onclick, which doesn't
+// respond to touch gestures at all, so on a touch device there was no way
+// to swipe it away — the sheet just sat there until the page was
+// reloaded. Bound on the handle specifically (not the whole body) so it
+// never fights with scrolling the product list. The handle has no other
+// purpose than closing the sheet, so — matching the plain-tap behavior it
+// already had — any release (tap or drag, any distance) closes it; the
+// drag tracking below is purely for the visual "follows your finger" feel
+// while a touch/drag is in progress, not a distance threshold to clear.
+function enableSwipeToDismiss(handle, sheet){
+  let startY = 0;
+  let dragging = false;
+
+  const start = (y) => {
+    dragging = true;
+    startY = y;
+    sheet.style.transition = 'none';
+  };
+  const move = (y) => {
+    if(!dragging) return;
+    const dy = Math.max(0, y - startY); // only allow dragging downward
+    sheet.style.transform = `translateY(${dy}px)`;
+  };
+  const end = () => {
+    if(!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    closeStoreSheet();
+  };
+
+  handle.addEventListener('touchstart', (e) => start(e.touches[0].clientY), { passive: true });
+  handle.addEventListener('touchmove', (e) => move(e.touches[0].clientY), { passive: true });
+  handle.addEventListener('touchend', end);
+
+  handle.addEventListener('mousedown', (e) => start(e.clientY));
+  window.addEventListener('mousemove', (e) => move(e.clientY));
+  window.addEventListener('mouseup', end);
+}
+enableSwipeToDismiss(document.querySelector('.store-sheet-handle'), document.getElementById('storeSheet'));
 
 function enableDragScroll(el){
   // Scrollbars are hidden site-wide for the phone-mockup look, and this

@@ -1,0 +1,1532 @@
+[
+  {
+    "name": "Albany",
+    "store_id_ext": "5f234dedfbe98b083105e08b",
+    "address": "225 Dairy Flat Highway, Albany Village, Albany Auckland 0632",
+    "online": true,
+    "subdomain": "albany",
+    "lat": -36.7253381,
+    "lng": 174.6955229,
+    "store_id": "b5c53cf2-3384-49ce-9e57-4c5d1741f6da"
+  },
+  {
+    "name": "Andy Bay",
+    "store_id_ext": "66d93c2c02d7cfad9bcea9ba",
+    "address": "460 Anderson Bay Road, Anderson Bay, Dunedin Otago 9002",
+    "online": false,
+    "subdomain": null,
+    "lat": -45.8961549,
+    "lng": 170.5316864,
+    "store_id": "dc1651ab-f8ae-4616-bd1d-b75d1675e792"
+  },
+  {
+    "name": "Ashhurst",
+    "store_id_ext": "650a854e607c46710d01be60",
+    "address": "62 Cambridge Avenue, Ashhurst Manawatu 4810",
+    "online": false,
+    "subdomain": null,
+    "lat": -40.2926063,
+    "lng": 175.7544265,
+    "store_id": "0dfd25fe-2e10-4ccf-99ac-0bc0c512136b"
+  },
+  {
+    "name": "Aviemore Drive",
+    "store_id_ext": "5ea25160f605cc1483001a63",
+    "address": "14-29 Aviemore Drive, Highland Park, Auckland 2010",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9061746,
+    "lng": 174.9051647,
+    "store_id": "cb3b566b-c28f-46a1-a0f7-187954d4d771"
+  },
+  {
+    "name": "Bairds Road",
+    "store_id_ext": "66da3e7a96dfb2aa4873f182",
+    "address": "127 Bairds Road, \u014ctara, Auckland AKL 2023",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9608559,
+    "lng": 174.8745453,
+    "store_id": "f4f1a64e-06f8-4032-bfe6-0dc7343ee96b"
+  },
+  {
+    "name": "Bethlehem",
+    "store_id_ext": "5ea25130f605cc148300005f",
+    "address": "Bethlehem Town Centre, 19 Bethlehem Road, Bethlehem, Tauranga 3110",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.695864,
+    "lng": 176.1131816,
+    "store_id": "634d8809-8e59-4b28-8770-36d15209401e"
+  },
+  {
+    "name": "Birkenhead",
+    "store_id_ext": "5ea25130f605cc14830000b9",
+    "address": "Unit F 174 Mokoia Road, Chatswood, Auckland 0626",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8178641,
+    "lng": 174.710109,
+    "store_id": "35e4eb73-108c-4de6-9907-bfee419cce64"
+  },
+  {
+    "name": "Bluff",
+    "store_id_ext": "63bdf8e146391a3e82861850",
+    "address": "70 Gore Street, Bluff, Southland 9814",
+    "online": true,
+    "subdomain": "bluff",
+    "lat": -46.5992787,
+    "lng": 168.344813,
+    "store_id": "39df41b1-75e2-4142-b6ba-59c65a552edc"
+  },
+  {
+    "name": "Borman Road",
+    "store_id_ext": "61a96517e1953117100149fa",
+    "address": "7/454 Borman Road, Flagstaff, Hamilton 3210",
+    "online": true,
+    "subdomain": "bormanroad",
+    "lat": -37.7229825,
+    "lng": 175.2559678,
+    "store_id": "e2c7a518-d30e-470c-85a8-31f95f2cbbf4"
+  },
+  {
+    "name": "Botany",
+    "store_id_ext": "5ea25131f605cc1483000113",
+    "address": "301 A Botany Road, Golflands, Auckland 2013",
+    "online": true,
+    "subdomain": "botany",
+    "lat": -36.9254557,
+    "lng": 174.913118,
+    "store_id": "950d25ab-251d-402f-9f78-142f9129965a"
+  },
+  {
+    "name": "Brookfield",
+    "store_id_ext": "5ea25132f605cc148300016d",
+    "address": "140 Otumoetai Road, Brookfield, Tauranga 3110",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.6892246,
+    "lng": 176.1354982,
+    "store_id": "c4ea5063-56a5-4dbb-b6fa-4eff7a25bfcb"
+  },
+  {
+    "name": "Brown\u2019s Bay",
+    "store_id_ext": "5fa8663d60b75a5c2504bf21",
+    "address": "775 Beach Road, Browns Bay Auckland 0630",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.7152051,
+    "lng": 174.7431781,
+    "store_id": "386759c4-edaa-40ed-af9f-0428f6785b12"
+  },
+  {
+    "name": "Cambridge",
+    "store_id_ext": "612713a7d7477622bb0090c0",
+    "address": "2/8 Anzac Street, Cambridge 3434",
+    "online": true,
+    "subdomain": "bottleo-cambridge-ecommerce.myfoodlink.com/",
+    "lat": -37.8923636,
+    "lng": 175.4723751,
+    "store_id": "f5a70c5a-fdef-40ec-a3bc-73f3813be5ae"
+  },
+  {
+    "name": "Cambridge Terrace",
+    "store_id_ext": "5eb43bb86d8e697eec035cba",
+    "address": "63 Cambridge Terrace, Te Aro Wellington 6011",
+    "online": true,
+    "subdomain": "cambridge",
+    "lat": -41.2975959,
+    "lng": 174.7814994,
+    "store_id": "8f77a1d2-9b7e-4583-85c8-0b366efc4b18"
+  },
+  {
+    "name": "Cascades",
+    "store_id_ext": "5ea25133f605cc1483000221",
+    "address": "62 Ben Lomond Cresent, Pakuranga Heights, Auckland 2210",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9084603,
+    "lng": 174.8924315,
+    "store_id": "f2115c8e-938a-4904-833f-57bf17fce501"
+  },
+  {
+    "name": "Chartwell",
+    "store_id_ext": "5eab3f4a6d8e69158e02c1b8",
+    "address": "13 Lyndon Court, Chartwell, Hamilton 3210",
+    "online": true,
+    "subdomain": "chartwell",
+    "lat": -37.759991,
+    "lng": 175.2835816,
+    "store_id": "a6d08cf1-d8fc-4e8c-908f-dd645e4db16f"
+  },
+  {
+    "name": "Christchurch Airport",
+    "store_id_ext": "675baedbec1bddd11c5a6fc5",
+    "address": "544 Memorial Avenue, Spitfire Square, Christchurch Airport, Christchurch Canterbury 8053",
+    "online": true,
+    "subdomain": "christchurchairport",
+    "lat": -43.4852369,
+    "lng": 172.5354825,
+    "store_id": "cb9ba91d-558e-4145-836d-57f375e5ba94"
+  },
+  {
+    "name": "College St",
+    "store_id_ext": "68d21040659759eb328fe169",
+    "address": "364-366 College Street, Palmerston North 4410",
+    "online": false,
+    "subdomain": null,
+    "lat": -40.3573392,
+    "lng": 175.6266973,
+    "store_id": "db808591-1b39-4c86-8158-d98404cbec7b"
+  },
+  {
+    "name": "Conifer Grove",
+    "store_id_ext": "6115f2dc60b75a58320090fa",
+    "address": "68C Walter Strevens Drive Conifer Grove, Takanini, Auckland 2112",
+    "online": true,
+    "subdomain": "conifer-grove",
+    "lat": -37.0472944,
+    "lng": 174.9101779,
+    "store_id": "a91428a7-68b8-42ad-ac45-90eef9375e64"
+  },
+  {
+    "name": "Coromandel",
+    "store_id_ext": "65110c6e607c467a24644495",
+    "address": "112 Wharf Road, Coromandel 3506",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.7603682,
+    "lng": 175.4960412,
+    "store_id": "092281ad-cc62-43a6-bb43-5b1d4e9739fe"
+  },
+  {
+    "name": "Cumberland Street",
+    "store_id_ext": "66d92b5afc857326c7bd41e2",
+    "address": "867 Cumberland Street, Dunedin North, Dunedin Otago 9016",
+    "online": false,
+    "subdomain": null,
+    "lat": -45.8598936,
+    "lng": 170.514611,
+    "store_id": "c1f13987-c963-4489-8903-4038d56f777a"
+  },
+  {
+    "name": "Dargaville",
+    "store_id_ext": "644f232683203655a30e297a",
+    "address": "70 Victoria Street, Dargaville 0310",
+    "online": true,
+    "subdomain": "dargaville",
+    "lat": -35.9420402,
+    "lng": 173.8692496,
+    "store_id": "da45777b-43c0-41b3-a8f7-6c5344c745be"
+  },
+  {
+    "name": "Davies Corner",
+    "store_id_ext": "60a5fa88ec2866424d04b3d3",
+    "address": "21 Hukanui Road, Fairfield, Hamilton 3214",
+    "online": true,
+    "subdomain": "davies-corner",
+    "lat": -37.7620558,
+    "lng": 175.2875925,
+    "store_id": "c780c094-69b7-4bc7-b04a-e73025621e81"
+  },
+  {
+    "name": "Devonport",
+    "store_id_ext": "635f4698cef16e1545b709b7",
+    "address": "63A Lake Road, Devonport, Auckland AKL 0624",
+    "online": true,
+    "subdomain": "devonport",
+    "lat": -36.8133334,
+    "lng": 174.7919704,
+    "store_id": "b768f400-1dd4-478e-a2a5-3ebb2593ed56"
+  },
+  {
+    "name": "Dixon Street",
+    "store_id_ext": "66a6fe4a02685732555d4ef2",
+    "address": "94 Dixon Street, Te Aro, Wellington 6011",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2908596,
+    "lng": 174.77478,
+    "store_id": "0bc54872-0277-4b22-b4ed-0bc146430dfe"
+  },
+  {
+    "name": "Dominion Road",
+    "store_id_ext": "674d3f22da38d39d277205f9",
+    "address": "360d Dominion Road, Mt Eden, Auckland AKL 2110",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8795861,
+    "lng": 174.7499916,
+    "store_id": "610ec813-83c6-4c01-86aa-03751c339f1b"
+  },
+  {
+    "name": "Duke Street",
+    "store_id_ext": "64d4740d84259a3252550a44",
+    "address": "114 Duke Street, Mt Roskill, Auckland 1041",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8993343,
+    "lng": 174.7564172,
+    "store_id": "9dd5cd82-ed57-4473-8d4b-de98efd6b8b5"
+  },
+  {
+    "name": "Edgecumbe",
+    "store_id_ext": "673425ebfc857398199f8bd3",
+    "address": "11-19 College Road, Edgecumbe 3120, New Zealand",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.9763674,
+    "lng": 176.8280347,
+    "store_id": "8cb92734-f5fa-4d01-b474-81ac31c15f2a"
+  },
+  {
+    "name": "Fairy Springs",
+    "store_id_ext": "5ea25163f605cc1483001c25",
+    "address": "36 Fairy Springs Road, Fairy Springs, Rotorua 3015",
+    "online": true,
+    "subdomain": "fairy-springs",
+    "lat": -38.1245177,
+    "lng": 176.2309641,
+    "store_id": "0ae61887-edba-4fcc-97fb-d3700eec10d9"
+  },
+  {
+    "name": "Featherston",
+    "store_id_ext": "5eab424350c9d42d5a01d848",
+    "address": "43 Fitzherbert Street, Featherston 5710",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.1171207,
+    "lng": 175.3256111,
+    "store_id": "c14ecdf1-a30c-4b88-91ff-6dce777daaec"
+  },
+  {
+    "name": "Feilding",
+    "store_id_ext": "650a8377607c46710d01b914",
+    "address": "8 Stafford Street, Feilding, Feilding 4702",
+    "online": true,
+    "subdomain": "feilding",
+    "lat": -40.2270678,
+    "lng": 175.5671891,
+    "store_id": "04a68338-953a-490f-8169-420c4c070161"
+  },
+  {
+    "name": "Fenton Street",
+    "store_id_ext": "5ea2514cf605cc1483000f7d",
+    "address": "4/223 Fenton Street, Rotorua 3010",
+    "online": false,
+    "subdomain": null,
+    "lat": -38.140968,
+    "lng": 176.2533109,
+    "store_id": "e9fc6091-5203-41dd-aa19-27745d17cbf2"
+  },
+  {
+    "name": "Ferrymead",
+    "store_id_ext": "674d4706cef16ebb332c1956",
+    "address": "9 Humphreys Drive, Ferrymead, christchurch Canterbury 8023",
+    "online": false,
+    "subdomain": null,
+    "lat": -43.5569213,
+    "lng": 172.7045882,
+    "store_id": "7b6cea59-eb50-448d-a3c2-e7d1cf20e8d3"
+  },
+  {
+    "name": "Fraser Cove",
+    "store_id_ext": "5ea25137f605cc1483000497",
+    "address": "229 Fraser Street, Tauranga 3112",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.711083,
+    "lng": 176.1512547,
+    "store_id": "d9f84e23-1889-483a-936f-a5b182673dc8"
+  },
+  {
+    "name": "Gladstone Road",
+    "store_id_ext": "6842727eb0bfdf74d0940ef9",
+    "address": "3 Gladstone Road, Richmond, Nelson Nelson 7020",
+    "online": true,
+    "subdomain": "gladstoneroad",
+    "lat": -41.3320706,
+    "lng": 173.2011164,
+    "store_id": "a10f50e7-ce99-4966-84ae-673c46d8d9c2"
+  },
+  {
+    "name": "Glenfield",
+    "store_id_ext": "5eb43ad1d74776592002990c",
+    "address": "47 Downing Street, Glenfield Auckland 0629",
+    "online": true,
+    "subdomain": "glenfield",
+    "lat": -36.7834266,
+    "lng": 174.7216364,
+    "store_id": "c6d4c169-879f-4bdc-9e15-d8ba0e113bf4"
+  },
+  {
+    "name": "Greenwood",
+    "store_id_ext": "60b5b6fe60b75a45d803c922",
+    "address": "91a Greenwood Street, Frankton, Hamilton 3204",
+    "online": true,
+    "subdomain": "greenwood",
+    "lat": -37.7909391,
+    "lng": 175.2596784,
+    "store_id": "6f0faaab-e3c7-44f6-84c1-3d9f7a13eab0"
+  },
+  {
+    "name": "Halswell",
+    "store_id_ext": "5f1a0e42d747761223005662",
+    "address": "Unit 5, 29 Ensign Street, Halswell Christchurch 8025",
+    "online": false,
+    "subdomain": null,
+    "lat": -43.5745426,
+    "lng": 172.5670822,
+    "store_id": "f9ffb098-ef8c-49b9-a4a3-1a59fc843719"
+  },
+  {
+    "name": "Hamilton Central",
+    "store_id_ext": "64c207970268572ab8ccf4bc",
+    "address": "9 Willoughby Street, Whitiora, Hamilton 3200",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.7808435,
+    "lng": 175.2723987,
+    "store_id": "2628bfaf-a1a3-40ec-bb3a-827f5b738f75"
+  },
+  {
+    "name": "Hastings",
+    "store_id_ext": "5e9083ab50c9d4253d00763c",
+    "address": "101 Tomoana Road Hastings, Hastings 4120",
+    "online": true,
+    "subdomain": "hastings",
+    "lat": -39.6365811,
+    "lng": 176.8380639,
+    "store_id": "14349469-3817-4a42-a60b-a0249890d452"
+  },
+  {
+    "name": "Hillcrest",
+    "store_id_ext": "5eb4384a1db5f574f401c423",
+    "address": "132 Cambridge Road, Hillcrest, Hamilton 3216",
+    "online": true,
+    "subdomain": "hillcrest",
+    "lat": -37.7989603,
+    "lng": 175.3156806,
+    "store_id": "449b949f-1347-4202-9552-c5d271b14e1f"
+  },
+  {
+    "name": "Hillmorton",
+    "store_id_ext": "68ca34d839537f753a7d4ce8",
+    "address": "7 Halswell Road, Hoon Hay, Christchurch Canterbury 8025",
+    "online": true,
+    "subdomain": "bottleo-hillmorton.myfoodlink.com/",
+    "lat": -43.564483,
+    "lng": 172.6087903,
+    "store_id": "4b07906b-b508-44eb-bde0-ab41b58871f4"
+  },
+  {
+    "name": "Hillside-Dunedin",
+    "store_id_ext": "63d7232846391a026b11acad",
+    "address": "491 Hillside Road, Caversham, Dunedin 9077",
+    "online": true,
+    "subdomain": "hillside-dunedin",
+    "lat": -45.8974832,
+    "lng": 170.4890445,
+    "store_id": "43500806-015b-4863-864f-c9c2f28416ef"
+  },
+  {
+    "name": "Hokitika",
+    "store_id_ext": "5ea2513cf605cc14830006b3",
+    "address": "56-60 Tancred Street, Hokitika 7810",
+    "online": false,
+    "subdomain": null,
+    "lat": -42.7159396,
+    "lng": 170.964213,
+    "store_id": "9dc97eb1-6b21-48b2-b3e2-0b1ae2ac058f"
+  },
+  {
+    "name": "Hornby",
+    "store_id_ext": "66d929812ff84b172e446774",
+    "address": "64 Carmen Road, Hornby, Christchurch Canterbury 8042",
+    "online": true,
+    "subdomain": "hornby",
+    "lat": -43.5374731,
+    "lng": 172.5287045,
+    "store_id": "4c7714a3-0fd6-424c-8355-0a9cfb7f9a93"
+  },
+  {
+    "name": "Huapai",
+    "store_id_ext": "5ea2513cf605cc148300070d",
+    "address": "301 Main Road, Huapai, Auckland 0810",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.7728627,
+    "lng": 174.5467606,
+    "store_id": "b0f342ce-f6fb-4907-a896-6a5d9bdb7111"
+  },
+  {
+    "name": "Hutt Park",
+    "store_id_ext": "5e96223050c9d43145016ac2",
+    "address": "15 Randwick Road, Moera, Hutt Park (Seaview), Lower Hutt 5010",
+    "online": true,
+    "subdomain": "hutt-park",
+    "lat": -41.2387972,
+    "lng": 174.9125504,
+    "store_id": "d2349db1-7fdd-49d8-b24d-874221fd4022"
+  },
+  {
+    "name": "Invercargill",
+    "store_id_ext": "5f2d583eec28666d390064c9",
+    "address": "1 Marama Avenue South, Otatara Invercargill 9879",
+    "online": true,
+    "subdomain": "wetlands",
+    "lat": -46.4312324,
+    "lng": 168.3091033,
+    "store_id": "06b8f891-809d-480e-9afa-76c0a61ed37d"
+  },
+  {
+    "name": "Island Bay",
+    "store_id_ext": "684b7077eb9f0a226ebbd092",
+    "address": "134 The Parade, Island Bay Wellington 6023",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.3342973,
+    "lng": 174.7731951,
+    "store_id": "3869efb6-9b7b-471e-a7b9-2bd5d873c941"
+  },
+  {
+    "name": "Kaikanui",
+    "store_id_ext": "5ea2513ef605cc14830007c1",
+    "address": "67 Williams Street, Kaiapoi, Christchurch 7630",
+    "online": false,
+    "subdomain": null,
+    "lat": -43.3975133,
+    "lng": 172.612986,
+    "store_id": "5b502e76-1ff4-402d-9db9-7fa64e086ac6"
+  },
+  {
+    "name": "Kaikorai Valley",
+    "store_id_ext": "66d93ccd2ff84b172f44c7da",
+    "address": "185 Kaikorai Valley Road, Bradford, Dunedin Otago 9011",
+    "online": false,
+    "subdomain": null,
+    "lat": -45.8701056,
+    "lng": 170.4743834,
+    "store_id": "3dc0714c-850f-4a0b-992e-a26de1739b57"
+  },
+  {
+    "name": "Karaka",
+    "store_id_ext": "674d3fdecef16ebb332bfb2b",
+    "address": "Unit B10/75, Hingaia Road, Karaka AKL 2113",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.0736978,
+    "lng": 174.9284273,
+    "store_id": "b1d4041d-ca3d-4849-ab53-1a035d76557b"
+  },
+  {
+    "name": "Katikati",
+    "store_id_ext": "5ea2513ef605cc148300081b",
+    "address": "74-76 Main Road, Katikati, Tauranga 3129",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.5522269,
+    "lng": 175.91541,
+    "store_id": "b485666d-561d-48da-be35-64a549fb86e0"
+  },
+  {
+    "name": "Kilbirnie",
+    "store_id_ext": "69448ac5c679bc3b38b71cdf",
+    "address": "59 Bay Road, Kilbirnie, Wellington 6022",
+    "online": true,
+    "subdomain": "bottleo-kilbirnie.myfoodlink.com/",
+    "lat": -41.3198076,
+    "lng": 174.7945411,
+    "store_id": "0b5b44ca-cec8-4250-8dba-606d533d97a4"
+  },
+  {
+    "name": "Kingsland",
+    "store_id_ext": "5ea2513ff605cc1483000875",
+    "address": "509 New North Road, Kingsland, Auckland 1021",
+    "online": true,
+    "subdomain": "kingsland",
+    "lat": -36.8722165,
+    "lng": 174.7432573,
+    "store_id": "6afc404a-6211-4a74-a2ec-996b6b89d90b"
+  },
+  {
+    "name": "Leamington",
+    "store_id_ext": "5ea25165f605cc1483001d33",
+    "address": "13 Cook Street, Leamington, Cambridge 3432",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.9004613,
+    "lng": 175.4764077,
+    "store_id": "1a7832bf-81f5-47f1-98c5-76448df7e60a"
+  },
+  {
+    "name": "Lincoln Road",
+    "store_id_ext": "5ea2513ff605cc14830008cf",
+    "address": "33 Lincoln Road, Addington, Christchurch 8024",
+    "online": false,
+    "subdomain": null,
+    "lat": -43.5434375,
+    "lng": 172.6120415,
+    "store_id": "5f26c65b-c0dd-476b-8af8-45217f51a650"
+  },
+  {
+    "name": "Lower Hutt",
+    "store_id_ext": "5ea25166f605cc1483001d8d",
+    "address": "6/75, High Street, Lower Hutt, Lower Hutt 5010",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2099453,
+    "lng": 174.9018531,
+    "store_id": "8e9f3abb-b300-48c0-a4c0-da22fe3dd9cc"
+  },
+  {
+    "name": "Lynmore",
+    "store_id_ext": "66f0c9ae929c6d1406400a0a",
+    "address": "15/5 TARAWERA ROAD (UNIT 4), Lynmore, Rotorua 3112",
+    "online": true,
+    "subdomain": "lynmore",
+    "lat": -38.1463048,
+    "lng": 176.2885971,
+    "store_id": "9d02f161-be7b-4a2d-a604-15db169ce09d"
+  },
+  {
+    "name": "Mana",
+    "store_id_ext": "5ea25140f605cc1483000929",
+    "address": "Unit 2 107A Mana Esplanade, Paremata, Wellington 5026",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.0976075,
+    "lng": 174.869541,
+    "store_id": "d76945e4-9791-4f53-a78f-0617daced592"
+  },
+  {
+    "name": "Mana",
+    "store_id_ext": "5eab4c8650c9d42d5a020cd7",
+    "address": "2/107 Mana Esplanade, Mana, Paremata, Wellington 5026",
+    "online": true,
+    "subdomain": "mana",
+    "lat": -41.0922147,
+    "lng": 174.8679354,
+    "store_id": "38a7f7ba-dba3-4dc8-b56b-e2d5d9335c0e"
+  },
+  {
+    "name": "Mangatera",
+    "store_id_ext": "5e907defec286657ab0451f9",
+    "address": "391 High Street, Dannevirke, Dannevirke 4930",
+    "online": false,
+    "subdomain": null,
+    "lat": -40.1909861,
+    "lng": 176.1126395,
+    "store_id": "ba81fd64-343b-4898-b3e0-1679be8508bc"
+  },
+  {
+    "name": "Mangere East",
+    "store_id_ext": "5ea25141f605cc14830009dd",
+    "address": "10/6 Savill Srive, Favona, Auckland 2024",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9513699,
+    "lng": 174.8078456,
+    "store_id": "be8b6cf5-2be2-44fa-9a60-2064479fd96a"
+  },
+  {
+    "name": "Marsden Cove",
+    "store_id_ext": "648a7779026857482a107f49",
+    "address": "11/30 Rauiri Drive, One Tree Point AKL 0118",
+    "online": false,
+    "subdomain": null,
+    "lat": -35.8391342,
+    "lng": 174.4624341,
+    "store_id": "6b19e049-e596-4301-8676-05f9cc9b5eac"
+  },
+  {
+    "name": "Martinborough",
+    "store_id_ext": "5ea25142f605cc1483000a37",
+    "address": "9 Memorial Square, Martinborough 5711",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2192034,
+    "lng": 175.4597661,
+    "store_id": "5dcaf396-a60d-4f0e-9475-7e269f4b0920"
+  },
+  {
+    "name": "Marton",
+    "store_id_ext": "68cc95ff3e00a0a3a59a48b8",
+    "address": "301 Broadway, Marton, Manawatu 4710",
+    "online": false,
+    "subdomain": null,
+    "lat": -40.065214,
+    "lng": 175.3792519,
+    "store_id": "e5a35194-f7aa-4b50-9da7-9e04266d0ad9"
+  },
+  {
+    "name": "May Road",
+    "store_id_ext": "671059d602d7cfe8bc570cae",
+    "address": "49 May Road, Mt. Roskill, Auckland AKL 1041",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9080339,
+    "lng": 174.7357143,
+    "store_id": "a2df3de8-9104-4fe2-a524-b5535626d3e6"
+  },
+  {
+    "name": "Milford",
+    "store_id_ext": "5ea25143f605cc1483000aeb",
+    "address": "19 Shakespeare Road, Milford, Auckland 0620",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.772813,
+    "lng": 174.7628602,
+    "store_id": "8896a9b3-ecab-4b8c-8f1b-3f7bad348d3a"
+  },
+  {
+    "name": "Morrinsville",
+    "store_id_ext": "619b169fd74776215c0081be",
+    "address": "40 Studholme Street, Morrinsville, 3300",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.6590407,
+    "lng": 175.5291952,
+    "store_id": "18560b32-8626-4b73-8716-5df14de6d8bd"
+  },
+  {
+    "name": "Mosgiel",
+    "store_id_ext": "66d92aa696dfb28b2372c88c",
+    "address": "24 Factory Road, Mosgiel, Dunedin Otago 9024",
+    "online": true,
+    "subdomain": "mosgiel",
+    "lat": -45.8731468,
+    "lng": 170.3508437,
+    "store_id": "39d5bce6-915b-45ae-8460-dc7214783ddb"
+  },
+  {
+    "name": "Mt Eden",
+    "store_id_ext": "5ea25167f605cc1483001e41",
+    "address": "110C Mt Eden Road, Mt Eden, Auckland 1024",
+    "online": true,
+    "subdomain": "mt-eden",
+    "lat": -36.889837,
+    "lng": 174.7599037,
+    "store_id": "c0cd9d80-b516-44db-80f7-8a242f91566e"
+  },
+  {
+    "name": "Mt Maunganui",
+    "store_id_ext": "6477e140832036760b22c8d4",
+    "address": "290 Maunganui Road, Tauranga 3116",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.6420474,
+    "lng": 176.1853461,
+    "store_id": "9653027f-7b2b-4e2b-94e1-71c822091933"
+  },
+  {
+    "name": "Mt Smart",
+    "store_id_ext": "5f59503460b75a56b50b30fb",
+    "address": "150f Mt Smart Road, Onehunga Auckland 1061",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9153584,
+    "lng": 174.792019,
+    "store_id": "046702aa-d066-491f-9ca8-999c05bd5a23"
+  },
+  {
+    "name": "Mt. Wellington",
+    "store_id_ext": "635f485b8320365a6a605b0b",
+    "address": "14/295 Penrose Road, Mt Wellington Auckland 1060",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.9068521,
+    "lng": 174.8349811,
+    "store_id": "f58f83d8-2151-44fa-9968-da418c08237b"
+  },
+  {
+    "name": "Naenae",
+    "store_id_ext": "5e907d09fbe98b28d2038978",
+    "address": "3/7 Treadwell Street, Lower Hutt, Naenae 5011",
+    "online": true,
+    "subdomain": "naenae",
+    "lat": -41.2007694,
+    "lng": 174.949871,
+    "store_id": "ff2b30fa-44c4-4969-99df-88bd7650c933"
+  },
+  {
+    "name": "New North Rd",
+    "store_id_ext": "6928fcfeb55a2a3273484f84",
+    "address": "935 B, New North Road, Mount Albert, 1025, New Zealand",
+    "online": true,
+    "subdomain": "bottleo-newnorthroad.myfoodlink.com/",
+    "lat": -36.8813324,
+    "lng": 174.722163,
+    "store_id": "66f92711-72ec-4df3-8e68-5bf75577a804"
+  },
+  {
+    "name": "Newlands",
+    "store_id_ext": "698d45f7b7c04f8b09f3cd8c",
+    "address": "5/6 McMillan Court, Newlands Wellington 6037",
+    "online": true,
+    "subdomain": "bottleo-newlands-ecommerce.myfoodlink.com/",
+    "lat": -41.2226657,
+    "lng": 174.8224297,
+    "store_id": "e624542d-fb06-4ca9-a665-f3c1fc2dafa8"
+  },
+  {
+    "name": "Newmarket",
+    "store_id_ext": "6458486904015f046b3a18c5",
+    "address": "63 Remuera Road, Remuera, Auckland 1050",
+    "online": true,
+    "subdomain": "newmarket",
+    "lat": -36.8719754,
+    "lng": 174.7798107,
+    "store_id": "e396472c-0c7a-48c5-bfd8-35c060e61aaa"
+  },
+  {
+    "name": "Ngaio",
+    "store_id_ext": "69379b0e97a8254255e7c189",
+    "address": "1 Khandallah Road, Ngaio, Wellington Wellington 6035",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2472072,
+    "lng": 174.7750646,
+    "store_id": "370ce111-fe4d-4ffc-88b1-1fbcf5ebb0be"
+  },
+  {
+    "name": "Ngaruawahia",
+    "store_id_ext": "5ea25168f605cc1483001e9b",
+    "address": "104 Great South Road, Ngaruawahia, Ngaruawahia 3720",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.6715182,
+    "lng": 175.1522145,
+    "store_id": "3bd57608-bc37-41d6-af68-51f3f1eb30e0"
+  },
+  {
+    "name": "Ngongotaha",
+    "store_id_ext": "5ea2514cf605cc1483000fd7",
+    "address": "174-176 Ngongotaha Road, Ngongotaha, Rotorua 1234",
+    "online": true,
+    "subdomain": "rotorua-ngongotaha",
+    "lat": -38.0735427,
+    "lng": 176.2088488,
+    "store_id": "e5e632a0-3a51-486e-8356-982deed1ceaa"
+  },
+  {
+    "name": "Onekawa",
+    "store_id_ext": "62cfaf6b04015f0c5b5623be",
+    "address": "78 Taradale Road, Onekawa, Napier 4110",
+    "online": true,
+    "subdomain": "onekawa",
+    "lat": -39.5026126,
+    "lng": 176.886771,
+    "store_id": "10c31ab6-92f4-4b05-909f-d0cf3d0e34fe"
+  },
+  {
+    "name": "Orakei",
+    "store_id_ext": "674d4097ec1bddc7d13961fc",
+    "address": "76 Coates Avenue, Orakei, Auckland AKL 1071",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8560582,
+    "lng": 174.8147599,
+    "store_id": "3b83f8fb-a818-40ec-82db-f36a1ff9bd64"
+  },
+  {
+    "name": "Orewa",
+    "store_id_ext": "64645f0404015f02dadcb406",
+    "address": "8K Moana Avenue, Orewa, Orewa AKL 0931",
+    "online": true,
+    "subdomain": "orewa",
+    "lat": -36.5867794,
+    "lng": 174.6941384,
+    "store_id": "deb8a54b-ae1a-43bf-aa90-7b846ebeb287"
+  },
+  {
+    "name": "Papakura",
+    "store_id_ext": "66a6fa4e02685732515d59d3",
+    "address": "29 O'Shannessey Street, Papakura, Auckland AKL 2110",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.0606723,
+    "lng": 174.942451,
+    "store_id": "ea614f5a-6dd5-4db6-972b-78da347e65e2"
+  },
+  {
+    "name": "Paraparaumu",
+    "store_id_ext": "5eab4dd9d7477619e50316c2",
+    "address": "41 Maclean Street, Paraparaumu Beach 5032",
+    "online": true,
+    "subdomain": "paraparaumu",
+    "lat": -40.8944406,
+    "lng": 174.9828528,
+    "store_id": "dbf2ef95-b96e-4f61-95ec-1473cb622203"
+  },
+  {
+    "name": "Patea",
+    "store_id_ext": "6a0fc0b924528227b086471e",
+    "address": "123 Egmont Street, Patea Taranaki 4520",
+    "online": false,
+    "subdomain": null,
+    "lat": -39.7544565,
+    "lng": 174.4723223,
+    "store_id": "a7bcca87-b053-421a-96b6-9778094d9bbc"
+  },
+  {
+    "name": "Pleasant Point",
+    "store_id_ext": "624a3e786c1d9c06c500e7cf",
+    "address": "57 Main Road, Pleasant Point, Pleasant Point 7903",
+    "online": false,
+    "subdomain": null,
+    "lat": -44.2609609,
+    "lng": 171.131999,
+    "store_id": "41a0e5f8-6203-4ea6-98b8-651f214f50d9"
+  },
+  {
+    "name": "Poenamo",
+    "store_id_ext": "67b6b007da38d368c699c688",
+    "address": "3 Sunnybrae Road, Hillcrest, Auckland AKL 0627",
+    "online": true,
+    "subdomain": "poenamo",
+    "lat": -36.7865232,
+    "lng": 174.7412499,
+    "store_id": "430a956b-d7d0-4527-9393-820fad866fc5"
+  },
+  {
+    "name": "Pokeno",
+    "store_id_ext": "6143f35a60b75a21ab000010",
+    "address": "Pokeno Plaza, 1/25 Market Street, Pokeno, Auckland 2402",
+    "online": true,
+    "subdomain": "pokeno",
+    "lat": -37.2067517,
+    "lng": 174.9109702,
+    "store_id": "d3bff93e-01af-48f5-ab43-781e33a5a305"
+  },
+  {
+    "name": "Polson",
+    "store_id_ext": "6a0fc684eba897f33cd3acf4",
+    "address": "1 Polson Street, Castlecliff Whanganui 4501",
+    "online": false,
+    "subdomain": null,
+    "lat": -39.9425522,
+    "lng": 174.9939845,
+    "store_id": "13dec341-5e36-4aee-9035-5904492f4e83"
+  },
+  {
+    "name": "Porirua",
+    "store_id_ext": "685a3f6b5de0f9d8dbff3fe1",
+    "address": "13 Kenepuru Drive Porirua City Centre, Porirua, Wellington Region 5022",
+    "online": true,
+    "subdomain": "porirua",
+    "lat": -41.1385559,
+    "lng": 174.841398,
+    "store_id": "0988ca70-7a1e-4e27-a18b-5c59c6cd37e2"
+  },
+  {
+    "name": "Prestons Road",
+    "store_id_ext": "68da0b1b0a30970011ba0b62",
+    "address": "18 Prestons Road, Redwood, Christchurch Canterbury 8051",
+    "online": true,
+    "subdomain": "bottleo-prestonsroad.myfoodlink.com/",
+    "lat": -43.4740354,
+    "lng": 172.6190379,
+    "store_id": "1b5ca3e0-273e-4b54-af07-8ee6c39b6323"
+  },
+  {
+    "name": "Puhinui",
+    "store_id_ext": "5ea25147f605cc1483000d07",
+    "address": "3/258 Puhinui Road, Paparoetoe, Auckland 2025",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.995928,
+    "lng": 174.8358256,
+    "store_id": "6e853641-a052-45cb-b2cf-d5224ef7b1ba"
+  },
+  {
+    "name": "Putaruru",
+    "store_id_ext": "5ea25148f605cc1483000d61",
+    "address": "27-29 Arapuni Street, Putaruru, Auckland 3411",
+    "online": false,
+    "subdomain": null,
+    "lat": -38.0510978,
+    "lng": 175.7790198,
+    "store_id": "049063a7-fb18-4c41-ad30-8199c55d601f"
+  },
+  {
+    "name": "Pyes Pa",
+    "store_id_ext": "5ea25149f605cc1483000dbb",
+    "address": "Shop 5, 83 Pyes Pa Road, Pyes Pa Shopping Centre, Tauranga 3112",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.7455968,
+    "lng": 176.124861,
+    "store_id": "9175caf4-9581-4fa3-be88-256c9d334a57"
+  },
+  {
+    "name": "QEII",
+    "store_id_ext": "5ea25149f605cc1483000e15",
+    "address": "5/251 Travis Road North, New Brighton, Christchurch 8083",
+    "online": false,
+    "subdomain": null,
+    "lat": -43.493414,
+    "lng": 172.7026064,
+    "store_id": "4ae901df-a5f2-4070-8618-f5a9aa68bfc0"
+  },
+  {
+    "name": "Queens Road",
+    "store_id_ext": "60c997acec2866691c019085",
+    "address": "10 Queens road, Panmure, Auckland 1072",
+    "online": true,
+    "subdomain": "queensroad",
+    "lat": -36.8989505,
+    "lng": 174.8520522,
+    "store_id": "9c01e993-1fc6-48f0-94a4-954eb9363ea2"
+  },
+  {
+    "name": "Rangitikei",
+    "store_id_ext": "6842703297461ded7beda5f5",
+    "address": "285 Rangitikei Street, Palmerston North Central 4410",
+    "online": true,
+    "subdomain": "rangitiekistreet",
+    "lat": -40.3493719,
+    "lng": 175.6056275,
+    "store_id": "862b6875-0152-4720-98c1-c1fae3b78fca"
+  },
+  {
+    "name": "Redwood",
+    "store_id_ext": "5e848b971db5f51f2f009bd7",
+    "address": "66 Cleghorn Street, Redwood Town, Blenheim Marlborough 7201",
+    "online": true,
+    "subdomain": "redwood",
+    "lat": -41.5316592,
+    "lng": 173.950756,
+    "store_id": "6711eab7-c3fd-40d9-bb06-e00268460912"
+  },
+  {
+    "name": "Regent",
+    "store_id_ext": "5f346c36fbe98b5a6c06dcd6",
+    "address": "2 Manse Street, Regent Whangarei 0112",
+    "online": true,
+    "subdomain": "regent",
+    "lat": -35.7151034,
+    "lng": 174.3224393,
+    "store_id": "08c5fafc-795f-45d8-9639-db7b238c2f0a"
+  },
+  {
+    "name": "Remuera Rd",
+    "store_id_ext": "5ea2516af605cc1483001f4f",
+    "address": "618 Remuera Road, Remuera, Remuera, Auckland 1050",
+    "online": true,
+    "subdomain": "remuera-rd",
+    "lat": -36.8801229,
+    "lng": 174.8121609,
+    "store_id": "4153c3f0-fc4b-4ac5-9910-8d2f20491a3a"
+  },
+  {
+    "name": "Renwick",
+    "store_id_ext": "64584c35cef16e1a6b7a0176",
+    "address": "80, High Street, Renwick Malborough 7204",
+    "online": true,
+    "subdomain": "renwick",
+    "lat": -41.5083122,
+    "lng": 173.8290095,
+    "store_id": "69d94327-6791-4417-843f-78a891d432ad"
+  },
+  {
+    "name": "Richmond",
+    "store_id_ext": "5ea2514af605cc1483000ec9",
+    "address": "345 Stanmore Road, Richmond, Christchurch 8013",
+    "online": false,
+    "subdomain": null,
+    "lat": -43.517856,
+    "lng": 172.6561884,
+    "store_id": "5dbb345b-0ab3-4e49-8f28-6c39431419ff"
+  },
+  {
+    "name": "Richmond Road",
+    "store_id_ext": "674d3e28cd4512b3716544f1",
+    "address": "165 Richmond Road, Grey Lynn, Auckland AKL 1021",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8549763,
+    "lng": 174.7391413,
+    "store_id": "de047525-8162-4717-8637-00e1cee8dd4c"
+  },
+  {
+    "name": "Rimutaka",
+    "store_id_ext": "5ea2514bf605cc1483000f23",
+    "address": "1223-1253 Fergusson Drive, Upper Hutt, Wellington 6007",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.109425,
+    "lng": 175.0969266,
+    "store_id": "9550b676-55d7-4e5b-95da-4350748d2458"
+  },
+  {
+    "name": "Rosedale",
+    "store_id_ext": "67105fbb96dfb2cdf6e5a338",
+    "address": "4/83 Apollo Drive, Rosedale, Auckland AKL 0632",
+    "online": true,
+    "subdomain": "rosedale",
+    "lat": -36.7353068,
+    "lng": 174.7271868,
+    "store_id": "6ac93e75-769d-4980-83bb-49a9e8769ef3"
+  },
+  {
+    "name": "Royal Oak",
+    "store_id_ext": "6441f2eecef16e17464866ac",
+    "address": "738 Manukau Rd, Royal Oak, Royal Oak AKL 1023",
+    "online": true,
+    "subdomain": "royal-oak",
+    "lat": -36.9085042,
+    "lng": 174.7753311,
+    "store_id": "3ba836cd-ecb4-4e24-a7b4-db5a900d94dd"
+  },
+  {
+    "name": "Sanson",
+    "store_id_ext": "68d21cabf9adb48808cef52b",
+    "address": "49 Dundas Road Sanson, Manawatu 4500",
+    "online": false,
+    "subdomain": null,
+    "lat": -40.2191781,
+    "lng": 175.4230677,
+    "store_id": "bd825356-10f1-4464-bc94-b2297cf4d99d"
+  },
+  {
+    "name": "Schnapper Rock",
+    "store_id_ext": "5ea2514ef605cc14830010e5",
+    "address": "1 Schnapper Road Road, Greenhithe, Auckland 0632",
+    "online": true,
+    "subdomain": "schnapper-rock",
+    "lat": -36.7566302,
+    "lng": 174.7020801,
+    "store_id": "f3226c03-95fb-429d-a90e-89ba6f858785"
+  },
+  {
+    "name": "Selwyn St",
+    "store_id_ext": "5ea2516af605cc1483001fa9",
+    "address": "Shop 1/304 Selwyn Street, Spreydon, Christchurch 8024",
+    "online": true,
+    "subdomain": "selwyn-st",
+    "lat": -43.5529403,
+    "lng": 172.6088659,
+    "store_id": "20e09f12-8488-4dba-b800-08d719b559cc"
+  },
+  {
+    "name": "Shirley",
+    "store_id_ext": "5e907fcfec2866368e025798",
+    "address": "114 Marshland Road, Unit 5, Christchurch 8061",
+    "online": true,
+    "subdomain": "shirley",
+    "lat": -43.530955,
+    "lng": 172.6364343,
+    "store_id": "06fba747-fc74-4d96-aa6b-36c4d177ed02"
+  },
+  {
+    "name": "Snells Beach",
+    "store_id_ext": "5ea25150f605cc1483001199",
+    "address": "334 MAHURANGI EAST ROAD, Snells Beach, Auckland AKL 0920",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.4238181,
+    "lng": 174.726819,
+    "store_id": "d7a96c5d-e4df-4f94-a147-5d6e55117c0f"
+  },
+  {
+    "name": "Sockburn",
+    "store_id_ext": "5ea25150f605cc14830011f3",
+    "address": "125 Main South Road, Sockburn, Christchurch 8042",
+    "online": true,
+    "subdomain": "sockburn",
+    "lat": -43.5376135,
+    "lng": 172.5574436,
+    "store_id": "35714985-44a1-4533-a546-faed13091cc4"
+  },
+  {
+    "name": "Springfield",
+    "store_id_ext": "5ea25151f605cc148300124d",
+    "address": "Shop 3 & 4, 4 Otonga Road, Rotorua 3015",
+    "online": true,
+    "subdomain": "springfield",
+    "lat": -38.154306,
+    "lng": 176.2402177,
+    "store_id": "1a277e53-1579-474c-acf4-47b67d316f53"
+  },
+  {
+    "name": "St Heliers",
+    "store_id_ext": "67453978929c6d093f5776d2",
+    "address": "287c St Heliers Bay Road, St Heliers AKL 1071",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8658806,
+    "lng": 174.8514772,
+    "store_id": "a824a3db-f7d1-40e7-a07b-7f9e0052c62e"
+  },
+  {
+    "name": "Stadium Drive Pukekohe",
+    "store_id_ext": "608a40abec286619e002aa18",
+    "address": "7A Stadium Drive, Pukekohe 2120",
+    "online": true,
+    "subdomain": "stadiumdrive",
+    "lat": -37.1997571,
+    "lng": 174.9078354,
+    "store_id": "771d3b39-978b-44b5-bfec-358e82e8acc3"
+  },
+  {
+    "name": "State Highway 2 Bethlehem",
+    "store_id_ext": "69044165ae1b7a1f217c59e6",
+    "address": "233 State Highway 2, Bethlehem, Tauranga Tauranga 3110",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.6958282,
+    "lng": 176.1094105,
+    "store_id": "c18db6a3-fa10-4772-a4d2-70c3ac5f8f56"
+  },
+  {
+    "name": "Stokes Valley",
+    "store_id_ext": "5e907b2d6d8e69462b02e8e5",
+    "address": "2 Oates Street, Lower Hutt, Stokes Valley 5019",
+    "online": true,
+    "subdomain": "stokes-valley",
+    "lat": -41.1734478,
+    "lng": 174.9809587,
+    "store_id": "f54b5285-9815-411a-8acb-821bc7d56cea"
+  },
+  {
+    "name": "Stonefields",
+    "store_id_ext": "6554e726ee8bcc4dd3e97104",
+    "address": "40 Stonefields Avenue, Stonefields Auckland 1072",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8870878,
+    "lng": 174.8445089,
+    "store_id": "35cf9343-6c67-4c05-9533-87b74d92fc80"
+  },
+  {
+    "name": "Sumner",
+    "store_id_ext": "5eab4d44d74776759b000eda",
+    "address": "43 Nayland Street, Sumner, Christchurch 8081",
+    "online": true,
+    "subdomain": "sumner",
+    "lat": -43.5697621,
+    "lng": 172.7598417,
+    "store_id": "47950a43-6ae3-4edf-9bc9-20c648c8703c"
+  },
+  {
+    "name": "Sunnynook",
+    "store_id_ext": "5ffce6befbe98b399b01507c",
+    "address": "106 Sunnynook Road, Sunnynook 0620, New Zealand",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.7589531,
+    "lng": 174.7410573,
+    "store_id": "52b5d0af-c445-48ef-be2c-5a7fa101f58c"
+  },
+  {
+    "name": "Sunset Road",
+    "store_id_ext": "5ea2514df605cc1483001031",
+    "address": "23-29 Sunset Road, Rotorua 3015",
+    "online": false,
+    "subdomain": null,
+    "lat": -38.1455591,
+    "lng": 176.2096136,
+    "store_id": "dea999ed-c7dc-41ae-ac48-9626c51f6893"
+  },
+  {
+    "name": "Taihape",
+    "store_id_ext": "5ea25153f605cc148300135b",
+    "address": "17 Mataroa Road, Taihape 4720",
+    "online": false,
+    "subdomain": null,
+    "lat": -39.6739958,
+    "lng": 175.7933327,
+    "store_id": "3d0c7f11-2140-48db-8cbf-3d0e6c599679"
+  },
+  {
+    "name": "Takanini",
+    "store_id_ext": "5eab4ec050c9d4222b000b25",
+    "address": "Unit 14,30 Walters Road, Takanini, Auckland 2112",
+    "online": true,
+    "subdomain": "takanini",
+    "lat": -37.048593,
+    "lng": 174.9319878,
+    "store_id": "b33a3c26-4812-4f41-91f9-fd928a572e84"
+  },
+  {
+    "name": "Tancred Street",
+    "store_id_ext": "68181102473d3d00cf5fa54f",
+    "address": "242 Tancred Street, Ashburton 7700",
+    "online": true,
+    "subdomain": "tancredstreet",
+    "lat": -43.9072158,
+    "lng": 171.7488007,
+    "store_id": "ef2f918d-bc99-4d07-ae87-44cd76e0e437"
+  },
+  {
+    "name": "Taupo",
+    "store_id_ext": "5ea25154f605cc148300140f",
+    "address": "128 Ruapehu Street, Taupo 3330",
+    "online": false,
+    "subdomain": null,
+    "lat": -38.6838084,
+    "lng": 176.0734397,
+    "store_id": "22121c70-e997-4eac-8c03-c13b788d3fca"
+  },
+  {
+    "name": "Tauriko",
+    "store_id_ext": "5ea25155f605cc1483001469",
+    "address": "Tenancy 6, 204 Taurikura Drive, Tauriko lakes, Tauranga 3171",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.7508385,
+    "lng": 176.0971,
+    "store_id": "e7e1220a-ded3-46c4-bb91-c74144047162"
+  },
+  {
+    "name": "Tawa",
+    "store_id_ext": "5e90771bd747764923031dec",
+    "address": "80 Main Road, Tawa, Wellington 5028",
+    "online": true,
+    "subdomain": "tawa",
+    "lat": -41.1772722,
+    "lng": 174.8256931,
+    "store_id": "59fb4869-2bed-4588-b144-9dbd09a98ed5"
+  },
+  {
+    "name": "Te Anau",
+    "store_id_ext": "63d720d383203671450bdeb6",
+    "address": "114 Town Centre, Te Anau, Southland 9600",
+    "online": true,
+    "subdomain": "teanau",
+    "lat": -45.4149162,
+    "lng": 167.7170403,
+    "store_id": "f32260a6-e098-4c10-87da-29b4ab70ffa0"
+  },
+  {
+    "name": "Te Aroha",
+    "store_id_ext": "61a95b2d60b75a1237000e49",
+    "address": "210-212 Whitaker Street, Te Aroha 3320",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.5431244,
+    "lng": 175.7121946,
+    "store_id": "451c2c78-cdb0-4352-9cf9-2fe9463edf2c"
+  },
+  {
+    "name": "Te Awamutu",
+    "store_id_ext": "5ea25157f605cc1483001577",
+    "address": "2/39 Rewi Street, Te Awamutu 3800",
+    "online": false,
+    "subdomain": null,
+    "lat": -38.0095999,
+    "lng": 175.3194099,
+    "store_id": "63630002-e3c6-40c4-9077-67469c8bbf5f"
+  },
+  {
+    "name": "Te Puke",
+    "store_id_ext": "5ea25157f605cc14830015d1",
+    "address": "33 Jellicoe Street, Te Puke 3119",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.7856139,
+    "lng": 176.3294053,
+    "store_id": "35bb91e3-c78d-4867-8711-8590c6e26ac4"
+  },
+  {
+    "name": "Te Rapa",
+    "store_id_ext": "5e90848dec28665dcd02b4f3",
+    "address": "6 Manchester Place, Te Rapa, Hamilton 3200",
+    "online": true,
+    "subdomain": "te-rapa",
+    "lat": -37.7525186,
+    "lng": 175.2393522,
+    "store_id": "03d1502a-1603-45d0-9910-450938f58947"
+  },
+  {
+    "name": "Templeton",
+    "store_id_ext": "614c278cd7477623890119a3",
+    "address": "731A Main South Road, Templeton, Christchurch 8042",
+    "online": true,
+    "subdomain": "templeton",
+    "lat": -43.5499019,
+    "lng": 172.4882644,
+    "store_id": "dc2829e7-b846-45cb-b6b3-749467d065e4"
+  },
+  {
+    "name": "Thames",
+    "store_id_ext": "68807005e7057fb501edf7b5",
+    "address": "202 Sealey Street, Thames, Thames Thames 3500",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.1398865,
+    "lng": 175.5432613,
+    "store_id": "8710bc70-71c3-4152-b9e7-32e9d107d7bb"
+  },
+  {
+    "name": "Tikipunga",
+    "store_id_ext": "5f346c78d74776592606af59",
+    "address": "159 Kiripaka Road, Tikipunga 0112",
+    "online": true,
+    "subdomain": "tikipunga",
+    "lat": -35.6871291,
+    "lng": 174.3266248,
+    "store_id": "da98fc82-4943-4646-9b52-f215b8361049"
+  },
+  {
+    "name": "Tuakau",
+    "store_id_ext": "5ea2515af605cc1483001739",
+    "address": "31 George Street, Tuakau, Tuakau 2121",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.2590494,
+    "lng": 174.9465504,
+    "store_id": "765a811a-0ea2-43c1-8111-c7fe455fa120"
+  },
+  {
+    "name": "Upper Hutt",
+    "store_id_ext": "6876fa10aa88347ca746fb1d",
+    "address": "18/22 Queen Street, Upper Hutt, Wellington 5018",
+    "online": true,
+    "subdomain": "upperhutt",
+    "lat": -41.1234024,
+    "lng": 175.0692116,
+    "store_id": "14192452-c035-477e-8edb-41f020e0397c"
+  },
+  {
+    "name": "Victoria Ave",
+    "store_id_ext": "6842747b5589ded0eb135fb6",
+    "address": "446 Victoria Avenue, Whanganui 4500",
+    "online": true,
+    "subdomain": "victoria-ave",
+    "lat": -39.924266,
+    "lng": 175.0378572,
+    "store_id": "742ddc0d-4227-4bd1-8e23-d03471cbbb83"
+  },
+  {
+    "name": "Waikanae",
+    "store_id_ext": "698d4abd91a17cdfd67ee45b",
+    "address": "78 Main Road, Waikanae Wellington 5036",
+    "online": true,
+    "subdomain": "bottle-waikanae-ecommerce.myfoodlink.com/",
+    "lat": -40.8782209,
+    "lng": 175.064751,
+    "store_id": "84eae8c7-461d-4681-b10d-878f58055f6c"
+  },
+  {
+    "name": "Wainuiomata",
+    "store_id_ext": "666f93eb0268575af49d02d9",
+    "address": "13 Parkway, Wainuiomata 5014",
+    "online": true,
+    "subdomain": "wainuiomata",
+    "lat": -41.2533596,
+    "lng": 174.9308245,
+    "store_id": "d8fca971-70c3-45bd-8547-3d4ac1c616d5"
+  },
+  {
+    "name": "Wairoa",
+    "store_id_ext": "5e906a9850c9d45093014cba",
+    "address": "47 Queen Street, Hawkes Bay, Wairoa 4108",
+    "online": true,
+    "subdomain": "wairoa",
+    "lat": -39.03939,
+    "lng": 177.4271389,
+    "store_id": "3e8fd663-9d62-4c53-af50-fb4c4508e606"
+  },
+  {
+    "name": "Waiuku",
+    "store_id_ext": "5eab4041d7477652a1021368",
+    "address": "7 Leonard Street, Waiuku, Auckland 2123",
+    "online": true,
+    "subdomain": "bottleo-waiuku-ecommerce.myfoodlink.com/",
+    "lat": -37.2505713,
+    "lng": 174.7278209,
+    "store_id": "e0a1de79-686b-4002-b2aa-5e26f44edf16"
+  },
+  {
+    "name": "Wanaka",
+    "store_id_ext": "63bdfdc404015f3402084377",
+    "address": "1 Ardmore Street, Wanaka, Wanaka Central Otago 9305",
+    "online": true,
+    "subdomain": "wanaka",
+    "lat": -44.6941691,
+    "lng": 169.1364637,
+    "store_id": "99fd87bb-fdb8-4e4d-b505-91108f36cce7"
+  },
+  {
+    "name": "Warkworth",
+    "store_id_ext": "5ea2515df605cc14830018fb",
+    "address": "2/65 Auckland Road, Warkworth 0910",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.4094525,
+    "lng": 174.659084,
+    "store_id": "e06bd699-571a-4921-9c17-57285eb28428"
+  },
+  {
+    "name": "Washdyke",
+    "store_id_ext": "6493e7bb0268570e6a0a3c04",
+    "address": "144 Hilton Highway, Washdyke, Timaru Canterbury 7910",
+    "online": true,
+    "subdomain": "washdyke",
+    "lat": -44.3592177,
+    "lng": 171.2394905,
+    "store_id": "b420b471-9452-42be-8c97-c325d863c3b2"
+  },
+  {
+    "name": "Waverley",
+    "store_id_ext": "68ad1b5f87e0287c3f1a4423",
+    "address": "68 Weraroa Road, Waverley 4510",
+    "online": false,
+    "subdomain": null,
+    "lat": -39.7639161,
+    "lng": 174.6326807,
+    "store_id": "27afb857-32a9-44da-98c2-e137bdc12181"
+  },
+  {
+    "name": "Wellsford",
+    "store_id_ext": "67d77046191b15dbfa10351d",
+    "address": "133 Rodney Street, Wellsford, Auckland 0900",
+    "online": true,
+    "subdomain": "wellsford",
+    "lat": -36.2954344,
+    "lng": 174.5232816,
+    "store_id": "63c0bb1e-2903-4f1d-b1e4-2c6e2c5b4381"
+  },
+  {
+    "name": "Whangaparaoa",
+    "store_id_ext": "5ea2515ff605cc1483001a09",
+    "address": "1e Wade River Road, Stanmore Bay, Auckalnd Auckland 0932",
+    "online": true,
+    "subdomain": "whangaparaoa",
+    "lat": -36.6202718,
+    "lng": 174.7214003,
+    "store_id": "44b4c209-7015-4b78-958e-64ec2b462445"
+  },
+  {
+    "name": "Whitianga",
+    "store_id_ext": "64645b2c6c1d9c0765a71440",
+    "address": "27 Albert Street, Whitianga 3510",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.8328527,
+    "lng": 175.7048107,
+    "store_id": "ebefe353-1b3b-4d1f-868d-aaa72ee4e03f"
+  },
+  {
+    "name": "Windsor Park",
+    "store_id_ext": "5fa9d3daec28660e5b00e2fa",
+    "address": "1/544 East Coast Road, Windsor Park, Auckland Auckland 0630",
+    "online": true,
+    "subdomain": "windsorpark",
+    "lat": -36.7383693,
+    "lng": 174.7412025,
+    "store_id": "5015c7b2-da6f-493c-b130-68b99fe16530"
+  },
+  {
+    "name": "Yaldhurst",
+    "store_id_ext": "612717c160b75a3239004d04",
+    "address": "163C Yaldhurst Road, Sockburn, Christchurch 8042, Christchurch 8042",
+    "online": true,
+    "subdomain": "yaldhurst",
+    "lat": -43.5646384,
+    "lng": 172.5415197,
+    "store_id": "f40a3720-d7f9-4c6a-a514-084b74868520"
+  }
+]

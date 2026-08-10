@@ -1,7 +1,17 @@
 """
 Cheapie — chain store scraper using Firecrawl
 
-Covers the big JS-rendered chains: Liquorland, Woolworths, New World, PAK'nSAVE.
+Covers the big JS-rendered chains: Woolworths, New World, PAK'nSAVE.
+
+2026-08-03: Liquorland removed from this scraper — it used to be here too,
+but that approach only ever covered 4 of Liquorland's 9 real categories,
+and its "confirmed" ?p=N pagination turned out to silently return page 1
+every time (Firecrawl was calling it correctly; the assumption that this
+site needed JS rendering to page through results was just wrong). Fully
+replaced by scrape_liquorland_full.py, which scrapes every real category
+directly via plain HTTP requests — no Firecrawl credits needed at all.
+Left in TARGETS here, it would have re-introduced that stale, incomplete
+data on this workflow's next scheduled run.
 
 HOW TO RUN:
 1. export FIRECRAWL_API_KEY="fc-your-key-here"
@@ -17,21 +27,21 @@ and the new wine/spirits targets below are URL-verified only, not yet
 confirmed by a live scrape.
 
 NOTE on spirits: by NZ law (Sale and Supply of Alcohol Act), supermarkets
-can only sell beer, wine and cider — not spirits. That's why Woolworths,
-New World and PAK'nSAVE have no "spirits" entries below; only Liquorland
-(a dedicated bottle store) does. This isn't a scraping gap, it's real.
+can only sell beer, wine and cider — not spirits. That's why none of
+Woolworths, New World or PAK'nSAVE have a "spirits" entry below — this
+isn't a scraping gap, it's real (and it's why Liquorland, the one dedicated
+bottle store that used to be in this list, needed spirits coverage that
+this Firecrawl-based approach could never do properly anyway).
 
 NOTE on wine: none of the three supermarket chains has one single "wine"
 category the way they do for beer — it's split into red/white/rosé/etc.
 siblings. Red and white (the two biggest) are scraped as separate targets
 below, both tagged category "wine".
 
-NOTE on pagination: Liquorland is the only store here with a confirmed
-pagination pattern (?p=2, ?p=3, ...) — the JS-rendered supermarket chains
-didn't reveal one under inspection, so those stay single-page for now to
-avoid guessing and burning credits on a wrong param. Liquorland pagination
-is capped at MAX_PAGES_LIQUORLAND below, since — unlike the free
-direct-request scrapers — every extra page here is a real Firecrawl credit.
+NOTE on pagination: none of these three JS-rendered supermarket chains
+revealed a confirmed pagination pattern under inspection, so they stay
+single-page for now to avoid guessing and burning credits on a wrong
+param.
 
 If a target returns 0 products, share the printed debug output with
 Claude and the URL can be corrected.
@@ -41,7 +51,6 @@ import os
 import time
 import csv
 import requests
-from urllib.parse import urlsplit, urlunsplit, parse_qs, urlencode
 
 API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 if not API_KEY:
@@ -52,10 +61,6 @@ if not API_KEY:
 
 # Each target: (store_name, url, category)
 TARGETS = [
-    ("Liquorland", "https://www.liquorland.co.nz/beer", "beer"),
-    ("Liquorland", "https://www.liquorland.co.nz/rtd", "rtd"),
-    ("Liquorland", "https://www.liquorland.co.nz/wine", "wine"),
-    ("Liquorland", "https://www.liquorland.co.nz/spirits", "spirits"),
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/beer/lager-ale-stout-beer", "beer"),
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/seltzer-alcoholic-kombucha", "rtd"),
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/red-wine", "wine"),
@@ -69,11 +74,6 @@ TARGETS = [
     ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/red-wine?pg=1", "wine"),
     ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/white-wine?pg=1", "wine"),
 ]
-
-# store_name -> pagination query param name. Only stores listed here get
-# multi-page scraping; everyone else is fetched as a single page.
-PAGINATED_STORES = {"Liquorland": "p"}
-MAX_PAGES_LIQUORLAND = 5
 
 SCHEMA = {
     "type": "object",
@@ -141,32 +141,9 @@ def scrape_with_firecrawl(url):
     return {"data": {}}
 
 
-def build_page_url(base_url, page_param, page):
-    parts = urlsplit(base_url)
-    query = parse_qs(parts.query)
-    query[page_param] = [str(page)]
-    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query, doseq=True), parts.fragment))
-
-
 def scrape_target(store_name, url, category):
-    page_param = PAGINATED_STORES.get(store_name)
-    if not page_param:
-        result = scrape_with_firecrawl(url)
-        return result.get("data", {}).get("products", []), result
-
-    all_products = []
-    last_result = None
-    for page in range(1, MAX_PAGES_LIQUORLAND + 1):
-        page_url = url if page == 1 else build_page_url(url, page_param, page)
-        last_result = scrape_with_firecrawl(page_url)
-        page_products = last_result.get("data", {}).get("products", [])
-        print(f"  Page {page}: {len(page_products)} products.")
-        if not page_products:
-            break
-        all_products.extend(page_products)
-        if page < MAX_PAGES_LIQUORLAND:
-            time.sleep(2)
-    return all_products, last_result
+    result = scrape_with_firecrawl(url)
+    return result.get("data", {}).get("products", []), result
 
 
 def main():

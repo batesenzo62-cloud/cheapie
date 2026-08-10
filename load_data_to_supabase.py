@@ -17,6 +17,7 @@ HOW TO RUN:
 import os
 import csv
 import re
+import time
 import requests
 
 from parse_pack_size import parse_pack_size
@@ -97,7 +98,7 @@ def load_independent_stores(filename):
         for row in csv.DictReader(f):
             name = row.get("product_name")
             price = parse_price(row.get("price"))
-            rows.append({
+            row_out = {
                 "product_name": name,
                 "category": row.get("category") or "beer",
                 "store_name": row.get("store"),
@@ -108,7 +109,17 @@ def load_independent_stores(filename):
                 "source_url": row.get("url"),
                 "fetched_at": row.get("fetched_at") or None,
                 **pack_size_fields(name, price),
-            })
+            }
+            # store_id ties a row to one confirmed physical branch (added
+            # 2026-07-27 for per-branch deals scraping) — most rows still
+            # won't have one, since most chains only expose one national
+            # price list. Always include the key (None when absent), since
+            # PostgREST's bulk upsert rejects a batch where rows don't all
+            # share the exact same set of keys ("All object keys must
+            # match") — this bit us for real once already.
+            store_id = (row.get("store_id") or "").strip()
+            row_out["store_id"] = store_id or None
+            rows.append(row_out)
     return rows
 
 
@@ -131,6 +142,7 @@ def load_chain_stores(filename):
                 "is_online": False,
                 "source_url": None,
                 "fetched_at": row.get("fetched_at") or None,
+                "store_id": None,
                 **pack_size_fields(name, price),
             })
     return rows
@@ -157,16 +169,37 @@ def main():
         deduped[(row["store_name"], row["product_name"])] = row
     all_rows = list(deduped.values())
 
-    print(f"Upserting {len(all_rows)} rows to Supabase (update if it exists, insert if new)...")
-    response = requests.post(TABLE_ENDPOINT, headers=HEADERS, json=all_rows, timeout=30)
+    # A single request for the whole batch works fine up to a few tens of
+    # thousands of rows (confirmed — 11K and 21K both went through as one
+    # request earlier), but ~198K rows timed out entirely, even at a raised
+    # 120s timeout: too much for one request/transaction. Chunking keeps
+    # each request's payload and Postgres-side work bounded regardless of
+    # how large the source data grows.
+    CHUNK_SIZE = 3000
+    print(f"Upserting {len(all_rows)} rows to Supabase in chunks of {CHUNK_SIZE} (update if it exists, insert if new)...")
+    for i in range(0, len(all_rows), CHUNK_SIZE):
+        chunk = all_rows[i:i + CHUNK_SIZE]
+        chunk_num = i // CHUNK_SIZE + 1
+        total_chunks = (len(all_rows) + CHUNK_SIZE - 1) // CHUNK_SIZE
+        # A transient 5xx (seen for real: a one-off Cloudflare 520) shouldn't
+        # abort ~65 otherwise-successful chunks — retry a couple of times
+        # with a short backoff before giving up on this chunk for good.
+        response = None
+        for attempt in (1, 2, 3):
+            response = requests.post(TABLE_ENDPOINT, headers=HEADERS, json=chunk, timeout=120)
+            if response.status_code in (200, 201):
+                break
+            if response.status_code >= 500 and attempt < 3:
+                print(f"  chunk {chunk_num}/{total_chunks} attempt {attempt} got {response.status_code}, retrying...")
+                time.sleep(5)
+        if response.status_code not in (200, 201):
+            # Must actually fail the process (not just print) — otherwise this
+            # error is invisible to anything checking the exit code, including
+            # the GitHub Actions run that's meant to surface it.
+            raise SystemExit(f"Upsert failed on chunk {chunk_num}/{total_chunks} (status {response.status_code}): {response.text}")
+        print(f"  chunk {chunk_num}/{total_chunks} done ({len(chunk)} rows)")
 
-    if response.status_code in (200, 201):
-        print(f"Done. Upserted {len(all_rows)} products to Supabase.")
-    else:
-        # Must actually fail the process (not just print) — otherwise this
-        # error is invisible to anything checking the exit code, including
-        # the GitHub Actions run that's meant to surface it.
-        raise SystemExit(f"Upsert failed (status {response.status_code}): {response.text}")
+    print(f"Done. Upserted {len(all_rows)} products to Supabase.")
 
 
 if __name__ == "__main__":
