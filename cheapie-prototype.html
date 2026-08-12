@@ -2320,8 +2320,19 @@ async function showStoreSheet(store){
   // in the middle of that range rather than right on either edge.
   currentStoreFuse = new Fuse(rows, { keys: ['product_name'], threshold: 0.25, ignoreLocation: true });
 
+  // 2026-08-13: Liquorland genuinely is a special case here, not just an
+  // unverified assumption — scrape_liquorland_full.py's own comments
+  // document testing this directly: prices came back identical regardless
+  // of which real store was selected (checked against several, including
+  // a deliberately-niche long-tail SKU page). The generic "not confirmed"
+  // wording is actually less accurate for this one chain than saying so
+  // plainly — everyone else here (New World, Woolworths, ...) has no such
+  // confirmation, so keeps the honest "can't confirm" version.
+  const chain = chainNameFor(store.name);
   const disclaimer = (!confirmedBranch && rows.length)
-    ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chainNameFor(store.name)} catalogue prices — not confirmed for this specific store.</div>`
+    ? (chain === 'Liquorland'
+        ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">Liquorland prices are the same at every store nationwide (confirmed directly) — this isn't a generic fallback, just not tied to this specific branch in the data.</div>`
+        : `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chain} catalogue prices — not confirmed for this specific store.</div>`)
     : '';
 
   body.innerHTML = `
