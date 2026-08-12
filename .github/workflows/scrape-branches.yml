@@ -1,44 +1,103 @@
 name: Scrape per-branch chains and refresh prices
 
+# 2026-08-13 fix: this used to be one sequential job — scrape all 5 chains
+# into a shared CSV, then load once at the end. Confirmed directly: Bottle-O's
+# freshest data was stuck at 2026-08-03 (9+ days stale) even though this
+# workflow runs daily, because Super Liquor (147 branches, each needing up
+# to 250 pages to reach real catalogue depth — see MAX_PAGES_PER_TARGET in
+# scrape_independent_stores.py) can legitimately take several hours, and a
+# single slow/stuck step blocks every chain listed after it in the same
+# job from ever running at all. Split into independent parallel jobs, each
+# scraping and loading just its own chain, so a slow Super Liquor no
+# longer blocks Liquorland/Thirsty/Black Bull/Bottle-O from refreshing on
+# schedule. load_data_to_supabase.py already handles a missing CSV
+# gracefully (skips it, loads whatever's actually present), so each job
+# only ever has its own chain's fresh file in a clean checkout — no
+# cross-job file sharing needed.
 on:
   schedule:
-    # Daily rather than the independent-store workflow's every-4-hours —
-    # this covers ~250 branches total across Liquorland, Thirsty Liquor,
-    # Super Liquor, Black Bull, and Bottle-O, each requiring its own
-    # request(s). Running that volume every 4 hours would be a lot more
-    # load on these retailers' sites than is polite for data that mostly
-    # doesn't change that fast anyway.
     - cron: '0 3 * * *'
   workflow_dispatch: {}
 
 jobs:
-  scrape-branches-and-load:
+  liquorland:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
+      - run: pip install -r requirements.txt
       - name: Scrape Liquorland (full catalogue, no per-branch pricing — see scrape_liquorland_full.py)
         run: python3 scrape_liquorland_full.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
 
+  thirsty-liquor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
       - name: Scrape Thirsty Liquor branches
         run: python3 scrape_thirsty_branches.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
 
+  super-liquor:
+    runs-on: ubuntu-latest
+    # This one can genuinely run for hours (see the note above) — give it
+    # real headroom instead of hitting GitHub's 6-hour default and getting
+    # killed silently mid-run.
+    timeout-minutes: 480
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
       - name: Scrape Super Liquor branches
         run: python3 scrape_superliquor_branches.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
 
+  black-bull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
       - name: Scrape Black Bull branches
         run: python3 scrape_blackbull_branches.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
 
+  bottle-o:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
       - name: Scrape Bottle-O branches
         run: python3 scrape_bottleo_products.py
-
       - name: Load into Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
