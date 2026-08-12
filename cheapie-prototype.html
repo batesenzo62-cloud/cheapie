@@ -661,15 +661,49 @@ async function loadPopularSearches(){
 // near-you-scoped, price-sorted handful of results anyway (see its
 // MIN_NEARBY_RESULTS/DISPLAY_CAP), so there's no benefit to the other
 // ~46,000 rows even being in memory, only cost.
+// 2026-08-14 fix: a real free-text search here used to go straight to
+// PostgREST's plain `ilike` filter — an exact substring match, no typo or
+// plural tolerance at all. Confirmed directly this is exactly why
+// searching "cruisers" found nothing (every matching product is actually
+// named "Cruiser", singular — "*cruisers*" isn't a substring of that)
+// while "cruiser" worked fine. The Nearby map's search bar already solved
+// this the same way once before (see search_products_fuzzy /
+// enable_fuzzy_product_search.sql) — reused here rather than building a
+// second fuzzy-matching approach. A pure category browse (no free-text
+// term, or the term IS the category name — e.g. the Beer/Wine/Spirits/RTD
+// chips) has no text to fuzzy-match against, so that path is untouched:
+// still a plain, fast products-table fetch.
 async function fetchLiveProducts(category, query){
+  const hasFreeTextQuery = query && query.trim().length && query.toLowerCase() !== category;
+
+  if(hasFreeTextQuery){
+    await ensureStoresLoaded(); // resolves each match to a real store's address/coordinates, same as the Nearby map search
+    let rows = [];
+    try{
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_products_fuzzy`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ search_term: query.trim() })
+      });
+      if(resp.ok){
+        rows = await resp.json();
+      } else {
+        console.error('[fetchLiveProducts] fuzzy RPC failed:', resp.status, await resp.text());
+      }
+    } catch(err){
+      console.error(err);
+      throw err; // preserve doSearch's existing "couldn't reach the database" handling
+    }
+    if(category) rows = rows.filter(r => r.category === category);
+    return rows.map(r => mapRegionSearchRow(r, r.store_id)).sort(byValue);
+  }
+
   let url = `${SUPABASE_URL}/rest/v1/products?select=*,stores(id,name,address,latitude,longitude)&order=price_per_litre.asc.nullslast,price.asc`;
   if(category){
     url += `&category=eq.${category}`;
   }
-  if(query && query.trim().length && query.toLowerCase() !== category){
-    url += `&product_name=ilike.*${encodeURIComponent(query.trim())}*`;
-  }
-  return fetchAllRows(url, 6000);
+  const rows = await fetchAllRows(url, 6000);
+  return rows.map(mapDbRow);
 }
 
 function mapDbRow(row){
@@ -948,13 +982,16 @@ async function doSearch(term, forcedCategory){
   await requestUserLocation(); // best effort — doesn't block the search if denied/unavailable
 
   try{
+    // Already mapped to the same shape mapDbRow produces regardless of
+    // which path (fuzzy RPC vs plain category fetch) fetchLiveProducts
+    // took internally — no further mapping needed here.
     const rows = await fetchLiveProducts(forcedCategory || null, query);
     if(rows && rows.length){
-      const nearCount = userLocation ? rows.filter(r => r.stores).length : 0;
+      const nearCount = userLocation ? rows.filter(r => r.km !== null).length : 0;
       document.getElementById('resultsSubtitle').textContent = nearCount
         ? `${rows.length} real products found — showing the best value near you`
         : `${rows.length} real products found in your database, sorted by best value`;
-      currentSearchResults = rows.map(mapDbRow);
+      currentSearchResults = rows;
       populatePackSizeChips(currentSearchResults);
       renderResults(currentSearchResults);
       return;
@@ -1012,6 +1049,41 @@ function openDetail(r){
   show('view-detail');
 }
 
+// Loads storesCache/storesById once, tagging every store with its region
+// and nearest real town along the way (see REGION_CENTERS/REGION_TOWNS).
+// Factored out of initNearbyMap (2026-08-14) so the main Search tab can
+// resolve a matched product row to a real store's address/coordinates too
+// — needed once product search there started calling the same fuzzy RPC
+// the Nearby map already used, whose rows don't come with a joined store
+// record the way a plain products-table fetch does. ensureStoresPromise
+// guards against both tabs triggering the fetch at once.
+let ensureStoresPromise = null;
+async function ensureStoresLoaded(){
+  if(storesCache) return;
+  if(ensureStoresPromise) return ensureStoresPromise;
+  ensureStoresPromise = (async () => {
+    try{
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/stores?select=*`, { headers: { apikey: SUPABASE_ANON_KEY } });
+      storesCache = resp.ok ? await resp.json() : [];
+    } catch(err){
+      console.error(err);
+      storesCache = [];
+    }
+    storesCache.forEach(store => {
+      // Overwrites whatever (often missing or inconsistently-spelled — see
+      // the note by REGION_CENTERS) region string came from the database,
+      // with one computed consistently for every store that has coordinates.
+      store.region = nearestRegion(store.latitude, store.longitude);
+      // Nearest real, geocoded town within that region (see REGION_TOWNS) —
+      // consolidates every branch actually near e.g. Napier under "Napier"
+      // regardless of what a particular chain happened to name that branch.
+      store.town = nearestTownInRegion(store);
+      storesById[store.id] = store;
+    });
+  })();
+  await ensureStoresPromise;
+}
+
 function iconForStore(name, tierClass){
   const n = name.toLowerCase();
   const isSupermarket = n.includes('woolworths') || n.includes('new world') || n.includes("pak'nsave") || n.includes('countdown');
@@ -1059,24 +1131,10 @@ async function initNearbyMap(){
     }).addTo(nearbyMap);
   }
 
-  if(!storesCache){
-    status.textContent = 'Loading stores…';
-    try{
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/stores?select=*`, { headers: { apikey: SUPABASE_ANON_KEY } });
-      storesCache = resp.ok ? await resp.json() : [];
-    } catch(err){
-      console.error(err);
-      storesCache = [];
-    }
+  const firstLoad = !storesCache;
+  await ensureStoresLoaded();
+  if(firstLoad){
     storesCache.forEach(store => {
-      // Overwrites whatever (often missing or inconsistently-spelled — see
-      // the note by REGION_CENTERS) region string came from the database,
-      // with one computed consistently for every store that has coordinates.
-      store.region = nearestRegion(store.latitude, store.longitude);
-      // Nearest real, geocoded town within that region (see REGION_TOWNS) —
-      // consolidates every branch actually near e.g. Napier under "Napier"
-      // regardless of what a particular chain happened to name that branch.
-      store.town = nearestTownInRegion(store);
       // Added to the cluster group, not the map directly — see
       // storeMarkerCluster above for why. Individual markers still support
       // setIcon() exactly as before (used throughout for the tier-color
@@ -1087,7 +1145,6 @@ async function initNearbyMap(){
       marker.on('click', () => showStoreSheet(store));
       storeMarkerCluster.addLayer(marker);
       storeMarkers[store.id] = marker;
-      storesById[store.id] = store;
     });
   }
 
@@ -2025,6 +2082,64 @@ function enableSwipeToDismiss(handle, sheet){
   window.addEventListener('mouseup', end);
 }
 enableSwipeToDismiss(document.querySelector('.store-sheet-handle'), document.getElementById('storeSheet'));
+
+// 2026-08-14: swipe-to-dismiss only worked on the small handle bar —
+// requested to make the whole sheet body swipeable too, the way a native
+// app's bottom sheet behaves (drag down anywhere to dismiss). The handle
+// stays "any drag closes it" (its only purpose), but the body ALSO holds
+// scrollable content (the product list, "See all results" list) — a body-
+// wide version of that same any-drag-closes behavior would make it
+// impossible to scroll down through a long list without the sheet
+// closing underneath you. So this only takes over the gesture when the
+// list is already scrolled to the very top (bodyEl.scrollTop <= 0) —
+// exactly the same condition a real iOS/Android sheet uses to decide
+// "pull to dismiss" vs "just scroll the content" — and only actually
+// closes once dragged past a real distance (DISMISS_THRESHOLD), not on
+// every touch, so an ordinary scroll-bounce at the top doesn't
+// accidentally dismiss it. Touch-only (not mouse) so it can't fight with
+// enableDragScroll's existing mouse-based click-and-drag-scroll bound to
+// this same element for desktop testing.
+function enableBodySwipeToDismiss(bodyEl, sheet){
+  const DISMISS_THRESHOLD = 80;
+  let startY = 0;
+  let dragging = false;
+
+  bodyEl.addEventListener('touchstart', (e) => {
+    if(bodyEl.scrollTop > 0) return; // not at the top — let this be a normal scroll gesture
+    dragging = true;
+    startY = e.touches[0].clientY;
+    sheet.style.transition = 'none';
+  }, { passive: true });
+
+  bodyEl.addEventListener('touchmove', (e) => {
+    if(!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy <= 0){
+      // dragging back up (or no movement yet) — not a dismiss gesture,
+      // hand this touch back to normal scrolling rather than holding on
+      // to it for the rest of the gesture.
+      dragging = false;
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+      return;
+    }
+    e.preventDefault(); // stop the list from also scrolling/bouncing while the sheet is visibly being dragged down
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, { passive: false });
+
+  bodyEl.addEventListener('touchend', (e) => {
+    if(!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    const dy = Math.max(0, e.changedTouches[0].clientY - startY);
+    if(dy > DISMISS_THRESHOLD){
+      closeStoreSheet();
+    } else {
+      sheet.style.transform = ''; // snap back open
+    }
+  });
+}
+enableBodySwipeToDismiss(document.getElementById('storeSheetBody'), document.getElementById('storeSheet'));
 
 function enableDragScroll(el){
   // Scrollbars are hidden site-wide for the phone-mockup look, and this
