@@ -14,20 +14,20 @@ per-litre price for this one", not as "assume 0".
 
 import re
 
-# 2026-08-12: found live in the database — "Waikato Draught Bottles 12 x
-# 745mL" at $5.99 (a real ~$5.99 single-bottle price with a "12 x" pack
-# count wrongly attached, likely from a case/crate option elsewhere on the
-# source page bleeding into this listing), price_per_litre $0.67. Checked
-# broadly: every one of the ~30 lowest price-per-litre values in the whole
-# scraped dataset shares the same signature — a suspiciously round, small
-# total price on a multi-pack. No real NZ alcoholic beverage, even on the
-# heaviest bulk special, sells for under $1.50 per individual can/bottle —
-# well below the cheapest genuine cask-wine or bulk-beer pricing seen
-# anywhere in real data, so this only catches actual scraping corruption,
-# not real bargains. Used by both load_data_to_supabase.py (as rows are
-# scraped) and backfill_pack_sizes.py (for what's already loaded) so a bad
-# row never gets to *be* the "best value" in the first place.
-MIN_PLAUSIBLE_PRICE_PER_UNIT = 1.50
+# 2026-08-14: this file used to also export MIN_PLAUSIBLE_PRICE_PER_UNIT
+# and load_data_to_supabase.py/backfill_pack_sizes.py used it to null out
+# price_per_litre below $1.50/unit, on the theory that no real listing
+# goes that low. Reported directly, and checked live against the actual
+# retailer site: a flagged row ("Steinlager Classic Bottles 24 x 330mL" at
+# $15.99, Bottle-O Kingsland) turned out to be a genuine live duplicate
+# listing, not corruption — a real deal that suppression was hiding.
+# Another flagged row at a similar price ("Desperados Teq Beer 6x330b" at
+# $4.50) checked out genuinely stale/wrong (live price is $24.99, no
+# duplicate). Price alone can't tell these apart, so hard suppression here
+# was too blunt. cheapie-prototype.html now shows an honest "unusually
+# cheap" caveat on the card instead, without hiding the number or its
+# ranking, so a real find like the Steinlager one can still surface as
+# the actual cheapest option.
 
 _ML_UNIT = r"(?:ml|mL|ML|Ml)"
 _L_UNIT = r"(?:litres?|Litres?|LITRES?|ltrs?|Ltrs?|LTRS?|l|L)\b"

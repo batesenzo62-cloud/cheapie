@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-from parse_pack_size import parse_pack_size, MIN_PLAUSIBLE_PRICE_PER_UNIT
+from parse_pack_size import parse_pack_size
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -53,8 +53,6 @@ def fetch_all_products():
 
 def price_per_litre(price, unit_count, unit_volume_ml):
     if price is None or not unit_volume_ml:
-        return None
-    if (price / unit_count) < MIN_PLAUSIBLE_PRICE_PER_UNIT:
         return None
     litres = (unit_count * unit_volume_ml) / 1000
     return round(price / litres, 4) if litres > 0 else None

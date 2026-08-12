@@ -20,7 +20,7 @@ import re
 import time
 import requests
 
-from parse_pack_size import parse_pack_size, MIN_PLAUSIBLE_PRICE_PER_UNIT
+from parse_pack_size import parse_pack_size
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -76,9 +76,22 @@ def pack_size_fields(product_name, price, category=None):
     # (see parse_pack_size.py) — price_per_litre stays None in that case
     # too, rather than guessing a size. unit_count is still recorded even
     # without a volume, since "12pk, size unknown" is still real information.
+    #
+    # 2026-08-14 walk-back: this used to null out price_per_litre entirely
+    # below MIN_PLAUSIBLE_PRICE_PER_UNIT, on the theory that no real listing
+    # goes that low. Reported directly, and checked live against the actual
+    # retailer site: "Steinlager Classic Bottles 24 x 330mL" really is
+    # $15.99 at Bottle-O Kingsland right now (a genuine duplicate listing
+    # next to a $55.99 one) — a real deal this was hiding. But the exact
+    # same check on a different flagged row ("Desperados Teq Beer 6x330b"
+    # at $4.50) found it's genuinely stale/wrong — the live price is
+    # $24.99, no duplicate. Price alone can't tell these apart; suppressing
+    # the ranking outright was too blunt and cost a real find. The app now
+    # shows a caveat instead (see MIN_PLAUSIBLE_PRICE_PER_UNIT's use in
+    # cheapie-prototype.html) rather than hiding the number here.
     unit_count, unit_volume_ml = parse_pack_size(product_name, category)
     price_per_litre = None
-    if price is not None and unit_volume_ml and (price / unit_count) >= MIN_PLAUSIBLE_PRICE_PER_UNIT:
+    if price is not None and unit_volume_ml:
         litres = (unit_count * unit_volume_ml) / 1000
         if litres > 0:
             price_per_litre = round(price / litres, 4)

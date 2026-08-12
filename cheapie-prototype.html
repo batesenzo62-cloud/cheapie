@@ -850,10 +850,27 @@ function showsValueLine(r){
   return !isNonAlcoholic(r.productName || r.store);
 }
 
+// 2026-08-14: no real NZ alcoholic beverage sells for under $1.50 per
+// individual can/bottle even on the heaviest bulk special — this used to
+// be a hard suppression (null out price_per_litre entirely below this),
+// but checking two real flagged rows live against their actual retailer
+// sites found it cuts both ways: one turned out to be a genuine duplicate
+// listing (a real deal), the other genuinely stale/wrong. Price alone
+// can't tell those apart, so this is now just an honest caveat — the
+// number and its ranking stay real either way, this only adds a flag
+// worth a second look before trusting it blindly.
+const MIN_PLAUSIBLE_PRICE_PER_UNIT = 1.50;
+function isUnusuallyCheap(r){
+  return r.unitCount > 0 && (r.price / r.unitCount) < MIN_PLAUSIBLE_PRICE_PER_UNIT;
+}
+
 function valueLine(r){
   if(!showsValueLine(r)) return '';
+  const caveat = isUnusuallyCheap(r)
+    ? ' <span style="font-style:italic;" title="No real listing this cheap is common — double-check the price in-store or on the retailer\'s own page before relying on it.">· unusually cheap, worth confirming</span>'
+    : '';
   if(r.pricePerLitre === null || r.pricePerLitre === undefined){
-    return '<span style="font-style:italic;">Value comparison unavailable</span>';
+    return '<span style="font-style:italic;">Value comparison unavailable</span>' + caveat;
   }
   // Wine/spirits aren't shopped in per-litre terms — per-100mL reads more
   // naturally for bottle sizes in that range. Beer/RTD keep the
@@ -861,13 +878,13 @@ function valueLine(r){
   // pack deals — "per drink" rather than "per can", since plenty of these
   // multi-packs are bottles, not cans.
   if(r.category === 'spirits' || r.category === 'wine'){
-    return `$${(r.pricePerLitre / 10).toFixed(2)}/100mL`;
+    return `$${(r.pricePerLitre / 10).toFixed(2)}/100mL` + caveat;
   }
   if(r.unitCount > 1){
     const perUnit = r.price / r.unitCount;
-    return `$${perUnit.toFixed(2)}/drink · $${r.pricePerLitre.toFixed(2)}/L`;
+    return `$${perUnit.toFixed(2)}/drink · $${r.pricePerLitre.toFixed(2)}/L` + caveat;
   }
-  return `$${r.pricePerLitre.toFixed(2)}/L`;
+  return `$${r.pricePerLitre.toFixed(2)}/L` + caveat;
 }
 
 // These four chains are actually only scraped monthly per
