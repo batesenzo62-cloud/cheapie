@@ -2,7 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CHEAPIE — clickable prototype</title>
+<!-- Beer-emoji icon on the app's own gold, so "Add to Home Screen" gets a
+     real icon instead of Safari's default (a plain letter pulled from the
+     page title, since no icon was ever declared before). Inlined as a
+     base64 SVG data URI rather than a separate image file, keeping this a
+     single self-contained HTML file like the rest of the prototype. -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIj4KICA8cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iI0UyOUIyNiIvPgogIDx0ZXh0IHg9IjkwIiB5PSIxMDgiIGZvbnQtc2l6ZT0iMTA4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj7wn426PC90ZXh0Pgo8L3N2Zz4K">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIj4KICA8cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iI0UyOUIyNiIvPgogIDx0ZXh0IHg9IjkwIiB5PSIxMDgiIGZvbnQtc2l6ZT0iMTA4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj7wn426PC90ZXh0Pgo8L3N2Zz4K">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -87,6 +97,35 @@
     transition:opacity 200ms ease;
   }
   .view.active{ display:flex; opacity:1; }
+
+  /* 2026-08-13: this was built purely as a desktop-viewed "phone mockup"
+     (a fixed 380x800px frame centered on a wide page) with no viewport
+     meta tag at all — confirmed directly this is why it showed up as a
+     tiny phone graphic stuck in the corner of a real iPhone screen: with
+     no viewport tag, mobile Safari assumes a ~980px desktop-style canvas
+     and shrinks the whole page down to fit, so the already-small mockup
+     shrank again on top of that. On an actual small screen, the fake
+     phone bezel/shadow/rounded corners and the fake "9:41" status bar are
+     pointless — the real device already has its own real status bar and
+     doesn't need a picture of one — so this drops the frame entirely and
+     lets .screen become the whole viewport, real app style. Left
+     completely unchanged above ~600px so it still renders as the original
+     desktop mockup when viewed on a laptop/wide window. */
+  @media (max-width:600px){
+    body{ padding:0; min-height:100dvh; align-items:stretch; }
+    .caption{ display:none; }
+    .phone{
+      width:100vw; height:100dvh; height:100svh;
+      border-radius:0; padding:0; box-shadow:none;
+    }
+    .screen{ border-radius:0; }
+    .statusbar{ display:none; }
+    .view{ top:0; padding-top:env(safe-area-inset-top); }
+    /* flex-basis grows to make room, rather than padding eating into the
+       existing fixed 60px (box-sizing:border-box would otherwise squash
+       the nav items to fit padding inside that same 60px). */
+    .bottomnav{ flex-basis:calc(60px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); }
+  }
 
   .awning{
     height:20px; width:100%; flex:0 0 auto;
@@ -1298,6 +1337,11 @@ const REGION_TOWNS = {
     "Methven": [-43.6324, 171.6473],
     "Amberley": [-43.1513, 172.733],
     "Akaroa": [-43.8043, 172.9678],
+    "Kaikoura": [-42.4006, 173.6811],
+    "Hanmer Springs": [-42.5218, 172.8303],
+    "Twizel": [-44.2575, 170.0994],
+    "Fairlie": [-44.0976, 170.8289],
+    "Omarama": [-44.4879, 169.9656],
   },
   "Otago": {
     "Dunedin": [-45.8741, 170.5036],
@@ -1331,11 +1375,29 @@ function nearestTownInRegion(store){
   return best;
 }
 
+// 2026-08-12 fix: originally classified region by nearest of only 16
+// single points (REGION_CENTERS, one per region) — confirmed a real
+// misclassification from this directly: a Liquorland store actually in
+// Taupo (real Waikato District town) was landing in the "Hawke's Bay"
+// region tab, simply because Napier's one coarse center point happened to
+// sit geographically closer to it than any of the other 15 regions'
+// single points, regardless of which region Taupo genuinely belongs to.
+// REGION_TOWNS (184 real, individually geocoded towns, each already
+// correctly tagged with its true administrative region — built for the
+// suburb picker) gives far denser, more realistic coverage than 16 coarse
+// points ever could, so region classification now reuses that same data:
+// nearest real town wins, and the store inherits THAT town's region,
+// rather than nearest-of-16-broad-centers. REGION_CENTERS is kept only
+// for flyToNearbyScope's "zoom to this whole region" map navigation,
+// where one representative point per region is genuinely all that's
+// needed.
 function nearestRegion(lat, lng){
   let best = null, bestDist = Infinity;
-  for(const [name, [rLat, rLng]] of Object.entries(REGION_CENTERS)){
-    const d = haversineKm(lat, lng, rLat, rLng);
-    if(d < bestDist){ bestDist = d; best = name; }
+  for(const [region, towns] of Object.entries(REGION_TOWNS)){
+    for(const [tLat, tLng] of Object.values(towns)){
+      const d = haversineKm(lat, lng, tLat, tLng);
+      if(d < bestDist){ bestDist = d; best = region; }
+    }
   }
   return best;
 }
@@ -1455,18 +1517,17 @@ function clearNearbyMapSearch(){
 // picked) suburb/locality filter — the single source of truth both the
 // map-coloring search and the plain region-browse status line below use,
 // so the two can never disagree about which stores are "in scope".
-// Which suburbs/localities are currently toggled on within the selected
-// region — a Set rather than a single value so more than one can be picked
-// at once (e.g. Napier AND Taradale together). Empty means "no suburb
-// filter, whole region" — the same as the old single-select's 'all'.
-let nearbySelectedSuburbs = new Set();
+// Which single suburb/locality is currently picked within the selected
+// region (2026-08-12: reverted from multi-select back to one-at-a-time by
+// request). null means "no suburb filter, whole region".
+let nearbySelectedSuburb = null;
 
 function isStoreInScope(store){
   if(!store) return false;
   const region = document.getElementById('nearbyRegionSelect').value;
   if(region === 'all') return true;
   if(store.region !== region) return false;
-  if(nearbySelectedSuburbs.size && !nearbySelectedSuburbs.has(store.town)) return false;
+  if(nearbySelectedSuburb && store.town !== nearbySelectedSuburb) return false;
   return true;
 }
 
@@ -1487,7 +1548,7 @@ function resetNearbyMapPinColors(){
   status.textContent = '';
   if(region === 'all') return;
   const count = Object.values(storesById).filter(isStoreInScope).length;
-  const place = nearbySelectedSuburbs.size ? [...nearbySelectedSuburbs].join(' + ') : region;
+  const place = nearbySelectedSuburb || region;
   status.textContent = `Showing ${count} stores in ${place} — search a product above to find the best value.`;
 }
 
@@ -1499,28 +1560,22 @@ function resetNearbyMapPinColors(){
 function populateSuburbChips(region){
   const container = document.getElementById('nearbySuburbChips');
   container.innerHTML = '';
-  nearbySelectedSuburbs = new Set(); // any suburbs picked for the PREVIOUS region no longer apply
+  nearbySelectedSuburb = null; // any suburb picked for the PREVIOUS region no longer applies
   if(region === 'all'){
     container.style.display = 'none';
     return;
   }
 
-  // "All of {region}" — the same option the original single-select
-  // dropdown had, restored as its own chip (not just "zero chips selected
-  // = everything") so it's an actual visible, clickable option rather than
-  // an implicit state, and doubles as a one-tap way to clear every
-  // individually-selected suburb at once.
+  // "All of {region}" — same option the original dropdown had, as its own
+  // chip so it's a real, visible, clickable choice rather than an implicit
+  // state, and mutually exclusive with picking one specific town below
+  // (selecting either one always deselects the other, same as a radio
+  // group).
   const allChip = document.createElement('div');
   allChip.className = 'chip active';
   allChip.textContent = `All of ${region}`;
   allChip.style.cssText = 'padding:6px 12px; font-size:11px;';
-  allChip.onclick = () => {
-    nearbySelectedSuburbs.clear();
-    container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    allChip.classList.add('active');
-    flyToNearbyScope();
-    rerunNearbyAfterScopeChange();
-  };
+  allChip.onclick = () => selectNearbySuburb(null, allChip);
   container.appendChild(allChip);
 
   const localities = new Set();
@@ -1532,23 +1587,16 @@ function populateSuburbChips(region){
     chip.className = 'chip';
     chip.textContent = loc;
     chip.style.cssText = 'padding:6px 12px; font-size:11px;'; // smaller than the category chips — there can be many more of these
-    chip.onclick = () => toggleNearbySuburb(loc, chip, allChip);
+    chip.onclick = () => selectNearbySuburb(loc, chip);
     container.appendChild(chip);
   });
   container.style.display = 'flex';
 }
 
-function toggleNearbySuburb(suburb, chipEl, allChip){
-  if(nearbySelectedSuburbs.has(suburb)){
-    nearbySelectedSuburbs.delete(suburb);
-    chipEl.classList.remove('active');
-  } else {
-    nearbySelectedSuburbs.add(suburb);
-    chipEl.classList.add('active');
-  }
-  // "All of {region}" only makes sense as its own selected state when
-  // nothing more specific is picked — light up whichever is actually true.
-  allChip.classList.toggle('active', nearbySelectedSuburbs.size === 0);
+function selectNearbySuburb(suburb, chipEl){
+  nearbySelectedSuburb = suburb;
+  document.querySelectorAll('#nearbySuburbChips .chip').forEach(c => c.classList.remove('active'));
+  chipEl.classList.add('active');
   flyToNearbyScope();
   rerunNearbyAfterScopeChange();
 }
@@ -1563,18 +1611,18 @@ function rerunNearbyAfterScopeChange(){
 }
 
 // Centers/zooms the map on whatever's currently selected: the average
-// position of every store across all selected suburbs (closer zoom, since
-// even several suburbs together are still small relative to a whole
-// region), or the region's own fixed center when no suburb is picked.
+// position of the picked suburb's real stores (closer zoom, since a
+// suburb-sized area is always small relative to a whole region), or the
+// region's own fixed center when no suburb is picked.
 function flyToNearbyScope(){
   const region = document.getElementById('nearbyRegionSelect').value;
   if(region === 'all') return;
-  if(nearbySelectedSuburbs.size){
-    const matches = Object.values(storesById).filter(s => s.region === region && nearbySelectedSuburbs.has(s.town));
+  if(nearbySelectedSuburb){
+    const matches = Object.values(storesById).filter(s => s.region === region && s.town === nearbySelectedSuburb);
     if(matches.length){
       const avgLat = matches.reduce((sum, s) => sum + s.latitude, 0) / matches.length;
       const avgLng = matches.reduce((sum, s) => sum + s.longitude, 0) / matches.length;
-      nearbyMap.flyTo([avgLat, avgLng], nearbySelectedSuburbs.size === 1 ? 13 : 12);
+      nearbyMap.flyTo([avgLat, avgLng], 13);
     }
   } else if(REGION_CENTERS[region]){
     nearbyMap.flyTo(REGION_CENTERS[region], REGION_ZOOM[region] || 9);
@@ -1663,15 +1711,13 @@ async function runNearbyMapSearch(term){
   });
 
   // Region + suburb search (2026-08-07/10): scopes the same in-stock/
-  // not-found search above to one NZ region and, optionally, one or more
-  // real towns within it (nearbySelectedSuburbs — e.g. Napier AND Taradale
-  // together) — see isStoreInScope/REGION_CENTERS/REGION_TOWNS for why
-  // this is computed from coordinates against verified geocoded places
-  // rather than the DB's own region column or raw store-name text.
+  // not-found search above to one NZ region and, optionally, one real town
+  // within it (nearbySelectedSuburb) — see isStoreInScope/REGION_CENTERS/
+  // REGION_TOWNS for why this is computed from coordinates against
+  // verified geocoded places rather than the DB's own region column or raw
+  // store-name text.
   const region = document.getElementById('nearbyRegionSelect').value;
-  const place = (region !== 'all' && nearbySelectedSuburbs.size)
-    ? [...nearbySelectedSuburbs].join(' + ')
-    : region;
+  const place = (region !== 'all' && nearbySelectedSuburb) ? nearbySelectedSuburb : region;
 
   const coloredIds = [...matchedSet].filter(id => isStoreInScope(storesById[id]));
   const totalCount = region === 'all'
