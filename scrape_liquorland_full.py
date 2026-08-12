@@ -149,6 +149,16 @@ def scrape_category(site_slug, url, app_category):
                 "store": "Liquorland",
                 "category": app_category,
                 "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
+                # 2026-08-13: reported directly — no product ever had a
+                # "View product page" link for this chain (no url field at
+                # all). The category JSON here doesn't expose a per-product
+                # slug/URL (checked what's actually in item/stylecolour/
+                # variant), and this site was unreachable to verify a real
+                # per-product URL pattern from the live page HTML instead.
+                # Falls back to the category page itself, which is real and
+                # guaranteed correct, rather than link to nothing at all or
+                # guess a per-product URL that might be wrong.
+                "url": url,
                 "_barcode": variant.get("barcode"),
             })
         fetched_so_far = page * 24
@@ -162,7 +172,6 @@ def scrape_category(site_slug, url, app_category):
 
 def main():
     init_session()
-    fieldnames = ["product_name", "price", "was_price", "in_stock", "store", "category", "fetched_at"]
 
     seen_barcodes = set()
     seen_names = set()
@@ -199,7 +208,7 @@ def main():
     # "file doesn't exist yet" the same as "file exists but is empty" —
     # this run's own fresh rows become the whole result either way.
     chain_path = "chain_store_prices.csv"
-    default_fieldnames = ["product_name", "price", "was_price", "in_stock", "store", "category", "fetched_at"]
+    default_fieldnames = ["product_name", "price", "was_price", "in_stock", "store", "category", "fetched_at", "url"]
     if os.path.exists(chain_path):
         with open(chain_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)

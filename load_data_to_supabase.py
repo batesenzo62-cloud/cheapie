@@ -155,7 +155,13 @@ def load_chain_stores(filename):
                 "was_price": parse_price(row.get("was_price")),
                 "in_stock": parse_bool(row.get("in_stock")),
                 "is_online": False,
-                "source_url": None,
+                # 2026-08-13 fix: hardcoded None regardless of what the CSV
+                # actually had — reported directly that Liquorland products
+                # never had a "View product page" link at all. Its own
+                # scraper does write a real url column now (falls back to
+                # the category page, since it has no per-product URL
+                # available); this was silently discarding it either way.
+                "source_url": row.get("url") or None,
                 "fetched_at": row.get("fetched_at") or None,
                 "store_id": None,
                 **pack_size_fields(name, price, category),

@@ -106,6 +106,13 @@ PAGINATED_TARGETS = [
 # category at one supermarket chain, but this is real money per page).
 MAX_PAGES_PER_TARGET = 15
 
+# 2026-08-13: added "url" — reported directly that no product from any
+# chain ever had a "View product page" link. Unverified whether Firecrawl's
+# AI extraction reliably returns a real absolute URL here rather than a
+# relative path or nothing at all (Firecrawl account was at 0 credits, no
+# way to test a live run) — check the first real run's output before
+# trusting this blindly; load_data_to_supabase.py already treats a missing/
+# empty url as "no link" rather than erroring either way.
 SCHEMA = {
     "type": "object",
     "properties": {
@@ -118,6 +125,7 @@ SCHEMA = {
                     "price": {"type": "string"},
                     "was_price": {"type": ["string", "null"]},
                     "in_stock": {"type": "boolean"},
+                    "url": {"type": ["string", "null"]},
                 },
                 "required": ["product_name", "price"],
             },
@@ -128,8 +136,9 @@ SCHEMA = {
 
 PROMPT = (
     "Extract every product listed on this page, including its name, "
-    "current price, the original price if it's on special, and whether "
-    "it's currently in stock."
+    "current price, the original price if it's on special, whether "
+    "it's currently in stock, and the full absolute URL of that specific "
+    "product's own page (not the category/listing page)."
 )
 
 
