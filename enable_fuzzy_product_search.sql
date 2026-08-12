@@ -113,6 +113,22 @@ create index if not exists idx_products_product_name_trgm
 -- conflict with, so this reverts to rn = 1 and drops the row cap back down
 -- — simpler and faster, and correct by construction rather than by
 -- catching every edge case a price ranking could hit.
+-- 2026-08-12 fix: reported directly — "Steinlager Classic Bottles 24 x
+-- 330mL" at $15.99 (a genuinely cheap real deal) never showed up in
+-- either main search screen, even though the exact same store's other
+-- Steinlager listings did. Root cause: rn = 1 keeps only ONE row per
+-- store — the single best TEXT match for the search term — and Bottle-O
+-- Kingsland alone had 7 different Steinlager pack sizes. Whichever one's
+-- wording happened to score highest on word_similarity won that store's
+-- only slot; every other pack size at that same store, including
+-- whichever one was actually cheapest, was silently discarded before the
+-- results ever reached the app. That's backwards for a price-comparison
+-- tool — the whole point is surfacing the best deal, not the best-worded
+-- listing. Raised to rn <= 10 so a store's real pack-size variety (single/
+-- 6/12/15/18/24-pack/crate — genuinely up to ~7-10 for a popular product)
+-- survives, while still bounding how many rows one giant chain (100+
+-- branches) can flood in under the overall limit below, raised from 1000
+-- to 4000 to match.
 create or replace function search_products_fuzzy(search_term text, min_similarity float default 0.5)
 returns setof products
 language plpgsql
@@ -132,8 +148,8 @@ begin
       from products prod
       where lower(search_term) <% lower(prod.product_name)
     ) ranked
-    where ranked.rn = 1
-    limit 1000;
+    where ranked.rn <= 10
+    limit 4000;
 end;
 $$;
 

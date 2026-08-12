@@ -91,6 +91,12 @@ def parse_pack_size(name, category=None):
     if not name:
         return 1, None
 
+    # Typo fix: "33oml" instead of "330ml" — the middle "0" got mistyped
+    # as the visually similar letter "o" (e.g. "Steinlager Pure 24x33oml
+    # Bottles"). Restores the dropped zero before any of the real parsing
+    # rules run, rather than adding a whole extra unit variant for it.
+    name = re.sub(r"(\d{2})o(ml)\b", r"\g<1>0\g<2>", name, flags=re.IGNORECASE)
+
     # 1. "6x330ml", "12 x 330ml", "6x1 Litre", "10x250ml", "6x 330ml"
     m = re.search(
         r"(\d+)\s*[xX]\s*(\d+(?:\.\d+)?)\s*" + _VOLUME_UNIT,

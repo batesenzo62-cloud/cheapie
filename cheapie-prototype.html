@@ -426,7 +426,7 @@
       <div class="bottomnav">
         <div class="navitem active"><span>🔍</span>Search</div>
         <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
-        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+        <div class="navitem" onclick="show('view-deals')"><span>🏷️</span>Deals</div>
       </div>
     </div>
 
@@ -449,7 +449,7 @@
       <div class="bottomnav">
         <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
         <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
-        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+        <div class="navitem" onclick="show('view-deals')"><span>🏷️</span>Deals</div>
       </div>
     </div>
 
@@ -469,7 +469,7 @@
       <div class="bottomnav">
         <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
         <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
-        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+        <div class="navitem" onclick="show('view-deals')"><span>🏷️</span>Deals</div>
       </div>
     </div>
 
@@ -517,18 +517,29 @@
       <div class="bottomnav">
         <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
         <div class="navitem active"><span>📍</span>Nearby</div>
-        <div class="navitem" onclick="show('view-account')"><span>👤</span>Account</div>
+        <div class="navitem" onclick="show('view-deals')"><span>🏷️</span>Deals</div>
       </div>
     </div>
 
-    <div class="view" id="view-account">
-      <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:0 40px; text-align:center; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--muted);">
-        Accounts aren't part of v1 — this tab is a placeholder for later.
+    <div class="view" id="view-deals">
+      <div style="padding:18px 20px 10px; font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">Deals</div>
+      <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;">
+        Real active specials across every store — not which store has the lowest everyday price, but which deal is actually the best right now.
       </div>
+      <div id="dealsChips" style="display:flex; flex-wrap:wrap; gap:6px; padding:6px 20px 10px;">
+        <div class="chip active" style="padding:6px 12px; font-size:11px;" onclick="loadDeals(null, this)">All</div>
+        <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('beer', this)">🍺 Beer</div>
+        <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('wine', this)">🍷 Wine</div>
+        <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('spirits', this)">🥃 Spirits</div>
+        <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('rtd', this)">🍹 RTD</div>
+      </div>
+      <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;" id="dealsSubtitle"></div>
+      <div class="perforation" style="margin:10px 0;"></div>
+      <div id="dealsList" style="padding:0 20px 16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1;"></div>
       <div class="bottomnav">
         <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
         <div class="navitem" onclick="show('view-nearby')"><span>📍</span>Nearby</div>
-        <div class="navitem active"><span>👤</span>Account</div>
+        <div class="navitem active"><span>🏷️</span>Deals</div>
       </div>
     </div>
 
@@ -584,10 +595,15 @@ function chainNameFor(storeName){
   return knownChains.find(c => lower.startsWith(c.toLowerCase())) || storeName;
 }
 
+let dealsLoadedOnce = false;
 function show(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id === 'view-nearby') initNearbyMap();
+  if(id === 'view-deals' && !dealsLoadedOnce){
+    dealsLoadedOnce = true;
+    loadDeals(null);
+  }
 }
 
 function quickSearch(term, category){
@@ -880,13 +896,6 @@ function makeCard(r, isBest, sublineOverride){
   return card;
 }
 
-function sectionHeader(text){
-  const h = document.createElement('div');
-  h.style.cssText = "padding:8px 2px 2px; font-family:'Inter',sans-serif; font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);";
-  h.textContent = text;
-  return h;
-}
-
 // Rank by price-per-litre when it's available — always, regardless of
 // category or display formatting (non-alcoholic drinks hide the figure on
 // the card but still rank by it under the hood). Otherwise fall back to
@@ -899,6 +908,14 @@ function byValue(a, b){
   if(aPpl !== null && bPpl !== null) return aPpl - bPpl;
   if(aPpl !== null) return -1;
   if(bPpl !== null) return 1;
+  return a.price - b.price;
+}
+
+// 2026-08-12: once you've picked one specific pack size (6-pack, 24-pack,
+// crate, ...) via the chips, the comparison you actually want is "which
+// store has this cheapest", not price-per-litre — you've already fixed
+// the size, so raw price is the more direct comparison at that point.
+function byPrice(a, b){
   return a.price - b.price;
 }
 
@@ -938,14 +955,21 @@ function renderResults(results){
   // show, which is exactly backwards for a filter that's supposed to only
   // ever narrow things down from what you'd otherwise see.
   const radiusIsUnlimited = currentRadiusKm >= RADIUS_SLIDER_MAX_KM;
-  const nearby = results.filter(r => r.km !== null && (radiusIsUnlimited || r.km <= currentRadiusKm)).sort(byValue);
-  const online = results.filter(r => r.km === null).sort(byValue);
-  const visible = nearby.concat(online);
+  const nearby = results.filter(r => r.km !== null && (radiusIsUnlimited || r.km <= currentRadiusKm));
+  const online = results.filter(r => r.km === null);
+  // 2026-08-12: reported directly — capping each section at 40 and
+  // splitting into separate "Near you"/"Online" sections meant a genuinely
+  // cheaper option could sit unseen past the cut-off, or in the section
+  // you weren't scanning. Show every real match, one flat list, sorted
+  // purely by value (cheapest/best-per-litre first) — each card's own
+  // subline already says "X km away" vs "Ships NZ-wide" per result, so
+  // the distinction isn't lost, it's just not used to split/truncate the
+  // list anymore.
+  const visible = nearby.concat(online).sort(currentPackSize === null ? byValue : byPrice);
 
   // Only tag a "best value" item when every visible result is genuinely
   // the same product — comparing prices across dissimilar products would
-  // be misleading. Computed from the post-radius-filter pool so the
-  // ribbon always lands on a card that's actually shown.
+  // be misleading.
   const sameProduct = visible.length > 1 &&
     visible.every(r => r.productName === visible[0].productName);
   const cheapest = sameProduct ? (() => {
@@ -955,35 +979,9 @@ function renderResults(results){
     return pool.reduce((min, r) => metric(r) < metric(min) ? r : min, pool[0]);
   })() : null;
 
-  // Never render thousands of cards even after the radius scoping above —
-  // the point of this screen is surfacing the best handful of options, not
-  // an exhaustive nationwide catalogue dump (confirmed directly: an
-  // unbounded category browse rendered 52,176 DOM cards before this fix).
-  const DISPLAY_CAP = 40;
-  const shownNearby = nearby.slice(0, DISPLAY_CAP);
-  const shownOnline = online.slice(0, DISPLAY_CAP);
-
-  if(shownNearby.length){
-    if(shownOnline.length) list.appendChild(sectionHeader('Near you'));
-    shownNearby.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
-    if(shownNearby.length < nearby.length){
-      const note = document.createElement('div');
-      note.style.cssText = 'font-size:11px; color:var(--muted); padding:6px 2px 2px; text-align:center;';
-      note.textContent = `Showing best ${shownNearby.length} of ${nearby.length} nearby`;
-      list.appendChild(note);
-    }
-  }
-  if(shownOnline.length){
-    if(shownNearby.length) list.appendChild(sectionHeader('Online — ships NZ-wide'));
-    shownOnline.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
-    if(shownOnline.length < online.length){
-      const note = document.createElement('div');
-      note.style.cssText = 'font-size:11px; color:var(--muted); padding:6px 2px 2px; text-align:center;';
-      note.textContent = `Showing best ${shownOnline.length} of ${online.length} online`;
-      list.appendChild(note);
-    }
-  }
-  if(!shownNearby.length && !shownOnline.length){
+  if(visible.length){
+    visible.forEach(r => list.appendChild(makeCard(r, r === cheapest)));
+  } else {
     showEmptyResults(currentRadiusKm >= RADIUS_SLIDER_MAX_KM
       ? 'No matches near you for this search.'
       : `No matches within ${currentRadiusKm} km — try widening the radius above.`);
@@ -2018,9 +2016,14 @@ async function runNearbyMapSearch(term){
     // since this only ever talks to the user's own Supabase project)
     // injection risk for no reason.
     const link = document.createElement('span');
-    link.textContent = ' See all results →';
-    link.style.cssText = 'text-decoration:underline; cursor:pointer; white-space:nowrap;';
+    link.textContent = 'See all results →';
+    // 2026-08-12: reported directly — plain underlined text reading like
+    // part of the status sentence wasn't obviously tappable. Styled like
+    // a real small button (bold, the app's own gold accent, its own line)
+    // instead of inline text, so it actually reads as a CTA.
+    link.style.cssText = 'display:inline-block; margin-top:6px; cursor:pointer; white-space:nowrap; font-weight:800; color:var(--gold-dark); text-decoration:underline; text-underline-offset:2px;';
     link.onclick = showNearbyRegionResults;
+    status.appendChild(document.createElement('br'));
     status.appendChild(link);
   }
 }
