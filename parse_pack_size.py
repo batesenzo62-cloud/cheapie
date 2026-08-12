@@ -42,6 +42,21 @@ def _to_ml(value, unit):
     return value
 
 
+# 330mL is the standard single-serve beer/cider/RTD bottle size in NZ —
+# safe to assume for a beer/rtd product that says "bottle(s)"/"btl(s)" but
+# never states a size, the same reasoning as wine's 750mL default (a
+# named container type with one dominant real-world size, rather than a
+# guess with no basis). Not applied to wine/spirits, where "bottle" covers
+# a much wider real range (375mL-1L+) and there's no single safe default.
+_BOTTLE_WORD = re.compile(r"\bbtls?\b|\bbottles?\b", re.IGNORECASE)
+
+
+def _bottle_default(name, category):
+    if category not in ("beer", "rtd"):
+        return None
+    return 330 if _BOTTLE_WORD.search(name) else None
+
+
 def _fix_if_total_not_per_unit(count, volume):
     # Some listings state the pack's TOTAL volume rather than the size of
     # each can/bottle — e.g. "18 pack 5940mL" (5940 = 18 x 330, the real
@@ -100,12 +115,13 @@ def parse_pack_size(name, category=None):
     # 3. "10 can pack" style — count before "can pack", no volume given.
     m = re.search(r"(\d+)\s*can\s*pack\b", name, re.IGNORECASE)
     if m:
-        return int(m.group(1)), None
+        return int(m.group(1)), _bottle_default(name, category)
 
-    # 4. Pack count with no volume anywhere nearby — e.g. "6pk cans".
+    # 4. Pack count with no volume anywhere nearby — e.g. "6pk cans",
+    #    "12pk Btls".
     m = re.search(r"(\d+)\s*(?:pk|pack)\b", name, re.IGNORECASE)
     if m:
-        return int(m.group(1)), None
+        return int(m.group(1)), _bottle_default(name, category)
 
     # 5. Single volume, no pack count — e.g. "Martell VSOP 700ml",
     #    "Country Red 3l" (single cask/bottle item).
@@ -123,7 +139,7 @@ def parse_pack_size(name, category=None):
     #    varietal names with literally no digit anywhere.
     if category == "wine":
         return 1, 750
-    return 1, None
+    return 1, _bottle_default(name, category)
 
 
 if __name__ == "__main__":
