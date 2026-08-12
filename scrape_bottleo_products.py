@@ -38,7 +38,9 @@ deliberately excluded — not real liquor products this app compares.
 HOW TO RUN:
     python3 scrape_bottleo_products.py
 """
-import requests, re, time, csv, json
+import requests, re, time, csv, json, os
+
+DEFAULT_FIELDNAMES = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at", "store_id"]
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -179,11 +181,20 @@ def main():
     all_new_rows += fallback_rows
     print(f"\nTotal fresh Bottle-O rows (incl. {len(fallback_rows)} generic fallback rows): {len(all_new_rows)}")
 
+    # 2026-08-14 fix: this file is gitignored (regenerated data, not
+    # source) — confirmed directly a plain open() here crashed every
+    # scheduled GitHub Actions run so far, since a fresh CI checkout never
+    # has it. Treated as "no existing rows to preserve" rather than an
+    # error — this run's own fresh rows still get written either way.
     scraped_store_names = {f"Bottle-O {s['name']}" for s in online_stores} | {"Bottle-O"}
-    with open("independent_store_prices.csv", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames
-        kept = [row for row in reader if row["store"] not in scraped_store_names]
+    if os.path.exists("independent_store_prices.csv"):
+        with open("independent_store_prices.csv", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            fieldnames = reader.fieldnames
+            kept = [row for row in reader if row["store"] not in scraped_store_names]
+    else:
+        fieldnames = DEFAULT_FIELDNAMES
+        kept = []
 
     for row in all_new_rows:
         kept.append({k: row.get(k, "") for k in fieldnames})

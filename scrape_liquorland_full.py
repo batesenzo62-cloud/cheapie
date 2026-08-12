@@ -29,7 +29,7 @@ long-tail stock gaps (no single store carries the full 15,000+ SKU catalog
 at once), not a scraping gap, so it's honest to report a real "no price
 currently available" rather than manufacture one by exhausting stores.
 """
-import requests, re, json, time, csv
+import requests, re, json, time, csv, os
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 STORE_ID = 4  # Liquorland Parnell — arbitrary, price confirmed identical across stores when available
@@ -187,11 +187,27 @@ def main():
     # Merge straight into chain_store_prices.csv, replacing the old
     # "Liquorland" rows — safe to re-run on a schedule, same replace-not-
     # append approach as the other per-branch scrapers.
+    #
+    # 2026-08-14 fix: chain_store_prices.csv is gitignored (regenerated
+    # data, not source) — fine on a machine where it already exists from a
+    # previous run, but confirmed directly this crashed every single
+    # scheduled GitHub Actions run so far, every day, at this exact line:
+    # a fresh CI checkout never has this file at all, so a plain open() in
+    # read mode threw FileNotFoundError before a single row ever reached
+    # Supabase (and since a failed step halts the rest of the job, none of
+    # the OTHER chains' scrapers even got to run afterward either). Treat
+    # "file doesn't exist yet" the same as "file exists but is empty" —
+    # this run's own fresh rows become the whole result either way.
     chain_path = "chain_store_prices.csv"
-    with open(chain_path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        chain_fieldnames = reader.fieldnames
-        kept = [r for r in reader if r["store"] != "Liquorland"]
+    default_fieldnames = ["product_name", "price", "was_price", "in_stock", "store", "category", "fetched_at"]
+    if os.path.exists(chain_path):
+        with open(chain_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            chain_fieldnames = reader.fieldnames
+            kept = [r for r in reader if r["store"] != "Liquorland"]
+    else:
+        chain_fieldnames = default_fieldnames
+        kept = []
 
     for row in all_rows:
         row_out = {k: row.get(k, "") for k in chain_fieldnames}

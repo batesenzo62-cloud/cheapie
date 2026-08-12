@@ -13,8 +13,10 @@ top of the previous run's.
 HOW TO RUN:
     python3 scrape_blackbull_branches.py
 """
-import csv, time
+import csv, time, os
 import scrape_independent_stores as s
+
+DEFAULT_FIELDNAMES = ["store", "store_id", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at"]
 
 BRANCHES = {
     "Greenwood": ("https://blackbullliquorgreenwood.co.nz", "5aaeedcc-78f6-4d0c-b71f-7c6416222479",
@@ -49,10 +51,19 @@ def main():
 
     print(f"\nTotal fresh rows: {len(new_rows)}")
 
+    # 2026-08-14 fix: this file is gitignored (regenerated data, not
+    # source) — confirmed directly a plain open() here crashed every
+    # scheduled GitHub Actions run so far, since a fresh CI checkout never
+    # has it. Treated as "no existing rows to preserve" rather than an
+    # error — this run's own fresh rows still get written either way.
     scraped_store_names = {f"Black Bull Liquor {label}" for label in BRANCHES}
-    with open("independent_store_prices.csv") as f:
-        fieldnames = next(csv.reader(f))
-    existing = list(csv.DictReader(open("independent_store_prices.csv")))
+    if os.path.exists("independent_store_prices.csv"):
+        with open("independent_store_prices.csv") as f:
+            fieldnames = next(csv.reader(f))
+        existing = list(csv.DictReader(open("independent_store_prices.csv")))
+    else:
+        fieldnames = DEFAULT_FIELDNAMES
+        existing = []
     kept = [row for row in existing if row["store"] not in scraped_store_names]
 
     all_rows = kept + new_rows

@@ -17,13 +17,14 @@ from the previous run are always already there).
 HOW TO RUN:
     python3 scrape_superliquor_branches.py
 """
-import csv, time, requests
+import csv, time, requests, os
 import scrape_independent_stores as s
 
 SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co"
 SUPABASE_KEY = "sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b"
 CSV_PATH = "independent_store_prices.csv"
 CATEGORIES = {"beer": "beer", "rtd": "premix", "wine": "wine", "spirits": "spirits"}
+DEFAULT_FIELDNAMES = ["store", "store_id", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at"]
 
 
 def match_store_id(stores, label):
@@ -39,9 +40,18 @@ def main():
     r2 = requests.get("https://www.superliquor.co.nz/GetStoresByState", headers=s.HEADERS)
     branch_data = [b for b in r2.json()["stores"] if b["Value"]]
 
-    with open(CSV_PATH) as f:
-        fieldnames = next(csv.reader(f))
-    existing = list(csv.DictReader(open(CSV_PATH)))
+    # 2026-08-14 fix: this file is gitignored (regenerated data, not
+    # source) — confirmed directly a plain open() here crashed every
+    # scheduled GitHub Actions run so far, since a fresh CI checkout never
+    # has it. Treated as "no existing rows to preserve" rather than an
+    # error — this run's own fresh rows still get written either way.
+    if os.path.exists(CSV_PATH):
+        with open(CSV_PATH) as f:
+            fieldnames = next(csv.reader(f))
+        existing = list(csv.DictReader(open(CSV_PATH)))
+    else:
+        fieldnames = DEFAULT_FIELDNAMES
+        existing = []
     kept = [row for row in existing if not row["store"].startswith("Super Liquor")]
 
     new_rows = []

@@ -16,7 +16,7 @@ top of the previous run's.
 HOW TO RUN:
     python3 scrape_thirsty_branches.py
 """
-import csv, time, requests
+import csv, time, requests, os
 import scrape_independent_stores as s
 
 SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co"
@@ -77,9 +77,17 @@ def main():
 
     print(f"\nTotal new branch-specific rows: {len(new_rows)}")
 
+    # 2026-08-14 fix: this file is gitignored (regenerated data, not
+    # source) — confirmed directly that a plain open() here crashed every
+    # scheduled GitHub Actions run so far, since a fresh CI checkout never
+    # has it. Treated as "no existing rows to preserve" rather than an
+    # error — this run's own fresh rows still get written either way.
     scraped_store_names = {f"Thirsty Liquor {label}" for label in BRANCHES}
-    with open("independent_store_prices.csv") as f:
-        existing = list(csv.DictReader(f))
+    if os.path.exists("independent_store_prices.csv"):
+        with open("independent_store_prices.csv") as f:
+            existing = list(csv.DictReader(f))
+    else:
+        existing = []
 
     fieldnames = list(s.PRODUCT_FIELDNAMES) + ["store_id"]
     for row in existing:
