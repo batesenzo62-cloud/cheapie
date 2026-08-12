@@ -734,7 +734,39 @@ async function fetchLiveProducts(category, query){
       throw err; // preserve doSearch's existing "couldn't reach the database" handling
     }
     if(category) rows = rows.filter(r => r.category === category);
-    return rows.map(r => mapRegionSearchRow(r, r.store_id)).sort(byValue);
+
+    // 2026-08-12: a generic chain-catalogue match (no confirmed store_id —
+    // most rows, since search_products_fuzzy keeps only one representative
+    // row per chain's whole unconfirmed catalogue) used to become exactly
+    // one "Online — ships NZ-wide" card, full stop, no matter how many real
+    // physical branches of that chain exist nearby. Reported directly: the
+    // Nearby tab's region search finds "heaps" of Steinlager options in
+    // Hawke's Bay because it already fans a match like this out across
+    // every real branch of that chain in scope (see runNearbyMapSearch's
+    // idsByChain) — this search bar just never got the same treatment, so
+    // the exact same underlying data looked far sparser here. Mirrors that
+    // same approximation (same "not confirmed for this specific store"
+    // territory the store sheet already uses) instead of quietly having
+    // two different definitions of "how many options are near you".
+    const idsByChain = {};
+    Object.values(storesById).forEach(store => {
+      const chain = chainNameFor(store.name);
+      (idsByChain[chain] = idsByChain[chain] || []).push(store.id);
+    });
+    const expanded = [];
+    rows.forEach(r => {
+      if(r.store_id){
+        expanded.push(mapRegionSearchRow(r, r.store_id));
+        return;
+      }
+      const branchIds = idsByChain[r.store_name];
+      if(branchIds && branchIds.length){
+        branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+      } else {
+        expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
+      }
+    });
+    return expanded.sort(byValue);
   }
 
   let url = `${SUPABASE_URL}/rest/v1/products?select=*,stores(id,name,address,latitude,longitude)&order=price_per_litre.asc.nullslast,price.asc`;
