@@ -1,0 +1,1682 @@
+[
+  {
+    "name": "New World Albany",
+    "address": "219 Don McKinnon Drive, Albany, Auckland, 0632",
+    "lat": -36.72816939793398,
+    "lng": 174.7105360783264,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/albany",
+    "store_id": "7b1ba943-4c05-4340-bbba-bb282afdd803"
+  },
+  {
+    "name": "New World Birkenhead",
+    "address": "180 Mokoia Road, Birkenhead 0626",
+    "lat": -36.81092619798975,
+    "lng": 174.71160408783567,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/birkenhead",
+    "store_id": "379a5e70-6bec-4900-9fb8-d75a55cda04a"
+  },
+  {
+    "name": "New World Botany",
+    "address": "588 Chapel Road, East Tamaki, 2016",
+    "lat": -36.9334658,
+    "lng": 174.91493200000002,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/botany",
+    "store_id": "0b97de1b-748e-4b87-8443-61d68e3c3f8c"
+  },
+  {
+    "name": "New World Browns Bay",
+    "address": "2 Inverness Road, Browns Bay, 0630",
+    "lat": -36.71430339460861,
+    "lng": 174.74621899643398,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/browns-bay",
+    "store_id": "4e103f11-d38d-43ad-8bca-9543407adb8a"
+  },
+  {
+    "name": "New World Devonport",
+    "address": "35 Bartley Terrace, Devonport, 0624",
+    "lat": -36.82947584957498,
+    "lng": 174.7964776141556,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/devonport",
+    "store_id": "aebbd3c0-ec70-4d80-87f3-43a5e928d1ed"
+  },
+  {
+    "name": "New World Eastridge",
+    "address": "209 Kepa Road, Mission Bay, New Zealand , 1071",
+    "lat": -36.86098660796516,
+    "lng": 174.82876066679535,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/eastridge",
+    "store_id": "9575cc81-c9a3-405c-a4a6-88e7369244af"
+  },
+  {
+    "name": "New World Green Bay",
+    "address": "64 Godley Road, Green Bay, 0604 New Zealand ",
+    "lat": -36.93069132233088,
+    "lng": 174.67916089999994,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/green-bay",
+    "store_id": "e548e38f-f33a-4b89-9629-5965830aab7f"
+  },
+  {
+    "name": "New World Hobsonville",
+    "address": "120 Hobsonville Road, Hobsonville, Auckland, 0618",
+    "lat": -36.7993,
+    "lng": 174.645016,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/hobsonville",
+    "store_id": "fbeef607-92a6-4cd2-993d-e59d054f79b1"
+  },
+  {
+    "name": "New World Howick",
+    "address": "Corner of Union Rd and Wellington Street, Howick, 2014",
+    "lat": -36.904685289559964,
+    "lng": 174.924205871936,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/howick",
+    "store_id": "6749c401-928d-4bc3-9003-58f7eafba056"
+  },
+  {
+    "name": "New World Kumeu",
+    "address": "108-110 Main Rd Kumeu 0810",
+    "lat": -36.7750368,
+    "lng": 174.5539304,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/kumeu",
+    "store_id": "fe9569c7-519d-44b9-bc29-97a13c6a70b6"
+  },
+  {
+    "name": "New World Long Bay",
+    "address": "55b Glenvar Ridge Road, Long Bay, Auckland 0630",
+    "lat": -36.684304,
+    "lng": 174.739577,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/long-bay",
+    "store_id": "cac8da46-938c-466e-a392-ad7e9d8e6072"
+  },
+  {
+    "name": "New World Metro Queen Street",
+    "address": "125 Queen Street, Auckland, 0620",
+    "lat": -36.84644850761498,
+    "lng": 174.76581138035658,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/metro-queen-street",
+    "store_id": "3b6fdd11-88bc-4f2f-a218-d5d5421996f5"
+  },
+  {
+    "name": "New World Metro Shore City",
+    "address": "52-56 Anzac St, Takapuna, Auckland 0740",
+    "lat": -36.787343,
+    "lng": 174.770024,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/metro-shore-city",
+    "store_id": "1cc47e36-7775-4b5c-85a9-0f640036690d"
+  },
+  {
+    "name": "New World Milford",
+    "address": "141 Kitchener Road, Milford, 0620",
+    "lat": -36.77246283950749,
+    "lng": 174.76473210122344,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/milford",
+    "store_id": "01257296-b6ce-4a7f-9dbc-d827eecc038c"
+  },
+  {
+    "name": "New World Mt Albert",
+    "address": "1 Alberton Avenue, Mt Albert, Auckland 1025",
+    "lat": -36.880354,
+    "lng": 174.726017,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/mt-albert",
+    "store_id": "421b582e-8b4d-4374-ae67-fa1d7bab6dea"
+  },
+  {
+    "name": "New World Mt Roskill",
+    "address": "53 May Road, Mt Roskill, Auckland 1041",
+    "lat": -36.908355772091625,
+    "lng": 174.7349662735412,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/mt-roskill",
+    "store_id": "093a0bf3-8724-4a31-89ca-d51f4f724fdb"
+  },
+  {
+    "name": "New World New Lynn",
+    "address": "2-6 Crown Lynn Place, New Lynn, 0600",
+    "lat": -36.9111227,
+    "lng": 174.68584520000002,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/new-lynn",
+    "store_id": "eecf503e-0786-4cb9-8438-7ade07f4a9d3"
+  },
+  {
+    "name": "New World Newmarket",
+    "address": "42 Nuffield Street, Newmarket, Auckland 1023",
+    "lat": -36.87208171122898,
+    "lng": 174.77797345308898,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/newmarket",
+    "store_id": "0f116e13-34e8-4c2b-ab02-530a88eabcd6"
+  },
+  {
+    "name": "New World Orewa",
+    "address": "11 Moana Avenue Orewa, 0931",
+    "lat": -36.586539989420736,
+    "lng": 174.69362553187716,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/orewa",
+    "store_id": "c2b72d80-841d-47a8-8b6f-6acc13bfd817"
+  },
+  {
+    "name": "New World Ormiston",
+    "address": "240 Ormiston Road, Ormiston, Auckland, 2019",
+    "lat": -36.965351862740995,
+    "lng": 174.91276747136993,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/ormiston",
+    "store_id": "50d433a1-370e-471e-8d14-d9acdd8253d8"
+  },
+  {
+    "name": "New World Papakura",
+    "address": "29-31 East Street, Papakura, 2110",
+    "lat": -37.06418154806333,
+    "lng": 174.9415287188408,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/papakura",
+    "store_id": "e1765764-e275-4e48-9b51-c853a50a8c88"
+  },
+  {
+    "name": "New World Papatoetoe",
+    "address": "65 St George Street, Papatoetoe, 2025",
+    "lat": -36.980097091990174,
+    "lng": 174.85368371226843,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/papatoetoe",
+    "store_id": "dca4cc4e-2be0-4535-a8a7-ff1204907b25"
+  },
+  {
+    "name": "New World Point Chevalier",
+    "address": "1136 Great North Road, Point Chevalier, Auckland 1022",
+    "lat": -36.86991223003226,
+    "lng": 174.71270056651215,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/point-chevalier",
+    "store_id": "23d363da-dab1-4ddb-a3c9-bb6b725ca182"
+  },
+  {
+    "name": "New World Pukekohe",
+    "address": "17 Paerata Rd, Pukekohe 2120",
+    "lat": -37.189722,
+    "lng": 174.903083,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/pukekohe",
+    "store_id": "296d346c-1531-4ba5-adbb-0203f327095a"
+  },
+  {
+    "name": "New World Remuera",
+    "address": "10 Clonbern Road, Remuera, Auckland, 1050",
+    "lat": -36.8819007,
+    "lng": 174.79765450000002,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/remuera",
+    "store_id": "2a97e9e4-9204-4304-b0c0-0a5ca3d27a5f"
+  },
+  {
+    "name": "New World Southmall",
+    "address": "185 Great South Road, Manurewa, 2102",
+    "lat": -37.02281795443766,
+    "lng": 174.8967004,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/southmall",
+    "store_id": "df59e32b-209b-415d-a9a4-f484a5857c0c"
+  },
+  {
+    "name": "New World Stonefields",
+    "address": "100 Lunn Avenue, Mount Wellington, Auckland 1072",
+    "lat": -36.8901864,
+    "lng": 174.83192009999993,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/stonefields",
+    "store_id": "5ec737db-a8fc-426e-800c-21d6170a2e1f"
+  },
+  {
+    "name": "New World Te Atat\u016b",
+    "address": "575 Te Atatu Road, Te Atatu Penisula, Auckland, 0610",
+    "lat": -36.842683009808795,
+    "lng": 174.65238094038574,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/te-atatu",
+    "store_id": "cf4528dd-c1c9-4dc9-91a0-f519a6714281"
+  },
+  {
+    "name": "New World Victoria Park",
+    "address": "2 College Hill, Freemans Bay, New Zealand , 1011",
+    "lat": -36.84857804106143,
+    "lng": 174.75123735403668,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/victoria-park",
+    "store_id": "4424dfdc-7965-4c65-9b16-8cd8a4137504"
+  },
+  {
+    "name": "New World Waiuku",
+    "address": "49 Bowen Street, Waiuku, 2123",
+    "lat": -37.2502355,
+    "lng": 174.72837290000007,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/waiuku",
+    "store_id": "0178c0b7-1f13-4e74-a729-65dad444b9b4"
+  },
+  {
+    "name": "New World Warkworth",
+    "address": "6 Percy Street, Warkworth, 0910",
+    "lat": -36.3983755,
+    "lng": 174.66615879999995,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/warkworth",
+    "store_id": "8a9f7f46-c096-4391-83a1-e0e3ff5f477e"
+  },
+  {
+    "name": "New World Whangaparaoa",
+    "address": "580 Whangaparaoa Road, Stanmore Bay, Whangaparaoa 0932",
+    "lat": -36.6285815,
+    "lng": 174.73300319999998,
+    "url": "https://www.newworld.co.nz/upper-north-island/auckland/whangaparaoa",
+    "store_id": "9f5cecb7-6436-4a69-a92d-989acd61afa3"
+  },
+  {
+    "name": "New World Aokautere",
+    "address": "194-200 Ruapehu Drive, Summerhill, Aokautere, 4410",
+    "lat": -40.38716871860094,
+    "lng": 175.63916335159,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/aokautere",
+    "store_id": "cbf6b2bf-26dd-4a2e-a2de-7d7bdc51daea"
+  },
+  {
+    "name": "New World Broadway",
+    "address": "Cnr. Broadway Ave &, Albert Street, Palmerston North 4414",
+    "lat": -40.348783894854556,
+    "lng": 175.62423825092617,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/melodys",
+    "store_id": "cde40511-64b0-4579-ab16-a0c2bb010d29"
+  },
+  {
+    "name": "New World Carterton",
+    "address": "60-72 High Street South, Carterton 5713",
+    "lat": -41.026034230231254,
+    "lng": 175.52634713925204,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/carterton",
+    "store_id": "aec3eb00-8e69-4ffd-b956-c01ea4b7cfef"
+  },
+  {
+    "name": "New World Dannevirke",
+    "address": "Denmark St, Dannevirke 4930",
+    "lat": -40.21014005077957,
+    "lng": 176.0978994756714,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/dannevirke",
+    "store_id": "a09d6174-b823-4de8-98bd-9b2f26b11e5e"
+  },
+  {
+    "name": "New World Feilding",
+    "address": "42 Aorangi Street, Feilding 4702",
+    "lat": -40.227811,
+    "lng": 175.569499,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/feilding",
+    "store_id": "4ced5123-fc4e-442d-80ae-0ad40ec42361"
+  },
+  {
+    "name": "New World Foxton",
+    "address": "Cnr Main & Whyte Streets, Foxton 4814",
+    "lat": -40.47236339217262,
+    "lng": 175.28168754376372,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/foxton",
+    "store_id": "50634e72-f760-4b25-9da0-53716b6ad390"
+  },
+  {
+    "name": "New World Levin",
+    "address": "21 Bath St, Levin 5510",
+    "lat": -40.62312261198052,
+    "lng": 175.28339125092623,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/levin",
+    "store_id": "03cf98cb-09f5-47a8-b05d-275362dfd1ca"
+  },
+  {
+    "name": "New World Marton",
+    "address": "427 Wellington Rd, Marton 4710",
+    "lat": -40.07523436024655,
+    "lng": 175.37886864288748,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/marton",
+    "store_id": "8cc1de85-de4a-4934-85e4-49f228c7a3a4"
+  },
+  {
+    "name": "New World Masterton",
+    "address": "Cnr Queen/Bruce Sts, Masterton 5810",
+    "lat": -40.94854673589756,
+    "lng": 175.6655223269836,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/masterton",
+    "store_id": "6e2472a7-2b35-499b-b39d-23057003e906"
+  },
+  {
+    "name": "New World Pahiatua",
+    "address": "101-103 Main Street, Pahiatua 4910",
+    "lat": -40.45252943879788,
+    "lng": 175.84175229510652,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/pahiatua",
+    "store_id": "bf639f7e-ae0c-433b-81e5-c69f1f5ab974"
+  },
+  {
+    "name": "New World Pioneer",
+    "address": "179-197 Main Street, Palmerston North 4412",
+    "lat": -40.35985238881536,
+    "lng": 175.60110208650815,
+    "url": "https://www.newworld.co.nz/lower-north-island/manawatu-and-wairarapa/pioneer",
+    "store_id": "807b84ac-37e8-435c-b641-3fa7b931caea"
+  },
+  {
+    "name": "New World Brookfield",
+    "address": "89 Bellevue Road Otumoetai, Tauranga 3110",
+    "lat": -37.68974843194816,
+    "lng": 176.13468084215015,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/brookfield",
+    "store_id": "c749e201-763e-4154-88d9-87a08988bdbc"
+  },
+  {
+    "name": "New World Gate Pa",
+    "address": "948 Cameron Road, Tauranga 3112",
+    "lat": -37.713166106711235,
+    "lng": 176.1429386914017,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/gate-pa",
+    "store_id": "29e9191b-235b-4c47-831f-054e66d6ede1"
+  },
+  {
+    "name": "New World Kawerau",
+    "address": "Tarawera Court, Kawerau 3127",
+    "lat": -38.085732155233515,
+    "lng": 176.70100041219905,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/kawerau",
+    "store_id": "e9c79343-e0b7-41ff-88bb-348b4193ac20"
+  },
+  {
+    "name": "New World Mt Maunganui",
+    "address": "Cnr Tweed St & Maunganui Rd, Mt Maunganui 3116",
+    "lat": -37.65396277189566,
+    "lng": 176.19927392359546,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/mt-maunganui",
+    "store_id": "55ab1547-de9c-4208-a5d1-ac59bc3af0aa"
+  },
+  {
+    "name": "New World Opotiki",
+    "address": "19 Bridge Street, Opotiki 3122",
+    "lat": -38.01217063398412,
+    "lng": 177.2767565588955,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/opotiki",
+    "store_id": "0b941403-71c8-4a5e-9a79-6a406c1f3e68"
+  },
+  {
+    "name": "New World Te Puke",
+    "address": "12 Jocelyn St Te Puke 3119",
+    "lat": -37.78585569398337,
+    "lng": 176.32806958315052,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/te-puke",
+    "store_id": "e10eaf71-7d40-4b73-854a-cfa9f02591ed"
+  },
+  {
+    "name": "New World The Sands",
+    "address": "255 The Boulevard, Papamoa, 3118",
+    "lat": -37.727302329107424,
+    "lng": 176.34662121729528,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/the-sands",
+    "store_id": "492093ad-7398-41ae-83c1-5de479e3a0fd"
+  },
+  {
+    "name": "New World Westend",
+    "address": "247 Old Taupo Road, Rotorua, 3015, New Zealand ",
+    "lat": -38.14664964999163,
+    "lng": 176.23820239695897,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/westend",
+    "store_id": "c2f447f7-242c-42d3-9db7-ddc9eaf85a3a"
+  },
+  {
+    "name": "New World Whakatane",
+    "address": "51 Kakahoroa Drive, Whakatane 3120",
+    "lat": -37.9507075,
+    "lng": 176.99317440000004,
+    "url": "https://www.newworld.co.nz/upper-north-island/bay-of-plenty/whakatane",
+    "store_id": "4171ab62-838e-44d7-b2da-b49df61e8bf9"
+  },
+  {
+    "name": "New World Cambridge",
+    "address": "14 Anzac St, Leamington, Cambridge 3434",
+    "lat": -37.893409100068894,
+    "lng": 175.4723560610214,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/cambridge",
+    "store_id": "6b5f55fa-fc7a-4a83-8177-d6dff2ac2de7"
+  },
+  {
+    "name": "New World Glenview",
+    "address": "Ohaupo Rd, Glenview, Hamilton 3206",
+    "lat": -37.82252237274291,
+    "lng": 175.28742704183355,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/glenview",
+    "store_id": "92bd0d4a-6257-43f5-909f-d9ae5d415976"
+  },
+  {
+    "name": "New World Hillcrest",
+    "address": "280 Cambridge Road, Hillcrest Hamilton 3216 New Zealand ",
+    "lat": -37.8019904,
+    "lng": 175.32227269999998,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/hillcrest",
+    "store_id": "c9b9b752-89c1-4661-9e1c-2a4b3ae673f6"
+  },
+  {
+    "name": "New World Matamata",
+    "address": "45 Waharoa Rd, Matamata 3400",
+    "lat": -37.80344060368989,
+    "lng": 175.7698183607132,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/matamata",
+    "store_id": "a6e6f2cb-a575-4dd7-9761-8edb1b8f3243"
+  },
+  {
+    "name": "New World Morrinsville",
+    "address": "79 - 97 Thames Street, Morrinsville, 3300",
+    "lat": -37.6595068,
+    "lng": 175.52229940000007,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/morrinsville",
+    "store_id": "a9794c7d-f69f-4f86-a67a-4719c101f244"
+  },
+  {
+    "name": "New World Ngaruawahia",
+    "address": "7 Galileo Street, Ngaruawahia 3720",
+    "lat": -37.667026362131985,
+    "lng": 175.15031574211957,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/ngaruawahia",
+    "store_id": "e1c156c3-0e32-4088-b7f4-cd26efdacba2"
+  },
+  {
+    "name": "New World Rototuna",
+    "address": "44 Horsham Downs Road, Rototuna, Hamilton 3210",
+    "lat": -37.72828346500006,
+    "lng": 175.27398949577025,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/rototuna",
+    "store_id": "72561c02-ea52-4bfa-b8de-0c3182bfd3dc"
+  },
+  {
+    "name": "New World Taumarunui",
+    "address": "10 Hakiaha Street, Taumarunui 3920",
+    "lat": -38.8828542146808,
+    "lng": 175.25798370025439,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/taumarunui",
+    "store_id": "d41fe109-daa3-470a-9594-11b0b9dd81dd"
+  },
+  {
+    "name": "New World Te Kauwhata",
+    "address": "6 Main Road, Te Kauwhata, 3710",
+    "lat": -37.40402098085264,
+    "lng": 175.14324305566328,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/te-kauwhata",
+    "store_id": "26cfa43e-2d07-45e9-95cd-2d71df44bae2"
+  },
+  {
+    "name": "New World Te Kuiti",
+    "address": "39 Rora Street, Te Kuiti, 3910",
+    "lat": -38.33177769264327,
+    "lng": 175.1629164148194,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/te-kuiti",
+    "store_id": "6cf76184-ce54-4aa1-9c44-e20a6417b43d"
+  },
+  {
+    "name": "New World Te Rapa",
+    "address": "751 Te Rapa Road, Hamilton 3200",
+    "lat": -37.753020456863425,
+    "lng": 175.24000322949985,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/te-rapa",
+    "store_id": "364ebe4f-04a5-4ce2-a5c5-326932dd1af4"
+  },
+  {
+    "name": "New World Tokoroa",
+    "address": "Bridge Street, Tokoroa 3420",
+    "lat": -38.21930533272706,
+    "lng": 175.86662571288014,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/tokoroa",
+    "store_id": "7ebaeb92-11a3-4fed-b0cc-9947453de136"
+  },
+  {
+    "name": "New World T\u016brangi",
+    "address": "19 Ohuanga Street, Turangi 3334",
+    "lat": -38.99001517574646,
+    "lng": 175.80889037238728,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/turangi",
+    "store_id": "eef8fe33-cf37-4e1a-8678-11ccfd22807b"
+  },
+  {
+    "name": "New World Waihi",
+    "address": "35 Kenny Street, Waihi 3610",
+    "lat": -37.39326893561546,
+    "lng": 175.839516453373,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/waihi",
+    "store_id": "220f453b-edcb-47af-a862-38f4a43af95a"
+  },
+  {
+    "name": "New World Whangamata",
+    "address": "308 Aickin Road, Whangamat\u0101 3620",
+    "lat": -37.2021525970036,
+    "lng": 175.86691443988116,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/whangamata",
+    "store_id": "fa4b8895-8cb2-47db-86c5-fa21b2f31bfd"
+  },
+  {
+    "name": "New World Whitianga",
+    "address": "1 Joan Gaskell Drive, Whitianga 3510",
+    "lat": -36.8347029,
+    "lng": 175.70035830000006,
+    "url": "https://www.newworld.co.nz/upper-north-island/waikato/whitianga",
+    "store_id": "5da8ce78-ed09-4b09-afbc-2d8fb368aac3"
+  },
+  {
+    "name": "New World Churton Park",
+    "address": "69 Lakewood Avenue Churton Park, Wellington 6037",
+    "lat": -41.20281185804334,
+    "lng": 174.80806656864775,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/churton-park",
+    "store_id": "8f629024-2e52-4db0-8d8c-f230f171a912"
+  },
+  {
+    "name": "New World Hutt City",
+    "address": "Bloomfield Terrace, Lower Hutt 5010",
+    "lat": -41.20902384586172,
+    "lng": 174.90804207672113,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/hutt-city",
+    "store_id": "d61eaad2-7ad7-4e83-98ed-f0588d91c4bc"
+  },
+  {
+    "name": "New World Island Bay",
+    "address": "Medway St, Island Bay, Wellington 6023",
+    "lat": -41.33468876898409,
+    "lng": 174.77211961779096,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/island-bay",
+    "store_id": "bd66705a-97e1-42e0-8508-0e8fab40575e"
+  },
+  {
+    "name": "New World Kapiti",
+    "address": "159 Kapiti Rd, Paraparaumu 5032, Wellington",
+    "lat": -40.904593990344665,
+    "lng": 174.99544006864778,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/kapiti",
+    "store_id": "54005e52-4b3f-40b1-9b22-cd473681bc3f"
+  },
+  {
+    "name": "New World Karori",
+    "address": "Karori Mall, 236 Karori Rd, Wellington 6012",
+    "lat": -41.28438137273607,
+    "lng": 174.73836452209014,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/karori",
+    "store_id": "630f4f29-e499-46da-b26e-10163a7ef59f"
+  },
+  {
+    "name": "New World Khandallah",
+    "address": "26 Ganges Rd, Khandallah, Wellington 6035",
+    "lat": -41.247596783442326,
+    "lng": 174.7917410123032,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/khandallah",
+    "store_id": "49de7314-fe1c-4557-a351-f9a3fabc336a"
+  },
+  {
+    "name": "New World Miramar",
+    "address": "48 Miramar Avenue, Wellington 6022",
+    "lat": -41.31575041287984,
+    "lng": 174.81455999881132,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/miramar",
+    "store_id": "a82d86a5-c012-48e3-81b9-6a9689e0572f"
+  },
+  {
+    "name": "New World Newlands",
+    "address": "Cnr. Newlands Rd and Bracken Rd, Newlands, Wellington 6037",
+    "lat": -41.22366056326873,
+    "lng": 174.8233100607132,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/newlands",
+    "store_id": "b3b312f8-f2c2-43fd-bf08-ce5fc27b21b0"
+  },
+  {
+    "name": "New World Newtown",
+    "address": "Riddiford St, Newtown, Wellington 6021",
+    "lat": -41.31158426950263,
+    "lng": 174.7792744779099,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/newtown",
+    "store_id": "7d72b106-d6a6-4b9c-9f5f-f7b2aac17315"
+  },
+  {
+    "name": "New World Otaki",
+    "address": "155-163 Main Highway, Otaki  5512",
+    "lat": -40.763601470301516,
+    "lng": 175.15372435952452,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/otaki",
+    "store_id": "7e81eca9-9286-40d3-af18-3e31f7c64f9b"
+  },
+  {
+    "name": "New World Paremata",
+    "address": "93-97 Mana Esplanade, Paremata 5026",
+    "lat": -41.0941126,
+    "lng": 174.86861520000002,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/paremata",
+    "store_id": "b2714db5-76b7-403a-87be-7cb0a6d6d202"
+  },
+  {
+    "name": "New World Porirua",
+    "address": "Lyttelton Ave, Porirua 5022",
+    "lat": -41.13633608091196,
+    "lng": 174.84196316217958,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/porirua",
+    "store_id": "9afaf6f5-6a20-456a-aa1c-2b266c391158"
+  },
+  {
+    "name": "New World Silverstream",
+    "address": "28 Whiteman's Rd, Silverstream 5019",
+    "lat": -41.14844030000001,
+    "lng": 175.0125409110451,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/silverstream",
+    "store_id": "0d3dfec1-a62a-4b6c-a373-2df8e00c75f1"
+  },
+  {
+    "name": "New World Stokes Valley",
+    "address": "Oates/Evans Sts, Stokes Valley 5019",
+    "lat": -41.1743755,
+    "lng": 174.98060629999998,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/stokes-valley",
+    "store_id": "c2d08e83-abbb-48b0-9dfb-30def016bc3c"
+  },
+  {
+    "name": "New World Tawa",
+    "address": "35 Oxford Street Tawa, Wellington 5028",
+    "lat": -41.1699618,
+    "lng": 174.82611020000002,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/tawa",
+    "store_id": "e635610a-ed19-4686-95cc-988fa49c4715"
+  },
+  {
+    "name": "New World Thorndon",
+    "address": "150 Molesworth Street, Thorndon, Wellington 6011",
+    "lat": -41.2741834,
+    "lng": 174.77837539999996,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/thorndon",
+    "store_id": "0d03bc2e-1d75-4cd9-9e88-7548bed525d4"
+  },
+  {
+    "name": "New World Waikanae",
+    "address": "5 Parata Street, Waikanae 5036",
+    "lat": -40.875077320376306,
+    "lng": 175.06532816195386,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/waikanae",
+    "store_id": "5ea0a54c-1288-472e-b196-05b3c96cac79"
+  },
+  {
+    "name": "New World Wellington City",
+    "address": "279 Wakefield St Wellington 6011",
+    "lat": -41.29265839203521,
+    "lng": 174.78456528843003,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/wellington-city",
+    "store_id": "e7a1d80f-71bd-4f01-9d64-dd5801c21443"
+  },
+  {
+    "name": "New World Whitby",
+    "address": "Whitby Village Cntr, Whitby, Porirua 5022",
+    "lat": -41.11690113321618,
+    "lng": 174.8931127393173,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/whitby",
+    "store_id": "0bce26bb-7ce7-43c2-8217-8fa4605a9811"
+  },
+  {
+    "name": "New World Willis Street Metro",
+    "address": "68 - 70 Willis Street, Wellington 6011",
+    "lat": -41.28794410093786,
+    "lng": 174.77526972579494,
+    "url": "https://www.newworld.co.nz/lower-north-island/wellington/willis-street-metro",
+    "store_id": "c367a539-76f6-4cff-827a-f43e7f55efab"
+  },
+  {
+    "name": "New World Greenmeadows",
+    "address": "9 Gloucester Street, Greenmeadows, Napier 4112",
+    "lat": -39.52532115621828,
+    "lng": 176.86241035952457,
+    "url": "https://www.newworld.co.nz/lower-north-island/gisborne-and-hawkes-bay/greenmeadows",
+    "store_id": "3f8e3ba8-4cd0-4681-8859-7446d4ac78ce"
+  },
+  {
+    "name": "New World Hastings",
+    "address": "400 E Heretaunga St, Hastings 4122",
+    "lat": -39.64478211764582,
+    "lng": 176.84642966501235,
+    "url": "https://www.newworld.co.nz/lower-north-island/gisborne-and-hawkes-bay/hastings-city",
+    "store_id": "9a3d9d9e-2d2f-4cc4-ac83-2e46e0a91c86"
+  },
+  {
+    "name": "New World Havelock North",
+    "address": "34 Havelock Road, Havelock North 4130",
+    "lat": -39.67142996612413,
+    "lng": 176.87719756707304,
+    "url": "https://www.newworld.co.nz/lower-north-island/gisborne-and-hawkes-bay/havelock-north",
+    "store_id": "e1e3e0c5-23fe-46e2-bda0-19a9e779310b"
+  },
+  {
+    "name": "New World Onekawa",
+    "address": "Maadi Rd Onekawa, Napier 4110",
+    "lat": -39.50908092775704,
+    "lng": 176.88830432970803,
+    "url": "https://www.newworld.co.nz/lower-north-island/gisborne-and-hawkes-bay/onekawa",
+    "store_id": "9535653c-b8f8-46ed-bebf-62ab629a7fcb"
+  },
+  {
+    "name": "New World Waipukurau",
+    "address": "27 Russell St, Waipukurau 4200",
+    "lat": -39.99440815871209,
+    "lng": 176.55466689514537,
+    "url": "https://www.newworld.co.nz/lower-north-island/gisborne-and-hawkes-bay/waipukurau",
+    "store_id": "17a1fa39-6075-41e6-91f5-ca6e40055866"
+  },
+  {
+    "name": "New World Wairoa",
+    "address": "51 Queen St, Wairoa 4108",
+    "lat": -39.032844182750345,
+    "lng": 177.4170051237035,
+    "url": "https://www.newworld.co.nz/lower-north-island/gisborne-and-hawkes-bay/wairoa",
+    "store_id": "ee557963-22a0-46e1-b2d9-a5091ea98500"
+  },
+  {
+    "name": "New World Inglewood",
+    "address": "58 Matai Street, Inglewood, 4330",
+    "lat": -39.1582142,
+    "lng": 174.20708000000002,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/inglewood",
+    "store_id": "49a97e2b-c515-4f04-b408-3ed9ef07fa7d"
+  },
+  {
+    "name": "New World Merrilands",
+    "address": "200 Mangorei Rd, New Plymouth 4312",
+    "lat": -39.0665900012923,
+    "lng": 174.10298980492826,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/merrilands",
+    "store_id": "82a6ac9d-d6d2-4113-b538-ca5c48e895ed"
+  },
+  {
+    "name": "New World New Plymouth",
+    "address": "78 Courtenay St, New Plymouth 4310",
+    "lat": -39.057820648682345,
+    "lng": 174.07774067301636,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/new-plymouth",
+    "store_id": "d49b46da-3ed3-4f43-892e-2ef167d5948d"
+  },
+  {
+    "name": "New World Ohakune",
+    "address": "12 Goldfinch St, Ohakune 4625",
+    "lat": -39.417736883682814,
+    "lng": 175.39896871163944,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/ohakune",
+    "store_id": "745ae416-7a42-4624-a310-f452d7ce69ab"
+  },
+  {
+    "name": "New World Stratford",
+    "address": "124 Regan Street, Stratford 4332",
+    "lat": -39.33721017594809,
+    "lng": 174.2863747975532,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/stratford",
+    "store_id": "6df76158-e434-4b6f-bcfe-40b704efcfee"
+  },
+  {
+    "name": "New World Taihape",
+    "address": "112-114 Hautapu St, Taihape 4742",
+    "lat": -39.67708309439308,
+    "lng": 175.7985378337296,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/taihape",
+    "store_id": "55d43e64-0d80-4137-863b-0409514b9668"
+  },
+  {
+    "name": "New World Waitara",
+    "address": "42 Queen St, Waitara 4320",
+    "lat": -39.00067269567099,
+    "lng": 174.23666144722142,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/waitara",
+    "store_id": "43e8f39a-8d98-4982-aea5-ccc2fb7a5549"
+  },
+  {
+    "name": "New World Whanganui",
+    "address": "374 Victoria Avenue, Whanganui 4500",
+    "lat": -39.92621127726964,
+    "lng": 175.04095835826638,
+    "url": "https://www.newworld.co.nz/lower-north-island/taranaki-and-whanganui/whanganui",
+    "store_id": "3433f3fc-164e-4c1c-8a04-1122564c88ad"
+  },
+  {
+    "name": "New World Kaikohe",
+    "address": "8 Marino Place, Kaikohe 0405",
+    "lat": -35.4085745,
+    "lng": 173.80003450000004,
+    "url": "https://www.newworld.co.nz/upper-north-island/northland/kaikohe",
+    "store_id": "b7cbc938-a10b-4abc-8372-7a1ec2b3d1c3"
+  },
+  {
+    "name": "New World Kerikeri",
+    "address": "99 Kerikeri Rd, Kerikeri 0230",
+    "lat": -35.22628419999999,
+    "lng": 173.95033309999997,
+    "url": "https://www.newworld.co.nz/upper-north-island/northland/kerikeri",
+    "store_id": "5a193713-bcc5-41a7-925f-2e69319948ab"
+  },
+  {
+    "name": "New World Mangawhai",
+    "address": "83 Molesworth Drive, Mangawhai 0505",
+    "lat": -36.11278958115037,
+    "lng": 174.57461655342226,
+    "url": "https://www.newworld.co.nz/upper-north-island/northland/mangawhai",
+    "store_id": "e2679282-04c2-47f4-9e90-dd02229d4c2a"
+  },
+  {
+    "name": "New World Onerahi",
+    "address": "128 Onerahi Rd, Onerahi, Whangarei 0110",
+    "lat": -35.7557374,
+    "lng": 174.36793710000006,
+    "url": "https://www.newworld.co.nz/upper-north-island/northland/onerahi",
+    "store_id": "54c0334c-d623-40a4-acbc-e199a3fb422a"
+  },
+  {
+    "name": "New World Regent",
+    "address": "167 Bank St, Regent, Whangarei 0112",
+    "lat": -35.7162841293658,
+    "lng": 174.32239777731547,
+    "url": "https://www.newworld.co.nz/upper-north-island/northland/regent",
+    "store_id": "4fb3adfc-9b05-4b7b-a59d-99b4446f2df4"
+  },
+  {
+    "name": "New World Alexandra",
+    "address": "89 Centennial Ave, Alexandra 9320",
+    "lat": -45.24997842719459,
+    "lng": 169.38690538836056,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/alexandra",
+    "store_id": "82663599-57e5-459a-8ec5-c589f44798a7"
+  },
+  {
+    "name": "New World Balclutha",
+    "address": "Lanark Street, Balclutha 9230",
+    "lat": -46.23822343731679,
+    "lng": 169.74314657130276,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/balclutha",
+    "store_id": "8c199639-f4c4-483b-892e-5ad996989e09"
+  },
+  {
+    "name": "New World Centre City",
+    "address": "133 Great King St. Dunedin 9016",
+    "lat": -45.87197608712517,
+    "lng": 170.5073162760574,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/centre-city",
+    "store_id": "a5e35f61-5fcc-4e84-9e05-ee40e2a03253"
+  },
+  {
+    "name": "New World Cromwell",
+    "address": "2 Murray Terrace, Cromwell 9310",
+    "lat": -45.037826488553335,
+    "lng": 169.19449463439332,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/cromwell",
+    "store_id": "493f4890-11b2-4118-b6e4-02edafff54c4"
+  },
+  {
+    "name": "New World Elles Road",
+    "address": "244 Elles Road, Invercargill 9812",
+    "lat": -46.42712459756811,
+    "lng": 168.3615710508568,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/elles-road",
+    "store_id": "0ea8d416-1014-40e0-a61c-761a427ba41c"
+  },
+  {
+    "name": "New World Gardens",
+    "address": "6 North Road, Dunedin 9010",
+    "lat": -45.8548406,
+    "lng": 170.5197442,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/gardens",
+    "store_id": "03eb4501-5dae-4947-b79f-fbb632b3c4d0"
+  },
+  {
+    "name": "New World Gore",
+    "address": "2-8 Irk Street, Gore 9710",
+    "lat": -46.09981526747112,
+    "lng": 168.9432011288361,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/gore",
+    "store_id": "ef38693e-d71b-4935-9bdb-e032b02801cb"
+  },
+  {
+    "name": "New World Mosgiel",
+    "address": "10 Hartstonge Ave, Mosgiel 9024",
+    "lat": -45.87236559999999,
+    "lng": 170.3491358,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/mosgiel",
+    "store_id": "1fa5f466-3038-4986-bab9-c5450c95cb89"
+  },
+  {
+    "name": "New World Oamaru",
+    "address": "Main South Road, Oamaru 9491",
+    "lat": -45.10224737631286,
+    "lng": 170.9549016779099,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/oamaru",
+    "store_id": "9c3201e2-f533-4daf-88d1-16255a157733"
+  },
+  {
+    "name": "New World Queenstown",
+    "address": "1/12 Hawthorne Drive Remarkables Park, Queenstown 9300 New Zealand ",
+    "lat": -45.02542622917406,
+    "lng": 168.74275103558193,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/queenstown",
+    "store_id": "7bc6fbdb-02d9-446f-9e06-5f7cc87b3723"
+  },
+  {
+    "name": "New World Three Parks",
+    "address": "83 Sir Tim Wallis Drive, Wanaka 9382",
+    "lat": -44.705353,
+    "lng": 169.150362,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/three-parks",
+    "store_id": "289ff144-199b-4d27-b9e3-a027cba7db76"
+  },
+  {
+    "name": "New World Waitaki",
+    "address": "402 Thames Highway, Oamaru 9400",
+    "lat": -45.07653282222119,
+    "lng": 170.98494433068845,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/waitaki",
+    "store_id": "fdd073fd-eacf-4e38-8439-675650c469f9"
+  },
+  {
+    "name": "New World Windsor",
+    "address": "51 Windsor Street, Invercargill 9810",
+    "lat": -46.395395278379524,
+    "lng": 168.36621291111453,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/windsor",
+    "store_id": "2b7b79a2-b442-4f1c-84f0-f5d8e8097281"
+  },
+  {
+    "name": "New World Winton",
+    "address": "293 Great North Road, Winton 9720",
+    "lat": -46.14153680506192,
+    "lng": 168.3253851152748,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/winton",
+    "store_id": "4cbd9024-a081-4faf-8a56-8994e45f924c"
+  },
+  {
+    "name": "New World W\u0101naka",
+    "address": "20 Dunmore Street Wanaka 9305 New Zealand ",
+    "lat": -44.6964383,
+    "lng": 169.13505140000007,
+    "url": "https://www.newworld.co.nz/south-island/otago-and-southland/wanaka",
+    "store_id": "4c6aecce-4bce-42fa-8e2d-05c13ec75329"
+  },
+  {
+    "name": "New World Ashburton",
+    "address": "75 Moore Street, Ashburton 7700",
+    "lat": -43.90379228304583,
+    "lng": 171.74383427420503,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/ashburton",
+    "store_id": "8cd33dca-5be6-462c-920e-5d1c0dfc4609"
+  },
+  {
+    "name": "New World Bishopdale",
+    "address": "Bishopdale Mall, Cnr Farrington Ave & Harewood Rd, Christchurch 8053",
+    "lat": -43.4883881678695,
+    "lng": 172.58712833013726,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/bishopdale",
+    "store_id": "251be333-3b87-4493-b040-f138a09a252b"
+  },
+  {
+    "name": "New World Durham Street",
+    "address": "175 Durham Street South, Christchurch 8011",
+    "lat": -43.538668,
+    "lng": 172.633512,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/durham-street",
+    "store_id": "df80b521-3a63-42fe-8b9e-da815fbdfd6a"
+  },
+  {
+    "name": "New World Fendalton",
+    "address": "19-23 Memorial Avenue, Christchurch 8053",
+    "lat": -43.51788708337433,
+    "lng": 172.58833822698364,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/fendalton",
+    "store_id": "5316bf52-5fdd-46ba-b482-9e59771179ed"
+  },
+  {
+    "name": "New World Ferry Road",
+    "address": "7-11 St John Street, Woolston, Christchurch 8062",
+    "lat": -43.54936274246441,
+    "lng": 172.68439926745907,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/ferry-road",
+    "store_id": "59ef8d2f-f625-4cee-9a0a-122481d5aeba"
+  },
+  {
+    "name": "New World Halswell",
+    "address": "346 Halswell Road, Christchurch 8025",
+    "lat": -43.58062650304889,
+    "lng": 172.56601248941047,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/halswell",
+    "store_id": "04224ad2-33df-40e3-957d-1e555569096b"
+  },
+  {
+    "name": "New World Ilam",
+    "address": "47C - 57C Peer St, Upper Riccarton, Christchurch 8041",
+    "lat": -43.52601457999897,
+    "lng": 172.5701913994751,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/ilam",
+    "store_id": "b48d30e1-cf23-4c22-8b9e-8506768a30fb"
+  },
+  {
+    "name": "New World Kaiapoi",
+    "address": "52 Charles Street, Kaiapoi 7630",
+    "lat": -43.38242754207865,
+    "lng": 172.65910290244676,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/kaiapoi",
+    "store_id": "9ea79c48-9985-4e80-b7ed-77938bf81eb0"
+  },
+  {
+    "name": "New World Lincoln",
+    "address": "77 Gerald Street, Lincoln 7608",
+    "lat": -43.64125749999999,
+    "lng": 172.47546609999995,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/lincoln",
+    "store_id": "19605f04-32b8-4637-a880-d992bb17702a"
+  },
+  {
+    "name": "New World Northwood",
+    "address": "2 Mounter Ave, Christchurch 8051",
+    "lat": -43.4596218,
+    "lng": 172.62246570000002,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/northwood",
+    "store_id": "b69c6288-1c24-4344-aff2-b3710ed58e80"
+  },
+  {
+    "name": "New World Prestons",
+    "address": "420 Marshland Rd, Marshland, Christchurch 8083",
+    "lat": -43.4751212,
+    "lng": 172.6598818,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/prestons",
+    "store_id": "47217b47-02da-4608-beb3-d8194c1863ea"
+  },
+  {
+    "name": "New World Rangiora",
+    "address": "10 Good Street, Rangiora 7400",
+    "lat": -43.30258096769941,
+    "lng": 172.5946530424667,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/rangiora",
+    "store_id": "01d753e2-3d29-422c-a7b4-efcda4d01730"
+  },
+  {
+    "name": "New World Ravenswood",
+    "address": "10 Bob Robertson Drive, Woodend 7691",
+    "lat": -43.30781820781236,
+    "lng": 172.67129735619514,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/ravenswood",
+    "store_id": "5529a068-9eab-470e-afca-b5d74ff1a9bb"
+  },
+  {
+    "name": "New World Rolleston",
+    "address": "92 Rolleston Drive, Rolleston 7614",
+    "lat": -43.5967006,
+    "lng": 172.3824743,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/rolleston",
+    "store_id": "55308166-5f15-4484-b8ad-090a9a2fe70a"
+  },
+  {
+    "name": "New World St Martins",
+    "address": "92 Wilsons Road, Christchurch 8023",
+    "lat": -43.55767693822415,
+    "lng": 172.6543260490738,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/st-martins",
+    "store_id": "dfbcbe60-126d-439b-99e1-246151a418b8"
+  },
+  {
+    "name": "New World Stanmore",
+    "address": "288 Stanmore Road, Christchurch 8013",
+    "lat": -43.5199514,
+    "lng": 172.65720199999998,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/stanmore",
+    "store_id": "d2e588ce-4efc-4835-9eec-b758ccf7f5f3"
+  },
+  {
+    "name": "New World Temuka",
+    "address": "185 King Street, Temuka 7920",
+    "lat": -44.24124099819932,
+    "lng": 171.2767606141556,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/temuka",
+    "store_id": "8bd6e6ba-7e99-48dd-b64b-0af564772518"
+  },
+  {
+    "name": "New World Timaru",
+    "address": "145 Wai-Iti Road, Highfield, Timaru 7910",
+    "lat": -44.390375435589306,
+    "lng": 171.2257500391479,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/timaru",
+    "store_id": "51d31d5e-42a6-46b6-9630-9974560d561e"
+  },
+  {
+    "name": "New World Waimate",
+    "address": "95 Queen Street, Waimate 7924",
+    "lat": -44.73373136521461,
+    "lng": 171.0479253318772,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/waimate",
+    "store_id": "57a14294-0478-40f0-8574-bef60b6d7e90"
+  },
+  {
+    "name": "New World Wigram",
+    "address": "51 Skyhawk Road, Wigram 8042 Christchurch, New Zealand",
+    "lat": -43.55264520254251,
+    "lng": 172.55784152327874,
+    "url": "https://www.newworld.co.nz/south-island/canterbury/wigram",
+    "store_id": "c1aaca1e-691d-4dd6-ba2f-c35779af98c0"
+  },
+  {
+    "name": "New World Blenheim",
+    "address": "4 Freswick Street, Blenheim 7201",
+    "lat": -41.51379730228377,
+    "lng": 173.9615690190144,
+    "url": "https://www.newworld.co.nz/south-island/nelson-city-and-marlborough/blenheim",
+    "store_id": "ba49b524-ef39-4241-afa6-a2c75017d100"
+  },
+  {
+    "name": "New World Kaikoura",
+    "address": "124-128 Beach Road, Kaik\u014dura 7300",
+    "lat": -42.3872551319319,
+    "lng": 173.67963578836066,
+    "url": "https://www.newworld.co.nz/south-island/nelson-city-and-marlborough/kaikoura",
+    "store_id": "e0744cc6-ae58-40db-9375-3d831bcc35e6"
+  },
+  {
+    "name": "New World Motueka",
+    "address": "271 High Street, Motueka 7120",
+    "lat": -41.11459007923456,
+    "lng": 173.01104189629518,
+    "url": "https://www.newworld.co.nz/south-island/nelson-city-and-marlborough/motueka",
+    "store_id": "230abe42-24eb-4dc0-a281-ffd5d9049820"
+  },
+  {
+    "name": "New World Nelson City",
+    "address": "Cnr Vanguard & Gloucester Street, Nelson South, Nelson 7010",
+    "lat": -41.27550125041954,
+    "lng": 173.2781730564834,
+    "url": "https://www.newworld.co.nz/south-island/nelson-city-and-marlborough/nelson-city",
+    "store_id": "328be0b4-018e-41cb-9ee1-6c8c54180fde"
+  },
+  {
+    "name": "New World Stoke",
+    "address": "107 Neale Avenue, Stoke, Nelson 7011",
+    "lat": -41.312423417786846,
+    "lng": 173.2326705259727,
+    "url": "https://www.newworld.co.nz/south-island/nelson-city-and-marlborough/stoke",
+    "store_id": "573a0a21-8078-4a6b-a7f3-185a794780c2"
+  },
+  {
+    "name": "New World Greymouth",
+    "address": "Cnr High & Marlborough St, Greymouth 7805",
+    "lat": -42.46279314643514,
+    "lng": 171.1955762619018,
+    "url": "https://www.newworld.co.nz/south-island/west-coast/greymouth",
+    "store_id": "407b4a20-b431-4a72-ba40-b605a8b74566"
+  },
+  {
+    "name": "New World Hokitika",
+    "address": "116 Revell Street, Hokitika 7810",
+    "lat": -42.7166124,
+    "lng": 170.96298090000005,
+    "url": "https://www.newworld.co.nz/south-island/west-coast/hokitika",
+    "store_id": "f7ddedd1-ba6e-49d2-92fb-ffb82b39e9aa"
+  },
+  {
+    "name": "New World Westport",
+    "address": "244 Palmerston Street, Westport 7825",
+    "lat": -41.75752144168201,
+    "lng": 171.5990722926598,
+    "url": "https://www.newworld.co.nz/south-island/west-coast/westport",
+    "store_id": "3aec7156-0089-41ac-9244-b0bfd9d3416b"
+  },
+  {
+    "name": "PAK'nSAVE Albany",
+    "address": "Don McKinnon Drive, Albany, Auckland, 0632",
+    "lat": -36.729808878994575,
+    "lng": 174.70680696588443,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/albany",
+    "store_id": "45ad9311-4dcb-4e80-ac0f-d2b9454d9ab2"
+  },
+  {
+    "name": "PAK'nSAVE Alderman Drive Henderson",
+    "address": "Alderman Drive, Henderson, 0612, Auckland",
+    "lat": -36.877244241144666,
+    "lng": 174.63259650912323,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/henderson",
+    "store_id": "043a18a5-1896-4038-8fbe-854b09a70acc"
+  },
+  {
+    "name": "PAK'nSAVE Blenheim",
+    "address": "1 Westwood Avenue, Springlands, Blenheim 7271",
+    "lat": -41.508641113181795,
+    "lng": 173.9234682364014,
+    "url": "https://www.paknsave.co.nz/south-island/marlborough/blenheim",
+    "store_id": "4724eb59-aa9d-4168-8b4f-98b66d9a8ebd"
+  },
+  {
+    "name": "PAK'nSAVE Botany",
+    "address": "Botany Town Centre,  501 Ti Rakau Drive, Northpark, Auckland, 2013",
+    "lat": -36.9304221677906,
+    "lng": 174.91303057472987,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/botany",
+    "store_id": "3e8dd420-209c-4875-8a17-662c98667579"
+  },
+  {
+    "name": "PAK'nSAVE Cameron Road",
+    "address": "476 Cameron Road, Tauranga, 3110",
+    "lat": -37.6966817,
+    "lng": 176.16163640000002,
+    "url": "https://www.paknsave.co.nz/upper-north-island/bay-of-plenty/cameron-road",
+    "store_id": "82492ab5-fefe-4126-a555-a3b019ba0baf"
+  },
+  {
+    "name": "PAK'nSAVE Clarence Street",
+    "address": "Clarence Street, Hamilton, 3204",
+    "lat": -37.795552953924386,
+    "lng": 175.2828432873108,
+    "url": "https://www.paknsave.co.nz/upper-north-island/waikato/clarence-street",
+    "store_id": "485b7f5b-af99-46f5-8a36-7079104d0f5b"
+  },
+  {
+    "name": "PAK'nSAVE Clendon",
+    "address": "16 Robert Ross Pl, Clendon Park, Auckland 2103",
+    "lat": -37.0225949,
+    "lng": 174.86378490000004,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/clendon",
+    "store_id": "19e5b3ac-11bb-4682-920d-8c1df0a920df"
+  },
+  {
+    "name": "PAK'nSAVE Dunedin",
+    "address": "86 Hillside Rd, South Dunedin, Dunedin 9012",
+    "lat": -45.8925435,
+    "lng": 170.49902499999996,
+    "url": "https://www.paknsave.co.nz/south-island/otago-and-southland/dunedin",
+    "store_id": "7f08c21e-71a1-4006-abdd-e56b650e2687"
+  },
+  {
+    "name": "PAK'nSAVE Gisborne City",
+    "address": "Childers Road, Gisborne, 4412",
+    "lat": -38.66422351203077,
+    "lng": 178.02097051468047,
+    "url": "https://www.paknsave.co.nz/upper-north-island/gisborne/gisborne-city",
+    "store_id": "5b2f56b1-0878-4838-8c4a-5686f9287738"
+  },
+  {
+    "name": "PAK'nSAVE Glen Innes",
+    "address": "182 Apirana Ave, Glen Innes, Auckland 1072",
+    "lat": -36.87579127734869,
+    "lng": 174.8549276736801,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/glen-innes",
+    "store_id": "f6bfae17-e537-4c86-8ce1-35b9c6a230ff"
+  },
+  {
+    "name": "PAK'nSAVE Hastings",
+    "address": "602 Heretaunga St W, St Leonards, Hastings 4120",
+    "lat": -39.63672361789621,
+    "lng": 176.83679057053064,
+    "url": "https://www.paknsave.co.nz/lower-north-island/hawkes-bay/hastings",
+    "store_id": "7b458864-391e-4d73-a3d6-0bfdeee7d1bd"
+  },
+  {
+    "name": "PAK'nSAVE Highland Park",
+    "address": "503-505 Pakuranga Road, Highland Park 2010",
+    "lat": -36.898183833728524,
+    "lng": 174.90689968044774,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/highland-park",
+    "store_id": "96ebf31a-9a47-4cf9-bb95-b0ef96e9a000"
+  },
+  {
+    "name": "PAK'nSAVE Hornby",
+    "address": "The Hub 418 Main S Rd, Hornby, Christchurch 8042",
+    "lat": -43.542540854010916,
+    "lng": 172.52275767116396,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/hornby",
+    "store_id": "a042bde4-d926-4218-9c70-60dbee48a104"
+  },
+  {
+    "name": "PAK'nSAVE H\u0101wera",
+    "address": "54 Princes St, Hawera 4610",
+    "lat": -39.590975393274846,
+    "lng": 174.28380106322936,
+    "url": "https://www.paknsave.co.nz/lower-north-island/taranaki-and-wanganui/hawera",
+    "store_id": "af828dbf-a80c-4abf-ba37-d28f0161b089"
+  },
+  {
+    "name": "PAK'nSAVE Invercargill",
+    "address": "95 Tay St, Invercargill, 9810",
+    "lat": -46.41404731693401,
+    "lng": 168.35311259881132,
+    "url": "https://www.paknsave.co.nz/south-island/otago-and-southland/invercargill",
+    "store_id": "f3e26155-e3fd-46e8-a335-9d1e8648bc08"
+  },
+  {
+    "name": "PAK'nSAVE Kait\u0101ia",
+    "address": "111 North Road, Kaitaia, 0482",
+    "lat": -35.099299164661204,
+    "lng": 173.2583690300247,
+    "url": "https://www.paknsave.co.nz/upper-north-island/northland/kaitaia",
+    "store_id": "a48974cd-eec5-4ca1-852e-061925124824"
+  },
+  {
+    "name": "PAK'nSAVE Kapiti",
+    "address": "200 Rimu Rd, Paraparaumu 5032",
+    "lat": -40.91813743434153,
+    "lng": 175.00241606483462,
+    "url": "https://www.paknsave.co.nz/lower-north-island/wellington/kapiti",
+    "store_id": "6a699fbb-8178-4ea7-a6b5-023d1d5eaa8e"
+  },
+  {
+    "name": "PAK'nSAVE Kilbirnie",
+    "address": "78 Rongotai Rd, Kilbirnie, Wellington 6022",
+    "lat": -41.3191131401515,
+    "lng": 174.79664958465582,
+    "url": "https://www.paknsave.co.nz/lower-north-island/wellington/kilbirnie",
+    "store_id": "281f38c4-1840-4ddf-9c44-d5af1d72375e"
+  },
+  {
+    "name": "PAK'nSAVE Levin",
+    "address": "508 Queen St, East, Levin 5510",
+    "lat": -40.6226012,
+    "lng": 175.28767790000006,
+    "url": "https://www.paknsave.co.nz/lower-north-island/manawatu-and-wairarapa/levin",
+    "store_id": "91d62420-8a72-48ac-b8dc-b6efae5cf28e"
+  },
+  {
+    "name": "PAK'nSAVE Lincoln Road",
+    "address": "Lincoln Road, Shopping Centre, Henderson, Auckland 0610",
+    "lat": -36.85771522980529,
+    "lng": 174.62800493596797,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/lincoln-road",
+    "store_id": "11c03133-bd75-4ca7-9ce9-7d8993b3bb7d"
+  },
+  {
+    "name": "PAK'nSAVE Lower Hutt",
+    "address": "Brunswick Street, Lower Hutt",
+    "lat": -41.20545316450661,
+    "lng": 174.91345402698357,
+    "url": "https://www.paknsave.co.nz/lower-north-island/wellington/lower-hutt",
+    "store_id": "7e302709-587d-4ceb-9de9-1fbccc7095b8"
+  },
+  {
+    "name": "PAK'nSAVE Manukau",
+    "address": "6 Cavendish Dr, Manukau, Auckland 2104",
+    "lat": -36.98802575048856,
+    "lng": 174.88061620688472,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/manukau",
+    "store_id": "f2b38533-119b-4df0-8358-b1c21c235db9"
+  },
+  {
+    "name": "PAK'nSAVE Masterton",
+    "address": "Queen St, Kuripuni, Masterton 5810",
+    "lat": -40.95685301326806,
+    "lng": 175.64953604683535,
+    "url": "https://www.paknsave.co.nz/lower-north-island/manawatu-and-wairarapa/masterton",
+    "store_id": "68da6299-ec42-4615-9fb8-dc21289614d6"
+  },
+  {
+    "name": "PAK'nSAVE Mill Street",
+    "address": "Mill Street, Hamilton, 3200",
+    "lat": -37.77993631539925,
+    "lng": 175.27278621191715,
+    "url": "https://www.paknsave.co.nz/upper-north-island/waikato/mill-street",
+    "store_id": "a32d6559-7046-425e-b897-0e3e0dcb59b2"
+  },
+  {
+    "name": "PAK'nSAVE Moorhouse",
+    "address": "297 Moorhouse Ave, Sydenham, Christchurch 8011",
+    "lat": -43.53889986394847,
+    "lng": 172.63831266242676,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/moorhouse",
+    "store_id": "aead7cab-aa64-45c0-8202-68ef9323a5fc"
+  },
+  {
+    "name": "PAK'nSAVE Mt Albert",
+    "address": "1167/1177 New North Rd, Mount Albert, Auckland 1025",
+    "lat": -36.89287512877003,
+    "lng": 174.70593630118867,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/mt-albert",
+    "store_id": "c7889aae-c47f-40c8-b657-8950b699533b"
+  },
+  {
+    "name": "PAK'nSAVE M\u0101ngere",
+    "address": "Corner of Bader Drive and Orly Avenue, Mangere, Auckland, 2022",
+    "lat": -36.96848522089855,
+    "lng": 174.79689017990108,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/mangere",
+    "store_id": "b246d19e-cae2-46b0-8843-0a61f7bbf4ec"
+  },
+  {
+    "name": "PAK'nSAVE Napier",
+    "address": "25 Munroe St, Napier 4110",
+    "lat": -39.49475617041702,
+    "lng": 176.9135099174439,
+    "url": "https://www.paknsave.co.nz/lower-north-island/hawkes-bay/napier",
+    "store_id": "f6890ee3-9f6a-4f20-9337-c1360215adb5"
+  },
+  {
+    "name": "PAK'nSAVE New Plymouth",
+    "address": "53 Leach St, New Plymouth 4310",
+    "lat": -39.05713250666025,
+    "lng": 174.0810941166717,
+    "url": "https://www.paknsave.co.nz/lower-north-island/taranaki-and-wanganui/new-plymouth",
+    "store_id": "016a6a79-0547-4e05-89e9-722b50ce98f1"
+  },
+  {
+    "name": "PAK'nSAVE Ormiston",
+    "address": "1 Bellingham Rd, Flat Bush, Auckland 2019",
+    "lat": -36.9658713,
+    "lng": 174.9135973,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/ormiston",
+    "store_id": "b04cb427-b4fc-441a-b208-9156c7389fe3"
+  },
+  {
+    "name": "PAK'nSAVE Palmerston North",
+    "address": "327 Ferguson St, Palmerston North, 4410",
+    "lat": -40.359165906606584,
+    "lng": 175.6117189764435,
+    "url": "https://www.paknsave.co.nz/lower-north-island/manawatu-and-wairarapa/palmerston-north",
+    "store_id": "b57473d6-e3ea-43de-9efb-c35f3ccf858b"
+  },
+  {
+    "name": "PAK'nSAVE Papakura",
+    "address": "331 Great South Rd, Takanini, Auckland 2112",
+    "lat": -37.0531793356172,
+    "lng": 174.93109559814752,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/papakura",
+    "store_id": "1e2c05a0-c549-4e76-b329-269fdccf87af"
+  },
+  {
+    "name": "PAK'nSAVE Papanui",
+    "address": "171 Main North Road, Papanui, Christchurch, New Zealand",
+    "lat": -43.4853687809161,
+    "lng": 172.61498059995094,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/papanui",
+    "store_id": "179b8c1c-6f70-4f6c-9259-5007668ad323"
+  },
+  {
+    "name": "PAK'nSAVE Petone",
+    "address": "114-124 Jackson Street, Petone, Wellington",
+    "lat": -41.22470294976473,
+    "lng": 174.8724163403366,
+    "url": "https://www.paknsave.co.nz/lower-north-island/wellington/petone",
+    "store_id": "b181c5be-938f-4996-be57-89f6947d2d83"
+  },
+  {
+    "name": "PAK'nSAVE Porirua",
+    "address": "12 Parumoana Street, Porirua",
+    "lat": -41.13140698038279,
+    "lng": 174.84214849391788,
+    "url": "https://www.paknsave.co.nz/lower-north-island/wellington/porirua",
+    "store_id": "abd5da05-03b0-484e-88a5-0e8741e93fd3"
+  },
+  {
+    "name": "PAK'nSAVE Pukekohe",
+    "address": "Cnr Queen & Harris Streets, Pukekohe, 2120",
+    "lat": -37.20514315782106,
+    "lng": 174.8997812347793,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/pukekohe",
+    "store_id": "df0122f8-495b-4f46-8547-c804aeec62a6"
+  },
+  {
+    "name": "PAK'nSAVE P\u0101p\u0101moa",
+    "address": "42 Domain Road, P\u0101p\u0101moa, 3118",
+    "lat": -37.70207078315337,
+    "lng": 176.2844437595245,
+    "url": "https://www.paknsave.co.nz/upper-north-island/bay-of-plenty/papamoa",
+    "store_id": "f7f285bc-fcc1-4dca-b307-80f4ab0ec8d9"
+  },
+  {
+    "name": "PAK'nSAVE Queenstown",
+    "address": "302 Hawthorne Drive, Frankton, Queenstown 9300",
+    "lat": -45.010504273072165,
+    "lng": 168.7477875429688,
+    "url": "https://www.paknsave.co.nz/south-island/otago-and-southland/queenstown",
+    "store_id": "6a82e95b-b5f8-4e28-8a26-2d7a11f9809c"
+  },
+  {
+    "name": "PAK'nSAVE Rangiora",
+    "address": "2 Southbrook Rd, Waimakariri, Rangiora 7400",
+    "lat": -43.3250671,
+    "lng": 172.59902950000003,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/rangiora",
+    "store_id": "2753bc51-244e-4e26-ade0-7b1ed4bf0798"
+  },
+  {
+    "name": "PAK'nSAVE Riccarton",
+    "address": "Westfield Riccarton, 129 Riccarton Rd, Riccarton, Christchurch 8041",
+    "lat": -43.53099691110821,
+    "lng": 172.59617139601744,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/riccarton",
+    "store_id": "33aa9786-24f9-414a-839d-dd9ee1a20438"
+  },
+  {
+    "name": "PAK'nSAVE Richmond",
+    "address": "Richmond Mall, Cnr Queen, Croucher and, Talbot St, Richmond 7020",
+    "lat": -41.33854755797297,
+    "lng": 173.1866178447052,
+    "url": "https://www.paknsave.co.nz/south-island/nelson/richmond",
+    "store_id": "ef104347-9cec-4be8-a1b7-0c56e7af4c71"
+  },
+  {
+    "name": "PAK'nSAVE Rolleston",
+    "address": "157 Levi Road, Rolleston 7614",
+    "lat": -43.59731231644035,
+    "lng": 172.39645748466043,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/rolleston",
+    "store_id": "830db122-4c2a-4d74-970e-6594baa27faf"
+  },
+  {
+    "name": "PAK'nSAVE Rotorua",
+    "address": "Cnr Fenton & Amohau Streets, Rotorua, 3010",
+    "lat": -38.140670501023166,
+    "lng": 176.2546632338989,
+    "url": "https://www.paknsave.co.nz/upper-north-island/bay-of-plenty/rotorua",
+    "store_id": "7f2269de-d379-491a-bf7c-896753519302"
+  },
+  {
+    "name": "PAK'nSAVE Royal Oak",
+    "address": "691 Manukau Rd, Royal Oak, Auckland 1023",
+    "lat": -36.90998932351251,
+    "lng": 174.7744650484101,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/royal-oak",
+    "store_id": "bad10d5d-8101-4161-bc8a-d9641727e98a"
+  },
+  {
+    "name": "PAK'nSAVE Silverdale",
+    "address": "20 Hibiscus Coast Hwy, Silverdale 0993",
+    "lat": -36.6202668532456,
+    "lng": 174.6733221534423,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/silverdale",
+    "store_id": "f346c221-2c66-4cdc-b374-f6db9bb3ee3a"
+  },
+  {
+    "name": "PAK'nSAVE Sylvia Park",
+    "address": "Sylvia Park, 286 Mount Wellington Hwy, 1060",
+    "lat": -36.91337657846075,
+    "lng": 174.84018272485355,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/sylvia-park",
+    "store_id": "ba2a7e25-efcd-435a-8141-3c8e2e9a9157"
+  },
+  {
+    "name": "PAK'nSAVE Tamatea",
+    "address": "Cnr Leicester Avenue &, Coventry Ave, Tamatea, Napier 4112",
+    "lat": -39.51044968544057,
+    "lng": 176.8700025592468,
+    "url": "https://www.paknsave.co.nz/lower-north-island/hawkes-bay/tamatea",
+    "store_id": "6812f54f-fad1-4392-ba8a-5e1018203450"
+  },
+  {
+    "name": "PAK'nSAVE Taup\u014d",
+    "address": "Ruapehu Street, Taup\u014d",
+    "lat": -38.68592429583583,
+    "lng": 176.0733622701141,
+    "url": "https://www.paknsave.co.nz/upper-north-island/bay-of-plenty/taupo",
+    "store_id": "b97753bb-1cd4-4900-9652-d3910f6ffed5"
+  },
+  {
+    "name": "PAK'nSAVE Tauriko",
+    "address": "2 Taurikura Drive, Tauriko, 3110",
+    "lat": -37.73903551614102,
+    "lng": 176.10367663812872,
+    "url": "https://www.paknsave.co.nz/upper-north-island/bay-of-plenty/tauriko",
+    "store_id": "efd50b1d-85dd-4f65-a8e2-a7222cecb044"
+  },
+  {
+    "name": "PAK'nSAVE Te Awamutu",
+    "address": "670 Cambridge Road, Te Awamutu, 3800",
+    "lat": -38.00682872923822,
+    "lng": 175.3390396767212,
+    "url": "https://www.paknsave.co.nz/upper-north-island/waikato/te-awamutu",
+    "store_id": "2a32c3b5-a42a-4235-93cf-89c2f25f55d0"
+  },
+  {
+    "name": "PAK'nSAVE Thames",
+    "address": "100 Mary Street, Thames, 3500",
+    "lat": -37.13873016388177,
+    "lng": 175.5390519312134,
+    "url": "https://www.paknsave.co.nz/upper-north-island/waikato/thames",
+    "store_id": "d7afdbc4-d07c-4cd5-b085-2dd3f992560a"
+  },
+  {
+    "name": "PAK'nSAVE Timaru",
+    "address": "98 Evans St, Waimataitai, Timaru 7910",
+    "lat": -44.38326709923632,
+    "lng": 171.23646710237733,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/timaru",
+    "store_id": "ecc0b9ff-6a94-4618-bd02-13f9dba25801"
+  },
+  {
+    "name": "PAK'nSAVE Upper Hutt",
+    "address": "Gibbons Street, Upper Hutt",
+    "lat": -41.12401802104741,
+    "lng": 175.06666590265502,
+    "url": "https://www.paknsave.co.nz/lower-north-island/wellington/upper-hutt",
+    "store_id": "8a47232f-f97c-453a-8746-bc569f25741d"
+  },
+  {
+    "name": "PAK'nSAVE Wainoni",
+    "address": "174 Wainoni Rd, Avondale, Christchurch 8061",
+    "lat": -43.513245167402054,
+    "lng": 172.69400674498297,
+    "url": "https://www.paknsave.co.nz/south-island/canterbury/wainoni",
+    "store_id": "4afa651c-d856-444c-be43-940ce408f799"
+  },
+  {
+    "name": "PAK'nSAVE Wairau Road",
+    "address": "30-60 Wairau Rd, Glenfield, Auckland 0627",
+    "lat": -36.77892452513722,
+    "lng": 174.74403526613162,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/wairau-road",
+    "store_id": "839a536a-09ea-49d7-9013-3df2364b69b4"
+  },
+  {
+    "name": "PAK'nSAVE Warkworth",
+    "address": "Corner Hudson Road and SH1, Warkworth 0984",
+    "lat": -36.39165304184114,
+    "lng": 174.65097882813322,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/warkworth",
+    "store_id": "73a9149a-1c0c-4eb5-a4b5-1a0a4a052b01"
+  },
+  {
+    "name": "PAK'nSAVE Westgate",
+    "address": "17/19 Fred Taylor Dr, Massey, Auckland 0814",
+    "lat": -36.8207564,
+    "lng": 174.60893469999996,
+    "url": "https://www.paknsave.co.nz/upper-north-island/auckland/westgate",
+    "store_id": "101fbb4a-89d9-4d5b-a3ec-a358874bea29"
+  },
+  {
+    "name": "PAK'nSAVE Whakat\u0101ne",
+    "address": "King St, Kopeopeo, 3120",
+    "lat": -37.96165088922797,
+    "lng": 176.98260466925046,
+    "url": "https://www.paknsave.co.nz/upper-north-island/bay-of-plenty/whakatane",
+    "store_id": "0040d65a-460f-4fae-9092-88860cc61ae1"
+  },
+  {
+    "name": "PAK'nSAVE Whanganui",
+    "address": "167 Glasgow St, Whanganui, 4500",
+    "lat": -39.927046760984425,
+    "lng": 175.03935746018828,
+    "url": "https://www.paknsave.co.nz/lower-north-island/taranaki-and-wanganui/whanganui",
+    "store_id": "929e7491-7916-4b1a-b224-3fafe1cccf7c"
+  },
+  {
+    "name": "PAK'nSAVE Whang\u0101rei",
+    "address": "Walton Street, Whangarei, 0110",
+    "lat": -35.72604947197216,
+    "lng": 174.3246049735718,
+    "url": "https://www.paknsave.co.nz/upper-north-island/northland/whangarei",
+    "store_id": "02e2e069-ea88-4b4a-8baa-c39e3eee4afe"
+  }
+]
