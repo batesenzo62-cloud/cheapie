@@ -738,6 +738,26 @@ function expandGenericChainMatches(rows){
     const chain = chainNameFor(store.name);
     (idsByChain[chain] = idsByChain[chain] || []).push(store.id);
   });
+
+  // 2026-08-13 fix: reported directly — "Steinlager Classic Bottles 24 x
+  // 330mL" showed as $15.99 at Bottle-O Hastings, but Hastings' own real
+  // confirmed price for that exact product is $54.99. Root cause: Bottle-O
+  // designates one branch (Kingsland) as the generic fallback catalogue
+  // for the ~80 branches with no online shop of their own (see
+  // scrape_bottleo_products.py's FALLBACK_STORE_NAME) — Kingsland's real
+  // $15.99 also exists as a second, storeless "Bottle-O" row for exactly
+  // this purpose, and fanning it out indiscriminately to every branch
+  // overwrote/duplicated Hastings' own different, equally real price with
+  // someone else's. Skip fanning a generic match out to any branch that
+  // already has its own confirmed row for the exact same product in this
+  // batch — that branch's real data wins, not the generic approximation.
+  const confirmedProductsByStore = {};
+  rows.forEach(r => {
+    if(r.store_id){
+      (confirmedProductsByStore[r.store_id] = confirmedProductsByStore[r.store_id] || new Set()).add(r.product_name);
+    }
+  });
+
   const expanded = [];
   rows.forEach(r => {
     if(r.store_id){
@@ -746,7 +766,10 @@ function expandGenericChainMatches(rows){
     }
     const branchIds = idsByChain[r.store_name];
     if(branchIds && branchIds.length){
-      branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+      branchIds.forEach(id => {
+        const hasOwnConfirmedRow = confirmedProductsByStore[id] && confirmedProductsByStore[id].has(r.product_name);
+        if(!hasOwnConfirmedRow) expanded.push(mapRegionSearchRow(r, id));
+      });
     } else {
       expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
     }
