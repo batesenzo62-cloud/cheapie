@@ -35,13 +35,23 @@ this Firecrawl-based approach could never do properly anyway).
 
 NOTE on wine: none of the three supermarket chains has one single "wine"
 category the way they do for beer — it's split into red/white/rosé/etc.
-siblings. Red and white (the two biggest) are scraped as separate targets
-below, both tagged category "wine".
+siblings. Red, white, rosé and sparkling are scraped as separate targets
+below, all tagged category "wine".
 
-NOTE on pagination: none of these three JS-rendered supermarket chains
-revealed a confirmed pagination pattern under inspection, so they stay
-single-page for now to avoid guessing and burning credits on a wrong
-param.
+NOTE on cider: legal for supermarkets (unlike spirits) and was previously
+just missing from TARGETS below — added for New World/PAK'nSAVE, mapped to
+category "beer" (same convention already used for the independent chains,
+e.g. Black Bull/Bottle-O's cider->beer mapping).
+
+2026-08-12: added real pagination. Firecrawl already proved it can get
+through Cloudflare (that's how the single-page version got its first real
+products), so the open question was only ever whether the ?pg=N param
+does anything — not whether Firecrawl can reach page 2 at all. Rather than
+trust the param blindly (Liquorland's old ?p=N looked identical but
+silently kept returning page 1 every time — see scrape_liquorland_full.py
+for how that was caught), scrape_paginated_firecrawl() below compares each
+page's product names against the previous page and stops the moment they
+match, instead of just stopping on an arbitrary page cap.
 
 If a target returns 0 products, share the printed debug output with
 Claude and the URL can be corrected.
@@ -59,21 +69,42 @@ if not API_KEY:
         "instructions at the top of this file."
     )
 
-# Each target: (store_name, url, category)
+# Each target: (store_name, url, category). Not paginated — Woolworths'
+# category URLs show no visible page param at all (possibly infinite
+# scroll under the hood), and guessing one would repeat exactly the
+# mistake this file's docstring already warns about.
 TARGETS = [
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/beer/lager-ale-stout-beer", "beer"),
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/seltzer-alcoholic-kombucha", "rtd"),
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/red-wine", "wine"),
     ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/white-wine", "wine"),
-    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/beer?pg=1", "beer"),
-    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/seltzers--other-alcoholic-drinks?pg=1", "rtd"),
-    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/red-wine?pg=1", "wine"),
-    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/white-wine?pg=1", "wine"),
-    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/beer?pg=1", "beer"),
-    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/seltzers--other-alcoholic-drinks?pg=1", "rtd"),
-    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/red-wine?pg=1", "wine"),
-    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/white-wine?pg=1", "wine"),
 ]
+
+# Each target: (store_name, url_template, category). url_template contains
+# a literal "{page}" placeholder — New World/PAK'nSAVE's own URLs already
+# use a confirmed real "?pg=N" param (unlike Woolworths above), so these
+# go through scrape_paginated_firecrawl() instead of a single fetch.
+PAGINATED_TARGETS = [
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/beer?pg={page}", "beer"),
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/cider?pg={page}", "beer"),
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/seltzers--other-alcoholic-drinks?pg={page}", "rtd"),
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/red-wine?pg={page}", "wine"),
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/white-wine?pg={page}", "wine"),
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/rose-wine?pg={page}", "wine"),
+    ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/sparkling-wine?pg={page}", "wine"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/beer?pg={page}", "beer"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/cider?pg={page}", "beer"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/seltzers--other-alcoholic-drinks?pg={page}", "rtd"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/red-wine?pg={page}", "wine"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/white-wine?pg={page}", "wine"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/rose-wine?pg={page}", "wine"),
+    ("PAK'nSAVE", "https://www.paknsave.co.nz/shop/category/beer-wine-and-cider/sparkling-wine?pg={page}", "wine"),
+]
+
+# Bounds the worst case if pagination turns out to be real but the site
+# genuinely never runs out of pages (shouldn't happen for a single
+# category at one supermarket chain, but this is real money per page).
+MAX_PAGES_PER_TARGET = 15
 
 SCHEMA = {
     "type": "object",
@@ -146,6 +177,35 @@ def scrape_target(store_name, url, category):
     return result.get("data", {}).get("products", []), result
 
 
+def scrape_paginated_firecrawl(url_template):
+    # Verifies the pagination param is real instead of trusting it: stops
+    # the moment a page's product names exactly match the previous page's,
+    # rather than trusting ?pg=N to keep advancing just because the URL
+    # changed. See the module docstring for why this matters — Liquorland's
+    # old ?p=N param looked identical to this and silently returned page 1
+    # forever.
+    all_products = []
+    prev_names = None
+    for page in range(1, MAX_PAGES_PER_TARGET + 1):
+        url = url_template.format(page=page)
+        result = scrape_with_firecrawl(url)
+        products = result.get("data", {}).get("products", [])
+        if not products:
+            if page == 1:
+                print(f"  Raw response for debugging: {result}")
+            break
+        names = frozenset(p.get("product_name", "") for p in products)
+        if prev_names is not None and names == prev_names:
+            print(f"  page {page} identical to page {page - 1} — pagination isn't real here, stopping")
+            break
+        print(f"  page {page}: {len(products)} products")
+        all_products.extend(products)
+        prev_names = names
+        if page < MAX_PAGES_PER_TARGET:
+            time.sleep(2)
+    return all_products
+
+
 def main():
     all_products = []
     for store_name, url, category in TARGETS:
@@ -155,6 +215,20 @@ def main():
             print(f"  Found {len(products)} products total.")
             if not products:
                 print(f"  Raw response for debugging: {last_result}")
+            for p in products:
+                p["store"] = store_name
+                p["category"] = category
+                p["fetched_at"] = time.strftime("%Y-%m-%d %H:%M")
+                all_products.append(p)
+        except Exception as exc:
+            print(f"  Could not scrape {store_name} ({category}): {exc}")
+        time.sleep(2)
+
+    for store_name, url_template, category in PAGINATED_TARGETS:
+        print(f"Scraping {store_name} ({category}) via Firecrawl (paginated)...")
+        try:
+            products = scrape_paginated_firecrawl(url_template)
+            print(f"  Found {len(products)} products total.")
             for p in products:
                 p["store"] = store_name
                 p["category"] = category
