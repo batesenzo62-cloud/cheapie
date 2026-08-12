@@ -36,6 +36,7 @@ Output: independent_store_prices.csv (now includes a "category" column)
 """
 
 import csv
+import json
 import re
 import time
 import requests
@@ -332,6 +333,19 @@ TARGETS = [
     ("Glengarry", "https://www.glengarrywines.co.nz/search?criteria=whisky", "spirits", "glengarry"),
     ("Glengarry", "https://www.glengarrywines.co.nz/search?criteria=vodka", "spirits", "glengarry"),
     ("Glengarry", "https://www.glengarrywines.co.nz/search?criteria=gin", "spirits", "glengarry"),
+    # 2026-08-13: Liquor Mart added — a genuine independent NZ liquor
+    # retailer, real server-rendered Shopify storefront (a different theme
+    # than Thirsty Liquor/Black Bull, hence "shopify_json" not "shopify" —
+    # see parse_shopify_json_cards). Confirmed all six category URLs return
+    # real products (5-29 each) and pagination genuinely advances (page 2/3
+    # mostly distinct product sets, not a repeat of page 1).
+    ("Liquor Mart", "https://liquormart.co.nz/collections/beer", "beer", "shopify_json"),
+    ("Liquor Mart", "https://liquormart.co.nz/collections/cider", "beer", "shopify_json"),
+    ("Liquor Mart", "https://liquormart.co.nz/collections/rtd", "rtd", "shopify_json"),
+    ("Liquor Mart", "https://liquormart.co.nz/collections/spirits", "spirits", "shopify_json"),
+    ("Liquor Mart", "https://liquormart.co.nz/collections/red-wine", "wine", "shopify_json"),
+    ("Liquor Mart", "https://liquormart.co.nz/collections/white-wine", "wine", "shopify_json"),
+    ("Liquor Mart", "https://liquormart.co.nz/collections/sparkling-wine", "wine", "shopify_json"),
 ]
 
 # Coverage audit (2026-07-24) found real catalogues up to 198 pages deep
@@ -483,6 +497,75 @@ def scrape_shopify(url):
         time.sleep(1)
 
     print(f"  ({page} of {max_page} page(s) scraped)")
+    return all_products
+
+
+# 2026-08-13: a second Shopify pattern found on Liquor Mart — its theme
+# doesn't match parse_shopify's selectors at all (a different theme,
+# "product-title"/"price-box" classes instead of grid__item/card__heading),
+# but embeds a genuine Shopify product JSON object directly on each card
+# via data-json-product='{...}' — cleaner than scraping rendered text
+# since it's structured data straight from Shopify's own product schema
+# (price in cents, compare_at_price for was-price, available for stock).
+def parse_shopify_json_cards(html, base_url):
+    products = []
+    for m in re.finditer(r"data-json-product='(\{.*?\})'", html, re.S):
+        try:
+            data = json.loads(m.group(1).replace("&quot;", '"'))
+        except json.JSONDecodeError:
+            continue
+        variants = data.get("variants") or []
+        if not variants:
+            continue
+        v = variants[0]
+        name = v.get("name") or data.get("title")
+        price = v.get("price")
+        if not name or price is None:
+            continue
+        # A few cards embed a stray "(Remove)" cart-widget label as part of
+        # the visible name text (e.g. an item already in the cart when this
+        # was fetched) — strips cleanly, doesn't affect real product names.
+        name = re.sub(r"\s*\(Remove\)\s*$", "", name)
+        compare_at = v.get("compare_at_price")
+        handle = data.get("handle")
+        products.append({
+            "name": name,
+            "price": f"{price / 100:.2f}",
+            "was_price": f"{compare_at / 100:.2f}" if compare_at else None,
+            "in_stock": bool(v.get("available")),
+            "url": f"{base_url}/products/{handle}" if handle else None,
+        })
+    return products
+
+
+def scrape_shopify_json_cards(url):
+    base_url = "{0.scheme}://{0.netloc}".format(urlparse(url))
+    all_products = []
+    seen_names = set()
+    page = 1
+    while True:
+        page_url = url if page == 1 else f"{url}?page={page}"
+        response = requests.get(page_url, headers=HEADERS, timeout=20)
+        response.raise_for_status()
+        page_products = parse_shopify_json_cards(response.text, base_url)
+        # Real pagination confirmed directly (page 2/3 mostly-but-not-fully
+        # distinct from page 1 — some featured-item overlap at page
+        # boundaries is normal) — stop once a page contributes nothing new,
+        # rather than trusting a fixed page count that could silently keep
+        # re-requesting the same content past the real end.
+        new_names = [p["name"] for p in page_products if p["name"] not in seen_names]
+        if not page_products or not new_names:
+            break
+        for p in page_products:
+            if p["name"] not in seen_names:
+                seen_names.add(p["name"])
+                all_products.append(p)
+        if page >= MAX_PAGES_PER_TARGET:
+            break
+        page += 1
+        time.sleep(1)
+
+    print(f"  ({page} page(s) scraped)")
     return all_products
 
 
@@ -649,6 +732,8 @@ def scrape_one(store_name, url, category, platform):
         raw_products = scrape_nopcommerce(url)
     elif platform == "shopify":
         raw_products = scrape_shopify(url)
+    elif platform == "shopify_json":
+        raw_products = scrape_shopify_json_cards(url)
     elif platform == "woocommerce":
         raw_products = scrape_woocommerce(url)
     elif platform == "hotcakes":
