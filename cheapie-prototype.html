@@ -1002,6 +1002,25 @@ function showEmptyResults(message){
 let currentSearchResults = [];
 let currentPackSize = null; // null = no filter (show every pack size)
 
+// A "size" isn't always just unitCount — a crate or keg is a distinct
+// container type a shopper searches for on its own terms, not just
+// another number in the Npack sequence (a keg's unitCount is 1, same as
+// a single can, which would otherwise be indistinguishable from a
+// genuine single-serve item). Detected from the product name, taking
+// priority over the numeric pack count when present.
+function sizeCategoryOf(r){
+  const name = (r.productName || '').toLowerCase();
+  if(/\bkeg\b/.test(name)) return 'keg';
+  if(/\bcrate\b/.test(name)) return 'crate';
+  return r.unitCount;
+}
+
+function sizeCategoryLabel(size){
+  if(size === 'crate') return 'Crate';
+  if(size === 'keg') return 'Keg';
+  return size === 1 ? 'Single' : `${size}-pack`;
+}
+
 // 2026-08-10: lets you narrow a search to one specific pack size (6/12/24
 // pack, single, etc.) when the matched products actually come in more than
 // one — e.g. searching "Steinlager" turns up singles, 6-packs, 12-packs
@@ -1010,12 +1029,18 @@ let currentPackSize = null; // null = no filter (show every pack size)
 // actually wants. When every match happens to share the same pack size
 // already, there's no real choice to offer, so the chip row stays hidden
 // entirely rather than showing a single, pointless option.
+// 2026-08-12: added crate/keg as their own categories (see
+// sizeCategoryOf) — kept after the numeric N-packs rather than sorted in
+// with them, since neither is really "a bigger number of cans" the way
+// 6/12/24-pack are steps of the same thing.
 function populatePackSizeChips(results){
   const container = document.getElementById('packSizeChips');
   container.innerHTML = '';
   currentPackSize = null;
 
-  const sizes = [...new Set(results.map(r => r.unitCount).filter(n => n !== null && n !== undefined))].sort((a, b) => a - b);
+  const numeric = [...new Set(results.map(sizeCategoryOf).filter(s => typeof s === 'number'))].sort((a, b) => a - b);
+  const named = ['crate', 'keg'].filter(s => results.some(r => sizeCategoryOf(r) === s));
+  const sizes = [...numeric, ...named];
   if(sizes.length <= 1){
     container.style.display = 'none';
     return;
@@ -1031,7 +1056,7 @@ function populatePackSizeChips(results){
   sizes.forEach(size => {
     const chip = document.createElement('div');
     chip.className = 'chip';
-    chip.textContent = size === 1 ? 'Single' : `${size}-pack`;
+    chip.textContent = sizeCategoryLabel(size);
     chip.style.cssText = 'padding:6px 12px; font-size:11px;';
     chip.onclick = () => applyPackSizeFilter(size, chip);
     container.appendChild(chip);
@@ -1046,7 +1071,7 @@ function populatePackSizeChips(results){
 function currentlyFilteredResults(){
   return currentPackSize === null
     ? currentSearchResults
-    : currentSearchResults.filter(r => r.unitCount === currentPackSize);
+    : currentSearchResults.filter(r => sizeCategoryOf(r) === currentPackSize);
 }
 
 function applyPackSizeFilter(size, chipEl){
