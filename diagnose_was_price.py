@@ -28,10 +28,12 @@ def dump(label, url):
     print(f"  status={r.status_code} size={len(html)}")
     print(f"  actual-price count: {html.count('actual-price')}")
     print(f"  old-price count: {html.count('old-price')}")
-    idx = html.find("old-price")
+    idx = html.find("old-product-price")
+    if idx == -1:
+        idx = html.find("old-price")
     if idx != -1:
-        print("  --- context around first old-price ---")
-        print(html[max(0, idx - 400):idx + 200])
+        print("  --- context around first old-price/old-product-price ---")
+        print(html[max(0, idx - 100):idx + 400])
     else:
         # No discount anywhere on this page at all -- show one full
         # product's price block so the real (undiscounted) markup is
