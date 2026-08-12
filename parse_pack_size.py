@@ -14,6 +14,21 @@ per-litre price for this one", not as "assume 0".
 
 import re
 
+# 2026-08-12: found live in the database — "Waikato Draught Bottles 12 x
+# 745mL" at $5.99 (a real ~$5.99 single-bottle price with a "12 x" pack
+# count wrongly attached, likely from a case/crate option elsewhere on the
+# source page bleeding into this listing), price_per_litre $0.67. Checked
+# broadly: every one of the ~30 lowest price-per-litre values in the whole
+# scraped dataset shares the same signature — a suspiciously round, small
+# total price on a multi-pack. No real NZ alcoholic beverage, even on the
+# heaviest bulk special, sells for under $1.50 per individual can/bottle —
+# well below the cheapest genuine cask-wine or bulk-beer pricing seen
+# anywhere in real data, so this only catches actual scraping corruption,
+# not real bargains. Used by both load_data_to_supabase.py (as rows are
+# scraped) and backfill_pack_sizes.py (for what's already loaded) so a bad
+# row never gets to *be* the "best value" in the first place.
+MIN_PLAUSIBLE_PRICE_PER_UNIT = 1.50
+
 _ML_UNIT = r"(?:ml|mL|ML|Ml)"
 _L_UNIT = r"(?:litres?|Litres?|LITRES?|ltrs?|Ltrs?|LTRS?|l|L)\b"
 

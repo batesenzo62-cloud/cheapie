@@ -20,7 +20,7 @@ import re
 import time
 import requests
 
-from parse_pack_size import parse_pack_size
+from parse_pack_size import parse_pack_size, MIN_PLAUSIBLE_PRICE_PER_UNIT
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -78,7 +78,7 @@ def pack_size_fields(product_name, price, category=None):
     # without a volume, since "12pk, size unknown" is still real information.
     unit_count, unit_volume_ml = parse_pack_size(product_name, category)
     price_per_litre = None
-    if price is not None and unit_volume_ml:
+    if price is not None and unit_volume_ml and (price / unit_count) >= MIN_PLAUSIBLE_PRICE_PER_UNIT:
         litres = (unit_count * unit_volume_ml) / 1000
         if litres > 0:
             price_per_litre = round(price / litres, 4)
