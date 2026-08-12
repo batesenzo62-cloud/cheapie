@@ -17,6 +17,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- 2026-08-14: 751 individual custom-HTML markers added directly to the
+     map (no clustering) is exactly why zooming/panning felt laggy on a
+     real phone — Leaflet has to reposition every one of those DOM
+     elements on every frame. Marker clustering groups nearby pins into a
+     single lightweight cluster icon at low zoom and only renders
+     individual markers once you've zoomed in close enough that there
+     aren't hundreds on screen at once — the standard fix for this exact
+     problem, not a Cheapie-specific hack. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" integrity="sha256-YU3qCpj/P06tdPBJGPax0bm6Q1wltfwjsho5TR4+TYc=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" integrity="sha256-YSWCMtmNZNwqex4CEw1nQhvFub2lmU7vcCKP+XVwwXA=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin=""></script>
 <script src="https://unpkg.com/fuse.js@7.0.0/dist/fuse.min.js" integrity="sha256-42IbU8t3tOwwbexB7ZVRHm3YDRf65aBPPjRtIUufj5I=" crossorigin=""></script>
 <style>
   :root{
@@ -219,7 +230,12 @@
   }
   .search-row input{
     border:none; outline:none; background:transparent;
-    font-family:'Inter',sans-serif; font-size:14px; font-weight:500;
+    /* 2026-08-14: iOS Safari auto-zooms the whole page in when a text
+       input/select gets focus if its computed font-size is under 16px —
+       confirmed that's exactly what this was (14px). Bumped to 16px
+       specifically to stop Safari's own zoom trigger, not a visual
+       preference. */
+    font-family:'Inter',sans-serif; font-size:16px; font-weight:500;
     flex:1; color:var(--ink);
   }
   .search-row input::placeholder{ color:var(--muted); }
@@ -438,7 +454,7 @@
           <input id="nearbyMapSearchInput" placeholder="Compare a product's price on the map" oninput="onNearbyMapSearchInput()">
           <span id="nearbyMapSearchClear" onclick="clearNearbyMapSearch()" style="display:none; opacity:0.5; cursor:pointer; font-weight:700; padding-left:2px;">✕</span>
         </div>
-        <select id="nearbyRegionSelect" onchange="onNearbyRegionChange()" style="width:100%; margin-top:8px; background:var(--white); border:2px solid var(--ink); border-radius:4px; padding:10px 12px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:var(--ink);">
+        <select id="nearbyRegionSelect" onchange="onNearbyRegionChange()" style="width:100%; margin-top:8px; background:var(--white); border:2px solid var(--ink); border-radius:4px; padding:10px 12px; font-family:'Inter',sans-serif; font-size:16px; font-weight:600; color:var(--ink);">
           <option value="all">All of NZ</option>
           <option value="Northland">Northland</option>
           <option value="Auckland">Auckland</option>
@@ -498,6 +514,7 @@ let userMarker = null;
 let storesCache = null;
 let storeMarkers = {}; // store.id -> Leaflet marker, so the map search can recolor pins in place
 let storesById = {};
+let storeMarkerCluster = null; // holds all 751 markers — see initNearbyMap for why plain unclustered markers were laggy on mobile
 
 function haversineKm(lat1, lon1, lat2, lon2){
   const R = 6371;
@@ -1027,6 +1044,21 @@ async function initNearbyMap(){
     L.DomEvent.disableClickPropagation(sheet);
   }
 
+  if(!storeMarkerCluster){
+    // disableClusteringAtZoom: once you're zoomed in far enough to
+    // actually distinguish nearby stores, always show them individually
+    // rather than clustering — clustering exists purely to keep the
+    // zoomed-out/national view light, not to hide pins once you're
+    // looking at one neighbourhood. chunkedLoading spreads the initial
+    // 751-marker add across a few frames instead of blocking the main
+    // thread in one go, so the first render doesn't stutter either.
+    storeMarkerCluster = L.markerClusterGroup({
+      disableClusteringAtZoom: 15,
+      chunkedLoading: true,
+      spiderfyOnMaxZoom: false,
+    }).addTo(nearbyMap);
+  }
+
   if(!storesCache){
     status.textContent = 'Loading stores…';
     try{
@@ -1045,9 +1077,15 @@ async function initNearbyMap(){
       // consolidates every branch actually near e.g. Napier under "Napier"
       // regardless of what a particular chain happened to name that branch.
       store.town = nearestTownInRegion(store);
-      const marker = L.marker([store.latitude, store.longitude], { icon: iconForStore(store.name) }).addTo(nearbyMap);
+      // Added to the cluster group, not the map directly — see
+      // storeMarkerCluster above for why. Individual markers still support
+      // setIcon() exactly as before (used throughout for the tier-color
+      // map search), clustering only affects how they're grouped visually
+      // when zoomed out.
+      const marker = L.marker([store.latitude, store.longitude], { icon: iconForStore(store.name) });
       marker.bindTooltip(store.name);
       marker.on('click', () => showStoreSheet(store));
+      storeMarkerCluster.addLayer(marker);
       storeMarkers[store.id] = marker;
       storesById[store.id] = store;
     });
