@@ -221,6 +221,32 @@
   }
   .chip.active, .chip:hover{ background:var(--ink); color:var(--paper); }
 
+  #radiusFilterRow{ display:none; }
+  #radiusSlider{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:6px;
+    border-radius:3px;
+    background:var(--line);
+    border:2px solid var(--ink);
+    outline:none;
+    margin:6px 0 2px;
+  }
+  #radiusSlider::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--gold);
+    border:2px solid var(--ink);
+    cursor:pointer;
+  }
+  #radiusSlider::-moz-range-thumb{
+    width:18px; height:18px;
+    border-radius:50%;
+    background:var(--gold);
+    border:2px solid var(--ink);
+    cursor:pointer;
+  }
+
   .search-row{
     display:flex; align-items:center; gap:10px;
     background:var(--white);
@@ -411,6 +437,13 @@
       </div>
       <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;" id="resultsSubtitle"></div>
       <div id="packSizeChips" style="display:none; flex-wrap:wrap; gap:6px; padding:0 20px 6px;"></div>
+      <div id="radiusFilterRow" style="padding:2px 20px 6px; font-family:'Inter',sans-serif;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:11.5px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted);">Search radius</span>
+          <span id="radiusValueLabel" style="font-size:12px; font-weight:700; color:var(--ink);">50 km</span>
+        </div>
+        <input type="range" id="radiusSlider" min="1" max="150" value="50" oninput="onRadiusSliderChange(this.value)">
+      </div>
       <div class="perforation" style="margin:10px 0;"></div>
       <div id="resultsList" style="padding:0 20px 16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1;"></div>
       <div class="bottomnav">
@@ -659,7 +692,7 @@ async function loadPopularSearches(){
 // fallback) still fetch everything — this cap is specific to the main
 // Search tab's browse/search, where renderResults() only ever surfaces a
 // near-you-scoped, price-sorted handful of results anyway (see its
-// MIN_NEARBY_RESULTS/DISPLAY_CAP), so there's no benefit to the other
+// currentRadiusKm/DISPLAY_CAP), so there's no benefit to the other
 // ~46,000 rows even being in memory, only cost.
 // 2026-08-14 fix: a real free-text search here used to go straight to
 // PostgREST's plain `ilike` filter — an exact substring match, no typo or
@@ -838,49 +871,41 @@ function byValue(a, b){
 // "near you" (confirmed directly: 49,833 of 52,176 "Beer" rows), just
 // sorted so the truly-close ones happened to be first in an enormous list
 // — in practice indistinguishable from "shows cheapest nationwide", which
-// is exactly what was reported. Now genuinely scoped to a real radius
-// around the user, widening only as far as needed to find a reasonable
-// number of options (never landing on literally the whole country) —
-// see fetchLiveProducts for why the number of candidate rows for a big
-// category is capped upstream in the first place.
-const NEARBY_RADIUS_STEPS_KM = [15, 30, 60, 120, 250, 9000];
-const MIN_NEARBY_RESULTS = 6;
-
-function scopeToNearbyRadius(nearbyAll){
-  for(const radius of NEARBY_RADIUS_STEPS_KM){
-    const within = nearbyAll.filter(r => r.km <= radius);
-    if(within.length >= MIN_NEARBY_RESULTS || radius === NEARBY_RADIUS_STEPS_KM[NEARBY_RADIUS_STEPS_KM.length - 1]){
-      return within;
-    }
-  }
-  return nearbyAll;
-}
+// is exactly what was reported.
+// 2026-08-12: replaced the old auto-widening step logic with a manual
+// radius slider (1-150km) the user drags themselves — see
+// onRadiusSliderChange/populateRadiusFilter. currentRadiusKm below is that
+// slider's current value.
+let currentRadiusKm = 50;
 
 function renderResults(results){
   const list = document.getElementById('resultsList');
   list.innerHTML = '';
   if(!results.length) return;
 
-  // Only tag a "best value" item when every result is genuinely the same
-  // product — comparing prices across dissimilar products would be
-  // misleading.
-  const sameProduct = results.length > 1 &&
-    results.every(r => r.productName === results[0].productName);
-  const cheapest = sameProduct ? (() => {
-    const withPpl = results.filter(r => usablePpl(r) !== null);
-    const pool = withPpl.length ? withPpl : results;
-    const metric = withPpl.length ? usablePpl : (r => r.price);
-    return pool.reduce((min, r) => metric(r) < metric(min) ? r : min, pool[0]);
-  })() : null;
-
   // Both groups now rank by value (cheapest/best-per-litre first) rather
   // than "Near you" ranking by raw distance — genuinely comparing prices
   // among your real nearby options is closer to what "cheapest near you"
   // means than just "whichever of them happens to be geographically
-  // closest, regardless of price".
-  let nearby = results.filter(r => r.km !== null);
+  // closest, regardless of price". "Near you" is scoped to whatever the
+  // radius slider is currently set to (1-150km, see onRadiusSliderChange)
+  // rather than every physical row nationwide.
+  const nearby = results.filter(r => r.km !== null && r.km <= currentRadiusKm).sort(byValue);
   const online = results.filter(r => r.km === null).sort(byValue);
-  if(nearby.length) nearby = scopeToNearbyRadius(nearby).sort(byValue);
+  const visible = nearby.concat(online);
+
+  // Only tag a "best value" item when every visible result is genuinely
+  // the same product — comparing prices across dissimilar products would
+  // be misleading. Computed from the post-radius-filter pool so the
+  // ribbon always lands on a card that's actually shown.
+  const sameProduct = visible.length > 1 &&
+    visible.every(r => r.productName === visible[0].productName);
+  const cheapest = sameProduct ? (() => {
+    const withPpl = visible.filter(r => usablePpl(r) !== null);
+    const pool = withPpl.length ? withPpl : visible;
+    const metric = withPpl.length ? usablePpl : (r => r.price);
+    return pool.reduce((min, r) => metric(r) < metric(min) ? r : min, pool[0]);
+  })() : null;
 
   // Never render thousands of cards even after the radius scoping above —
   // the point of this screen is surfacing the best handful of options, not
@@ -909,6 +934,9 @@ function renderResults(results){
       note.textContent = `Showing best ${shownOnline.length} of ${online.length} online`;
       list.appendChild(note);
     }
+  }
+  if(!shownNearby.length && !shownOnline.length){
+    showEmptyResults(`No matches within ${currentRadiusKm} km — try widening the radius above.`);
   }
 }
 
@@ -961,12 +989,44 @@ function populatePackSizeChips(results){
   container.style.display = 'flex';
 }
 
+// Combines both filters currently active on the results screen (pack
+// size chips + radius slider) — currentRadiusKm is applied inside
+// renderResults itself (it affects the near-you/online split), so this
+// only needs to handle pack size before handing off.
+function currentlyFilteredResults(){
+  return currentPackSize === null
+    ? currentSearchResults
+    : currentSearchResults.filter(r => r.unitCount === currentPackSize);
+}
+
 function applyPackSizeFilter(size, chipEl){
   currentPackSize = size;
   document.querySelectorAll('#packSizeChips .chip').forEach(c => c.classList.remove('active'));
   chipEl.classList.add('active');
-  const filtered = size === null ? currentSearchResults : currentSearchResults.filter(r => r.unitCount === size);
-  renderResults(filtered);
+  renderResults(currentlyFilteredResults());
+}
+
+// 2026-08-12: lets you drag the "Near you" radius from 1km out to 150km
+// instead of the fixed auto-widening steps it used to use — sorting stays
+// by cheapest/best-per-litre either way, this only changes which physical
+// stores count as "near you" at all.
+function populateRadiusFilter(results){
+  currentRadiusKm = 50;
+  const row = document.getElementById('radiusFilterRow');
+  const hasNearby = results.some(r => r.km !== null);
+  if(!hasNearby){
+    row.style.display = 'none';
+    return;
+  }
+  document.getElementById('radiusSlider').value = 50;
+  document.getElementById('radiusValueLabel').textContent = '50 km';
+  row.style.display = 'block';
+}
+
+function onRadiusSliderChange(value){
+  currentRadiusKm = Number(value);
+  document.getElementById('radiusValueLabel').textContent = `${currentRadiusKm} km`;
+  renderResults(currentlyFilteredResults());
 }
 
 async function doSearch(term, forcedCategory){
@@ -978,6 +1038,7 @@ async function doSearch(term, forcedCategory){
   document.getElementById('resultsList').innerHTML = '';
   document.getElementById('packSizeChips').style.display = 'none';
   document.getElementById('packSizeChips').innerHTML = '';
+  document.getElementById('radiusFilterRow').style.display = 'none';
 
   await requestUserLocation(); // best effort — doesn't block the search if denied/unavailable
 
@@ -993,6 +1054,7 @@ async function doSearch(term, forcedCategory){
         : `${rows.length} real products found in your database, sorted by best value`;
       currentSearchResults = rows;
       populatePackSizeChips(currentSearchResults);
+      populateRadiusFilter(currentSearchResults);
       renderResults(currentSearchResults);
       return;
     }
