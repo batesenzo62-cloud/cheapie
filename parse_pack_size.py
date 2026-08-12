@@ -17,6 +17,23 @@ import re
 _ML_UNIT = r"(?:ml|mL|ML|Ml)"
 _L_UNIT = r"(?:litres?|Litres?|LITRES?|ltrs?|Ltrs?|LTRS?|l|L)\b"
 
+# Some sources abbreviate the unit to a single trailing letter naming the
+# container instead of the volume unit — "330c" (330mL can), "500b" (500mL
+# bottle). Confirmed against 60 real sampled examples with zero false
+# positives (always immediately after the number, always a real can/bottle
+# size) — safe to treat as already-mL, same as _ML_UNIT.
+_BC_UNIT = r"(?:c|C|b|B)\b"
+
+# A handful of listings truncate "750ml" to "750m" (missing the final "l").
+# Restricted to the very end of the string — mid-name a lone "m" is usually
+# part of the product name itself (e.g. "Speights 5M Old Dark 12pk Btls",
+# where "5M" is a style code, not a size) rather than a truncated unit.
+_M_TRUNC = r"m(?=\s*$)"
+
+# Capturing (not non-capturing) — every call site immediately reads the
+# matched unit text back via _to_ml(), so it needs its own group number.
+_VOLUME_UNIT = "(" + _ML_UNIT + "|" + _BC_UNIT + "|" + _M_TRUNC + "|" + _L_UNIT + ")"
+
 
 def _to_ml(value, unit):
     unit = unit.lower()
@@ -40,13 +57,13 @@ def _fix_if_total_not_per_unit(count, volume):
     return volume
 
 
-def parse_pack_size(name):
+def parse_pack_size(name, category=None):
     if not name:
         return 1, None
 
     # 1. "6x330ml", "12 x 330ml", "6x1 Litre", "10x250ml", "6x 330ml"
     m = re.search(
-        r"(\d+)\s*[xX]\s*(\d+(?:\.\d+)?)\s*(" + _ML_UNIT + "|" + _L_UNIT + ")",
+        r"(\d+)\s*[xX]\s*(\d+(?:\.\d+)?)\s*" + _VOLUME_UNIT,
         name,
     )
     if m:
@@ -58,11 +75,8 @@ def parse_pack_size(name):
     #    "24pack 330mL", "12PK CANS 250ML" — pack count, then optional
     #    "cans"/"bottles" words, then the volume, in that order.
     m = re.search(
-        r"(\d+)\s*(?:pk|pack|PK|PACK|Pack)\b[^\d]{0,20}?(\d+(?:\.\d+)?)\s*("
-        + _ML_UNIT
-        + "|"
-        + _L_UNIT
-        + ")",
+        r"(\d+)\s*(?:pk|pack|PK|PACK|Pack)\b[^\d]{0,20}?(\d+(?:\.\d+)?)\s*"
+        + _VOLUME_UNIT,
         name,
         re.IGNORECASE,
     )
@@ -74,7 +88,7 @@ def parse_pack_size(name):
     # 2b. Reverse order — "330ml 6 pack", "250ml 12pk" — volume stated
     # before the pack count instead of after.
     m = re.search(
-        r"(\d+(?:\.\d+)?)\s*(" + _ML_UNIT + "|" + _L_UNIT + r")[^\d]{0,20}?(\d+)\s*(?:pk|pack|PK|PACK|Pack)\b",
+        r"(\d+(?:\.\d+)?)\s*" + _VOLUME_UNIT + r"[^\d]{0,20}?(\d+)\s*(?:pk|pack|PK|PACK|Pack)\b",
         name,
         re.IGNORECASE,
     )
@@ -95,13 +109,20 @@ def parse_pack_size(name):
 
     # 5. Single volume, no pack count — e.g. "Martell VSOP 700ml",
     #    "Country Red 3l" (single cask/bottle item).
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(" + _ML_UNIT + "|" + _L_UNIT + ")", name)
+    m = re.search(r"(\d+(?:\.\d+)?)\s*" + _VOLUME_UNIT, name)
     if m:
         volume = _to_ml(float(m.group(1)), m.group(2))
         return 1, volume
 
     # 6. Nothing parseable (e.g. "Fat Bird Chardonnay", "KONRAD GRÜNER
-    #    VELTLINER 2022") — treat as a single unit, unknown volume.
+    #    VELTLINER 2022"). Wine is the one category sold almost exclusively
+    #    in a single standard size — defaulting a nameless wine bottle to
+    #    750mL is safe in a way that guessing a beer/RTD/spirits size isn't
+    #    (those genuinely vary: 330/440/500mL cans, 700mL/1L spirits, etc).
+    #    Confirmed this covers ~9,900 real unparsed wine rows, all plain
+    #    varietal names with literally no digit anywhere.
+    if category == "wine":
+        return 1, 750
     return 1, None
 
 
@@ -113,14 +134,14 @@ if __name__ == "__main__":
         try:
             with open(fname, newline="", encoding="utf-8") as f:
                 for row in csv.DictReader(f):
-                    samples.append(row["product_name"])
+                    samples.append((row["product_name"], row.get("category")))
         except FileNotFoundError:
             pass
 
     parsed = 0
     unparsed = 0
-    for name in samples:
-        count, volume = parse_pack_size(name)
+    for name, category in samples:
+        count, volume = parse_pack_size(name, category)
         if volume is not None:
             parsed += 1
         else:

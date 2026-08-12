@@ -71,12 +71,12 @@ def parse_bool(raw):
     return str(raw).strip().lower() in ("true", "1", "yes")
 
 
-def pack_size_fields(product_name, price):
+def pack_size_fields(product_name, price, category=None):
     # unit_volume_ml is None whenever the name doesn't state a size at all
     # (see parse_pack_size.py) — price_per_litre stays None in that case
     # too, rather than guessing a size. unit_count is still recorded even
     # without a volume, since "12pk, size unknown" is still real information.
-    unit_count, unit_volume_ml = parse_pack_size(product_name)
+    unit_count, unit_volume_ml = parse_pack_size(product_name, category)
     price_per_litre = None
     if price is not None and unit_volume_ml:
         litres = (unit_count * unit_volume_ml) / 1000
@@ -98,9 +98,10 @@ def load_independent_stores(filename):
         for row in csv.DictReader(f):
             name = row.get("product_name")
             price = parse_price(row.get("price"))
+            category = row.get("category") or "beer"
             row_out = {
                 "product_name": name,
-                "category": row.get("category") or "beer",
+                "category": category,
                 "store_name": row.get("store"),
                 "price": price,
                 "was_price": parse_price(row.get("was_price")),
@@ -108,7 +109,7 @@ def load_independent_stores(filename):
                 "is_online": True,
                 "source_url": row.get("url"),
                 "fetched_at": row.get("fetched_at") or None,
-                **pack_size_fields(name, price),
+                **pack_size_fields(name, price, category),
             }
             # store_id ties a row to one confirmed physical branch (added
             # 2026-07-27 for per-branch deals scraping) — most rows still
@@ -132,9 +133,10 @@ def load_chain_stores(filename):
         for row in csv.DictReader(f):
             name = row.get("product_name")
             price = parse_price(row.get("price"))
+            category = row.get("category") or "beer"
             rows.append({
                 "product_name": name,
-                "category": row.get("category") or "beer",
+                "category": category,
                 "store_name": row.get("store"),
                 "price": price,
                 "was_price": parse_price(row.get("was_price")),
@@ -143,7 +145,7 @@ def load_chain_stores(filename):
                 "source_url": None,
                 "fetched_at": row.get("fetched_at") or None,
                 "store_id": None,
-                **pack_size_fields(name, price),
+                **pack_size_fields(name, price, category),
             })
     return rows
 

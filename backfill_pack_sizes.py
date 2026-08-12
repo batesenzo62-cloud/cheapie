@@ -39,7 +39,7 @@ def fetch_all_products():
         resp = requests.get(
             f"{SUPABASE_URL}/rest/v1/products",
             headers=HEADERS,
-            params={"select": "id,product_name,price", "offset": offset, "limit": page_size},
+            params={"select": "id,product_name,price,category", "offset": offset, "limit": page_size},
             timeout=30,
         )
         resp.raise_for_status()
@@ -80,7 +80,7 @@ def main():
 
     payload = []
     for row in rows:
-        unit_count, unit_volume_ml = parse_pack_size(row.get("product_name"))
+        unit_count, unit_volume_ml = parse_pack_size(row.get("product_name"), row.get("category"))
         ppl = price_per_litre(row.get("price"), unit_count, unit_volume_ml)
         payload.append({
             "id": row["id"],
