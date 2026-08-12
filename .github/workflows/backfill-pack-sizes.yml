@@ -1,0 +1,28 @@
+name: Backfill pack sizes on existing products
+
+# Manual-only maintenance job — not on a schedule. Re-run whenever
+# parse_pack_size.py's rules change and existing rows in Supabase need
+# their unit_count/unit_volume_ml/price_per_litre recomputed, since
+# load_data_to_supabase.py only ever computes these for rows as they're
+# freshly scraped, not for what's already sitting in the table.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  backfill-pack-sizes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Backfill pack sizes
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 backfill_pack_sizes.py
