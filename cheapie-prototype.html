@@ -1210,6 +1210,15 @@ async function ensureStoresLoaded(){
       console.error(err);
       storesCache = [];
     }
+    // 2026-08-12: PAK'nSAVE locations are real (scraped from their own
+    // store-finder), but there's genuinely zero PAK'nSAVE product/pricing
+    // data anywhere in the database — their shop pages are Cloudflare-
+    // blocked the same as New World's, and unlike New World there's no
+    // generic fallback catalogue for PAK'nSAVE either. Showing the pins
+    // anyway just leads to tapping one and finding nothing. Filtered out
+    // here (not deleted from the stores table) so it's a one-line revert
+    // once real PAK'nSAVE pricing data exists.
+    storesCache = storesCache.filter(store => !store.name.toLowerCase().includes("pak'nsave"));
     storesCache.forEach(store => {
       // Overwrites whatever (often missing or inconsistently-spelled — see
       // the note by REGION_CENTERS) region string came from the database,
