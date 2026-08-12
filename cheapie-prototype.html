@@ -1376,6 +1376,12 @@ function openDetail(r){
     };
     if(r.url){
       secondaryBtn.style.display = '';
+      // r.confirmedBranch === false means this price/url came from the
+      // chain's generic fallback catalogue (one representative branch,
+      // address substituted for whichever store you're actually looking
+      // at) — the link is real, but it opens THAT branch's page, not this
+      // one's. Label it honestly instead of implying it's this store's own.
+      secondaryBtn.textContent = r.confirmedBranch === false ? 'View product page (different branch) ↗' : 'View product page ↗';
       secondaryBtn.onclick = () => window.open(r.url, '_blank');
     }
   } else if(r.url){
@@ -1922,7 +1928,17 @@ function mapRegionSearchRow(row, storeId){
     productName: row.product_name,
     unitCount: row.unit_count || 1,
     unitVolumeMl: row.unit_volume_ml !== null && row.unit_volume_ml !== undefined ? Number(row.unit_volume_ml) : null,
-    pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null
+    pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null,
+    // 2026-08-13: reported directly — "Black Bull Liquor Napier"'s product
+    // page link actually opened Hawera's site. Root cause: an unconfirmed
+    // row (no real store_id of its own) fanned out to a real branch still
+    // carries the *source* row's url — the one real branch that chain's
+    // generic catalogue was actually scraped from (Hawera, for Black Bull;
+    // Kingsland, for Bottle-O) — not a page that exists for the branch
+    // being displayed. row.store_id is only ever real (non-null) for a row
+    // that genuinely was scraped from this specific branch, so it's a
+    // reliable signal openDetail can use to be honest about that.
+    confirmedBranch: !!row.store_id
   };
 }
 
@@ -2293,7 +2309,16 @@ function renderStoreProductList(rows){
     // coordinates are trustworthy even when this row itself has no store_id
     // (most rows don't — see the nearbyMapSearch fix above) and mapDbRow's
     // own join-based lat/lng comes back null.
-    const r = { ...mapDbRow(row), address: currentStoreInfo.address, lat: currentStoreInfo.latitude, lng: currentStoreInfo.longitude };
+    // confirmedBranch: is this row's url/price actually FROM this specific
+    // store, or is it the chain-wide fallback catalogue's source row
+    // (scraped from one representative branch) being shown here with this
+    // store's address substituted in? Reported directly — "Black Bull
+    // Liquor Napier"'s product page link actually opened Hawera's real
+    // site, since Hawera is the one branch Black Bull's generic catalogue
+    // is actually scraped from. openDetail uses this to be honest about
+    // where "View product page" really goes instead of implying it's
+    // Napier's own page.
+    const r = { ...mapDbRow(row), address: currentStoreInfo.address, lat: currentStoreInfo.latitude, lng: currentStoreInfo.longitude, confirmedBranch: row.store_id === currentStoreInfo.id };
     container.appendChild(makeCard(r, false, row.category));
   });
 
