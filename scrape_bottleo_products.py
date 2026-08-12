@@ -93,17 +93,31 @@ def get_departments(base):
     return result
 
 
-def parse_page(html):
+def parse_page(html, base):
     products = []
+    # 2026-08-13 fix: previously started matching from talker__product-name
+    # itself, with an unbounded .*? reaching forward to the next
+    # "price__sell" — reported directly as implausibly cheap for several
+    # unrelated 4-pack products (Export Gold, Godfather Strong, ...) across
+    # many branches simultaneously, matching the same signature as an
+    # already-confirmed case (a case/crate price bleeding into a different
+    # listing's name). Anchoring on each product's own <a href="/lines/...">
+    # link (which also gets a real product URL captured for "View product
+    # page" — previously always blank) and refusing to let either .*? cross
+    # into the *next* product's <a href="/lines/..."> guarantees the name,
+    # size and price captured always belong to the same product card,
+    # whatever the actual page structure around it turns out to be.
     for m in re.finditer(
+        r'<a href="(/lines/[^"]*)">(?:(?!<a href="/lines/).)*?'
         r'talker__product-name">([^<]+)</span>\s*'
-        r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?.*?'
+        r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?'
+        r'(?:(?!<a href="/lines/).)*?'
         r'price__sell"[^>]*>\$([\d.]+)<',
         html, re.S
     ):
-        name, size, price = m.groups()
+        url_path, name, size, price = m.groups()
         full_name = f"{name.strip()} {size.strip()}" if size else name.strip()
-        products.append({"name": full_name, "price": price})
+        products.append({"name": full_name, "price": price, "url": base + url_path})
     return products
 
 
@@ -118,7 +132,7 @@ def scrape_department(base, dept_id):
         except Exception as e:
             print(f"    page {page} error: {e}")
             break
-        products = parse_page(r.text)
+        products = parse_page(r.text, base)
         all_products += products
         if len(products) < 48:
             break
@@ -156,7 +170,7 @@ def scrape_store(store):
                 "price": p["price"],
                 "was_price": "",
                 "in_stock": True,
-                "url": "",
+                "url": p["url"],
                 "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
                 "store_id": store["store_id"],
             })
