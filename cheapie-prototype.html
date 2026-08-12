@@ -460,8 +460,9 @@
         <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);" id="detailStore">Store</div>
       </div>
       <div style="padding:8px 20px; flex:1; display:flex; flex-direction:column; gap:16px;">
-        <div style="background:var(--paper-2); border:2px solid var(--ink); height:150px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; color:var(--muted); letter-spacing:0.05em; text-transform:uppercase;">
-          Map placeholder
+        <div id="detailMap" style="background:var(--paper-2); border:2px solid var(--ink); height:150px; display:none; border-radius:4px;"></div>
+        <div id="detailMapEmpty" style="background:var(--paper-2); border:2px solid var(--ink); height:150px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-size:12px; font-weight:700; color:var(--muted); letter-spacing:0.05em; text-transform:uppercase; text-align:center; padding:0 20px;">
+          Ships NZ-wide — no physical store location
         </div>
         <div id="detailBody" style="font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); line-height:1.7;"></div>
         <div style="flex:1;"></div>
@@ -1386,6 +1387,40 @@ function openDetail(r){
     actionBtn.style.display = 'none';
   }
   show('view-detail');
+  showDetailMap(r, hasCoords);
+}
+
+// 2026-08-13: made first priority — the detail view's map was always a
+// static "Map placeholder" box, never a real map. Reuses the same Leaflet
+// setup the Nearby tab already loads. Initialized (not just updated) after
+// show('view-detail') runs, not before — Leaflet needs its container to
+// actually have real size when L.map() first measures it, which a
+// display:none parent (every .view before .active is added) would give it
+// as zero either way; invalidateSize() on top of that fixes the case where
+// the container *was* hidden at init and is only now being shown again.
+let detailMap = null;
+let detailMapMarker = null;
+function showDetailMap(r, hasCoords){
+  const mapEl = document.getElementById('detailMap');
+  const emptyEl = document.getElementById('detailMapEmpty');
+  if(!hasCoords){
+    mapEl.style.display = 'none';
+    emptyEl.style.display = 'flex';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  mapEl.style.display = 'block';
+  if(!detailMap){
+    detailMap = L.map('detailMap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(detailMap);
+  }
+  detailMap.setView([r.lat, r.lng], 15);
+  if(detailMapMarker){
+    detailMapMarker.setLatLng([r.lat, r.lng]);
+  } else {
+    detailMapMarker = L.marker([r.lat, r.lng]).addTo(detailMap);
+  }
+  setTimeout(() => detailMap.invalidateSize(), 60);
 }
 
 // Loads storesCache/storesById once, tagging every store with its region
