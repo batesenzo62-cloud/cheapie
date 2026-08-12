@@ -690,7 +690,14 @@ def parse_nopcommerce_page(soup, page_url):
         if not name or not price:
             continue
 
-        was_el = item.select_one(".prices .old-price, .old-price")
+        # 2026-08-13 fix: reported directly, then confirmed live via a
+        # real product's actual HTML (Big Barrel, "Panhead Pickup HIPA")
+        # — the real class is .old-product-price, not .old-price. Every
+        # single discounted Big Barrel/Super Liquor row had was_price=None
+        # in the database despite genuinely being on special, because this
+        # selector never matched anything at all. Keeping .old-price too
+        # in case a different theme/page genuinely uses it.
+        was_el = item.select_one(".prices .old-product-price, .old-product-price, .prices .old-price, .old-price")
         was_price = was_el.get_text(strip=True) if was_el else None
 
         link_el = item.select_one(".product-title a, .picture a")
