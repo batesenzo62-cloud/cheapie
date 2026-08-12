@@ -465,6 +465,7 @@
         <div id="detailBody" style="font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); line-height:1.7;"></div>
         <div style="flex:1;"></div>
         <button class="btn btn-primary" id="detailActionBtn" onclick="alert('Prototype only — this would open Maps for directions.')">Get directions</button>
+        <button class="btn btn-ghost" id="detailSecondaryBtn" style="display:none;">View product page ↗</button>
       </div>
       <div class="bottomnav">
         <div class="navitem" onclick="show('view-search')"><span>🔍</span>Search</div>
@@ -722,11 +723,42 @@ async function loadPopularSearches(){
 // term, or the term IS the category name — e.g. the Beer/Wine/Spirits/RTD
 // chips) has no text to fuzzy-match against, so that path is untouched:
 // still a plain, fast products-table fetch.
+// 2026-08-12: shared by both fetchLiveProducts paths (free-text fuzzy
+// search and plain category browse) — a generic chain-catalogue match (no
+// confirmed store_id) used to become exactly one "ships NZ-wide" card, no
+// matter how many real physical branches of that chain exist nearby.
+// Fans it out across every real branch in scope instead, same
+// approximation runNearbyMapSearch already used (and the store sheet's
+// own "not confirmed for this specific store" fallback) — otherwise the
+// app quietly had three different definitions of "how many options are
+// near you" depending which screen you were on.
+function expandGenericChainMatches(rows){
+  const idsByChain = {};
+  Object.values(storesById).forEach(store => {
+    const chain = chainNameFor(store.name);
+    (idsByChain[chain] = idsByChain[chain] || []).push(store.id);
+  });
+  const expanded = [];
+  rows.forEach(r => {
+    if(r.store_id){
+      expanded.push(mapRegionSearchRow(r, r.store_id));
+      return;
+    }
+    const branchIds = idsByChain[r.store_name];
+    if(branchIds && branchIds.length){
+      branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+    } else {
+      expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
+    }
+  });
+  return expanded;
+}
+
 async function fetchLiveProducts(category, query){
   const hasFreeTextQuery = query && query.trim().length && query.toLowerCase() !== category;
+  await ensureStoresLoaded(); // resolves each match to a real store's address/coordinates, same as the Nearby map search
 
   if(hasFreeTextQuery){
-    await ensureStoresLoaded(); // resolves each match to a real store's address/coordinates, same as the Nearby map search
     let rows = [];
     const callFuzzyRpc = () => fetch(`${SUPABASE_URL}/rest/v1/rpc/search_products_fuzzy`, {
       method: 'POST',
@@ -750,47 +782,32 @@ async function fetchLiveProducts(category, query){
       throw err; // preserve doSearch's existing "couldn't reach the database" handling
     }
     if(category) rows = rows.filter(r => r.category === category);
-
-    // 2026-08-12: a generic chain-catalogue match (no confirmed store_id —
-    // most rows, since search_products_fuzzy keeps only one representative
-    // row per chain's whole unconfirmed catalogue) used to become exactly
-    // one "Online — ships NZ-wide" card, full stop, no matter how many real
-    // physical branches of that chain exist nearby. Reported directly: the
-    // Nearby tab's region search finds "heaps" of Steinlager options in
-    // Hawke's Bay because it already fans a match like this out across
-    // every real branch of that chain in scope (see runNearbyMapSearch's
-    // idsByChain) — this search bar just never got the same treatment, so
-    // the exact same underlying data looked far sparser here. Mirrors that
-    // same approximation (same "not confirmed for this specific store"
-    // territory the store sheet already uses) instead of quietly having
-    // two different definitions of "how many options are near you".
-    const idsByChain = {};
-    Object.values(storesById).forEach(store => {
-      const chain = chainNameFor(store.name);
-      (idsByChain[chain] = idsByChain[chain] || []).push(store.id);
-    });
-    const expanded = [];
-    rows.forEach(r => {
-      if(r.store_id){
-        expanded.push(mapRegionSearchRow(r, r.store_id));
-        return;
-      }
-      const branchIds = idsByChain[r.store_name];
-      if(branchIds && branchIds.length){
-        branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
-      } else {
-        expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
-      }
-    });
-    return expanded.sort(byValue);
+    return expandGenericChainMatches(rows).sort(byValue);
   }
 
-  let url = `${SUPABASE_URL}/rest/v1/products?select=*,stores(id,name,address,latitude,longitude)&order=price_per_litre.asc.nullslast,price.asc`;
+  // 2026-08-12: dropped the postgREST stores(...) embed — it only ever
+  // resolved coordinates for rows with a confirmed store_id, which is
+  // exactly the "near you" gap expandGenericChainMatches below now closes
+  // for generic/unconfirmed rows too (a category browse hit the same
+  // "shows as ships-NZ-wide even though real nearby branches exist" issue
+  // the free-text search bar did, just via a different code path).
+  let url = `${SUPABASE_URL}/rest/v1/products?select=*&order=price_per_litre.asc.nullslast,price.asc`;
   if(category){
     url += `&category=eq.${category}`;
   }
   const rows = await fetchAllRows(url, 6000);
-  return rows.map(mapDbRow);
+  const expanded = expandGenericChainMatches(rows).sort(byValue);
+  // 2026-08-12: renderResults no longer caps what it's given (see its own
+  // 2026-08-12 note) — right for a specific product search (a few hundred
+  // to low thousands of real matches), but a broad category browse fanned
+  // out across every chain's real branches genuinely produced 24,000+ rows
+  // in testing, the same scale (confirmed directly: 52,176 DOM cards) that
+  // caused real, measured lag the first time this app hit it. Sorted by
+  // value first, so this cap can only ever drop the worse options, never
+  // hide a cheaper one — same guarantee as before, just scoped to the one
+  // path that can actually blow past sane DOM-node counts.
+  const CATEGORY_BROWSE_CAP = 1000;
+  return expanded.slice(0, CATEGORY_BROWSE_CAP);
 }
 
 function mapDbRow(row){
@@ -1159,12 +1176,16 @@ function openDetail(r){
     ${provenanceLine}
   `;
   const actionBtn = document.getElementById('detailActionBtn');
+  const secondaryBtn = document.getElementById('detailSecondaryBtn');
   actionBtn.style.display = '';
+  secondaryBtn.style.display = 'none';
   const hasCoords = r.lat !== null && r.lat !== undefined && r.lng !== null && r.lng !== undefined;
   if(hasCoords){
-    // Real store location known — directions take priority over a product
-    // link, since "go get it" is the more useful action for a physical
-    // store even if we also happen to have a source URL for this row.
+    // Real store location known — directions is the primary action for a
+    // physical store (go get it), but that shouldn't hide a genuine
+    // product-page link when one also exists for this row — reported
+    // directly as wanted: being able to check the retailer's own page/
+    // price for a product even when it's also a real nearby store.
     actionBtn.textContent = 'Get directions ↗';
     actionBtn.onclick = () => {
       let mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`;
@@ -1177,10 +1198,14 @@ function openDetail(r){
       }
       window.open(mapsUrl, '_blank');
     };
+    if(r.url){
+      secondaryBtn.style.display = '';
+      secondaryBtn.onclick = () => window.open(r.url, '_blank');
+    }
   } else if(r.url){
     // No confirmed physical store (e.g. "Ships NZ-wide") — send them to buy
     // it online instead of showing a directions button with nowhere to go.
-    actionBtn.textContent = 'Visit product page ↗';
+    actionBtn.textContent = 'View product page ↗';
     actionBtn.onclick = () => window.open(r.url, '_blank');
   } else {
     actionBtn.style.display = 'none';
