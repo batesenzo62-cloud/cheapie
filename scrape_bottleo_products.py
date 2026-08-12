@@ -112,12 +112,18 @@ def parse_page(html, base):
         r'talker__product-name">([^<]+)</span>\s*'
         r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?'
         r'(?:(?!<a href="/lines/).)*?'
+        # Real specials do exist (talker__prices__was), the parser just
+        # never captured one before — Deals tab requires was_price to find
+        # anything at all, so this was a hardcoded reason Bottle-O/Big
+        # Barrel-style "Bottle-O" rows could never appear there, reported
+        # directly.
+        r'(?:talker__prices__was[^>]*>\s*was \$([\d.]+)\s*</span>(?:(?!<a href="/lines/).)*?)?'
         r'price__sell"[^>]*>\$([\d.]+)<',
         html, re.S
     ):
-        url_path, name, size, price = m.groups()
+        url_path, name, size, was_price, price = m.groups()
         full_name = f"{name.strip()} {size.strip()}" if size else name.strip()
-        products.append({"name": full_name, "price": price, "url": base + url_path})
+        products.append({"name": full_name, "price": price, "was_price": was_price, "url": base + url_path})
     return products
 
 
@@ -168,7 +174,7 @@ def scrape_store(store):
                 "category": app_category,
                 "product_name": p["name"],
                 "price": p["price"],
-                "was_price": "",
+                "was_price": p.get("was_price") or "",
                 "in_stock": True,
                 "url": p["url"],
                 "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
