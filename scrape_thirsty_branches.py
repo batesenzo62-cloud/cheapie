@@ -33,17 +33,29 @@ def match_store_id(label):
 
 
 BRANCHES = {
-    "Whangaparaoa": ("https://thirstyliquorwhangaparaoa.co.nz", None),
-    "Mt Eden": ("https://thirstyliquormteden.co.nz", None),
-    "Franich Street": ("https://thirstyliquorfranichst.co.nz", None),
+    # 2026-08-12 fix: these six used to rely on match_store_id() finding
+    # the branch label as a substring of a stores.name value — confirmed
+    # directly (see fix_thirsty_branch_stores.py) that this silently fails
+    # in two different ways: Whangaparaoa/Franich Street's real stores
+    # exist but under generic "Thirsty Liquor Auckland" names with the
+    # distinguishing detail only in the address, and Mt Eden/Huntsbury/
+    # Tauranga/Dunedin either didn't exist in the table at all or (Dunedin)
+    # only had OTHER real Dunedin branches that aren't this specific one —
+    # meaning match_store_id() was either returning None (branch invisibly
+    # dropped into "ships NZ-wide" instead of "near you") or, for Dunedin,
+    # silently picking the wrong physical location. Hardcoded here instead,
+    # same as Te Rapa always was.
+    "Whangaparaoa": ("https://thirstyliquorwhangaparaoa.co.nz", "5d29c9f6-28e8-48a1-a567-7b14bc0f506e"),
+    "Mt Eden": ("https://thirstyliquormteden.co.nz", "e85a574c-86ed-4dec-8044-77cdc4498416"),
+    "Franich Street": ("https://thirstyliquorfranichst.co.nz", "01420451-b69e-4cb1-a76f-b6a1ac45f24d"),
     "Chapel Park": ("https://thirstyliquorchapelpark.co.nz", None),
     "Pukekohe": ("https://thirstyliquorpukekohe.co.nz", None),
     "Havelock North": ("https://thirstyliquorhavelocknorth.co.nz", None),
     "Levin": ("https://thirstyliquorlevin.co.nz", None),
-    "Dunedin": ("https://thirstyliquordunedin.co.nz", None),
+    "Dunedin": ("https://thirstyliquordunedin.co.nz", "a8e86ef9-274b-43f2-9cbc-48c2e3d329ba"),
     "Islington": ("https://thirstyliquorislington.co.nz", None),
-    "Huntsbury": ("https://thirstyliquorhuntsbury.co.nz", None),
-    "Tauranga": ("https://www.thirstyliquortauranga.co.nz", None),
+    "Huntsbury": ("https://thirstyliquorhuntsbury.co.nz", "e93e8684-524c-40fd-8dc0-b85bdefa3e6a"),
+    "Tauranga": ("https://www.thirstyliquortauranga.co.nz", "c9e54a08-aae5-4eeb-b8a5-2a6c3168fcee"),
     "Te Rapa": ("https://tlterapa.co.nz", "377320fd-3b7c-424d-9ce0-b46f7c7893b9"),
 }
 CATEGORIES = {"beer": "collections/beer", "rtd": "collections/rtds", "wine": "collections/wine", "spirits": "collections/spirits"}

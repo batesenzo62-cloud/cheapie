@@ -1,0 +1,27 @@
+name: Fix Thirsty Liquor branch store records
+
+# One-off data-fix job (workflow_dispatch only, no schedule) — inserts the
+# store records fix_thirsty_branch_stores.py's docstring explains were
+# missing or mismatched, so scrape_thirsty_branches.py's hardcoded
+# store_ids resolve to real rows. Safe to re-run (on_conflict=id upsert).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  fix-thirsty-branch-stores:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fix Thirsty Liquor branch store records
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 fix_thirsty_branch_stores.py
