@@ -712,12 +712,18 @@ async function fetchLiveProducts(category, query){
   if(hasFreeTextQuery){
     await ensureStoresLoaded(); // resolves each match to a real store's address/coordinates, same as the Nearby map search
     let rows = [];
+    const callFuzzyRpc = () => fetch(`${SUPABASE_URL}/rest/v1/rpc/search_products_fuzzy`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ search_term: query.trim() })
+    });
     try{
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_products_fuzzy`, {
-        method: 'POST',
-        headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ search_term: query.trim() })
-      });
+      // Same one-retry treatment as fetchAllRows — a non-2xx here (e.g. a
+      // transient Postgres statement timeout right after a bulk upsert)
+      // used to just silently return "No products found" instead of
+      // clearing up on its own a second later.
+      let resp = await callFuzzyRpc();
+      if(!resp.ok) resp = await new Promise(r => setTimeout(r, 1500)).then(callFuzzyRpc);
       if(resp.ok){
         rows = await resp.json();
       } else {
@@ -875,7 +881,10 @@ function byValue(a, b){
 // 2026-08-12: replaced the old auto-widening step logic with a manual
 // radius slider (1-150km) the user drags themselves — see
 // onRadiusSliderChange/populateRadiusFilter. currentRadiusKm below is that
-// slider's current value.
+// slider's current value. Dragging all the way to RADIUS_SLIDER_MAX_KM
+// means "any distance" (uncapped), not a literal 150km wall — see its use
+// in renderResults.
+const RADIUS_SLIDER_MAX_KM = 150;
 let currentRadiusKm = 50;
 
 function renderResults(results){
@@ -889,8 +898,15 @@ function renderResults(results){
   // means than just "whichever of them happens to be geographically
   // closest, regardless of price". "Near you" is scoped to whatever the
   // radius slider is currently set to (1-150km, see onRadiusSliderChange)
-  // rather than every physical row nationwide.
-  const nearby = results.filter(r => r.km !== null && r.km <= currentRadiusKm).sort(byValue);
+  // rather than every physical row nationwide. The slider's dial only
+  // labels up to 150km, but maxing it out means "any distance" (no cap)
+  // rather than a literal 150km wall — a hard 150km ceiling with nothing
+  // beyond it regressed sparser regions (e.g. Hawke's Bay) to far fewer
+  // results than the old auto-widening-to-nationwide fallback used to
+  // show, which is exactly backwards for a filter that's supposed to only
+  // ever narrow things down from what you'd otherwise see.
+  const radiusIsUnlimited = currentRadiusKm >= RADIUS_SLIDER_MAX_KM;
+  const nearby = results.filter(r => r.km !== null && (radiusIsUnlimited || r.km <= currentRadiusKm)).sort(byValue);
   const online = results.filter(r => r.km === null).sort(byValue);
   const visible = nearby.concat(online);
 
@@ -936,7 +952,9 @@ function renderResults(results){
     }
   }
   if(!shownNearby.length && !shownOnline.length){
-    showEmptyResults(`No matches within ${currentRadiusKm} km — try widening the radius above.`);
+    showEmptyResults(currentRadiusKm >= RADIUS_SLIDER_MAX_KM
+      ? 'No matches near you for this search.'
+      : `No matches within ${currentRadiusKm} km — try widening the radius above.`);
   }
 }
 
@@ -1010,6 +1028,10 @@ function applyPackSizeFilter(size, chipEl){
 // instead of the fixed auto-widening steps it used to use — sorting stays
 // by cheapest/best-per-litre either way, this only changes which physical
 // stores count as "near you" at all.
+function radiusLabelText(km){
+  return km >= RADIUS_SLIDER_MAX_KM ? 'Any distance' : `${km} km`;
+}
+
 function populateRadiusFilter(results){
   currentRadiusKm = 50;
   const row = document.getElementById('radiusFilterRow');
@@ -1019,13 +1041,13 @@ function populateRadiusFilter(results){
     return;
   }
   document.getElementById('radiusSlider').value = 50;
-  document.getElementById('radiusValueLabel').textContent = '50 km';
+  document.getElementById('radiusValueLabel').textContent = radiusLabelText(50);
   row.style.display = 'block';
 }
 
 function onRadiusSliderChange(value){
   currentRadiusKm = Number(value);
-  document.getElementById('radiusValueLabel').textContent = `${currentRadiusKm} km`;
+  document.getElementById('radiusValueLabel').textContent = radiusLabelText(currentRadiusKm);
   renderResults(currentlyFilteredResults());
 }
 
@@ -2012,9 +2034,23 @@ async function fetchAllRows(url, maxRows = Infinity){
   let all = [];
   let offset = 0;
   while(true){
-    const resp = await fetch(url, {
+    // 2026-08-12: retry a failed page once after a short pause before
+    // giving up — a single bad page used to throw immediately (surfacing
+    // as "couldn't reach the database" for a whole category browse), but
+    // this is a real, recurring transient condition, not just a total
+    // outage: a one-off Postgres statement timeout right after a huge
+    // bulk upsert (see showStoreSheet's own fallback for the same root
+    // cause) is exactly the kind of thing a scheduled scraper run
+    // triggers, and it clears up within a second or two on its own.
+    let resp = await fetch(url, {
       headers: { apikey: SUPABASE_ANON_KEY, Range: `${offset}-${offset + PAGE_SIZE - 1}` }
     });
+    if(!resp.ok){
+      await new Promise(r => setTimeout(r, 1500));
+      resp = await fetch(url, {
+        headers: { apikey: SUPABASE_ANON_KEY, Range: `${offset}-${offset + PAGE_SIZE - 1}` }
+      });
+    }
     if(!resp.ok){
       // A total connection failure should still surface as an error (same
       // as the plain fetch() this replaced) rather than look like a
