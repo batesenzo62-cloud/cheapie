@@ -100,6 +100,16 @@
     "store_id": "950d25ab-251d-402f-9f78-142f9129965a"
   },
   {
+    "name": "Bottle-O Ti Rakau",
+    "store_id_ext": "6a388b533181762cc04f922f",
+    "address": "60 D Ti Rakau Drive, Pakuranga 2010",
+    "online": true,
+    "subdomain": "bottleo-tirakau.myfoodlink.com/",
+    "lat": -36.9208977,
+    "lng": 174.8780308,
+    "store_id": "8cef20f4-f253-42dc-8d90-761743fd84bc"
+  },
+  {
     "name": "Brookfield",
     "store_id_ext": "5ea25132f605cc148300016d",
     "address": "140 Otumoetai Road, Brookfield, Tauranga 3110",
@@ -1063,7 +1073,7 @@
     "name": "Rosedale",
     "store_id_ext": "67105fbb96dfb2cdf6e5a338",
     "address": "4/83 Apollo Drive, Rosedale, Auckland AKL 0632",
-    "online": true,
+    "online": false,
     "subdomain": "rosedale",
     "lat": -36.7353068,
     "lng": 174.7271868,
@@ -1118,6 +1128,16 @@
     "lat": -43.530955,
     "lng": 172.6364343,
     "store_id": "06fba747-fc74-4d96-aa6b-36c4d177ed02"
+  },
+  {
+    "name": "Silverdale",
+    "store_id_ext": "6a587d9b0033036d026bb923",
+    "address": "1F Polarity Rise, Stanmore Bay, Silverdale, Auckland 0932, New Zealand",
+    "online": false,
+    "subdomain": null,
+    "lat": null,
+    "lng": null,
+    "store_id": "4cc027c0-8a7d-4f04-8a43-20780f4f696e"
   },
   {
     "name": "Snells Beach",
@@ -1358,6 +1378,16 @@
     "lat": -37.1398865,
     "lng": 175.5432613,
     "store_id": "8710bc70-71c3-4152-b9e7-32e9d107d7bb"
+  },
+  {
+    "name": "The Bottle-O Papatoetoe",
+    "store_id_ext": "6a34dc55be0a2a8ab0876964",
+    "address": "24B Charles Street, Papatoetoe Auckland 2025",
+    "online": true,
+    "subdomain": "bottleo-papatoetoe.myfoodlink.com/",
+    "lat": -36.9693169,
+    "lng": 174.8615002,
+    "store_id": "ed8d7b30-79ae-4fa2-8cf2-e1acff78f584"
   },
   {
     "name": "Tikipunga",
