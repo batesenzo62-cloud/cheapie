@@ -436,6 +436,7 @@
         <div style="font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--ink);" id="resultsTitle">Results</div>
       </div>
       <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;" id="resultsSubtitle"></div>
+      <div id="categoryChips" style="display:none; flex-wrap:wrap; gap:6px; padding:0 20px 6px;"></div>
       <div id="packSizeChips" style="display:none; flex-wrap:wrap; gap:6px; padding:0 20px 6px;"></div>
       <div id="radiusFilterRow" style="padding:2px 20px 6px; font-family:'Inter',sans-serif;">
         <div style="display:flex; justify-content:space-between; align-items:baseline;">
@@ -1056,6 +1057,54 @@ function showEmptyResults(message){
 // than re-querying the database each time.
 let currentSearchResults = [];
 let currentPackSize = null; // null = no filter (show every pack size)
+let currentCategoryFilter = null; // null = no filter (show every category)
+
+// 2026-08-13: reported directly — searching "Vodka" turned up 503 RTD
+// results and 3 beer alongside the 449 genuine spirits matches, with no
+// way to narrow down to just spirits. That's not wrong data (a "Vodka &
+// Soda" RTD is a real, legitimate match for the text "Vodka"), just
+// something the pure category chips (Beer/Wine/Spirits/RTD on the search
+// tab) never covered — those only ever ran a strict category-only browse,
+// with no equivalent for narrowing an already-run free-text search after
+// the fact. Same chip-row pattern as pack size, hidden entirely when a
+// search only ever matched one category anyway.
+const CATEGORY_LABELS = { beer: '🍺 Beer', wine: '🍷 Wine', spirits: '🥃 Spirits', rtd: '🍹 RTD' };
+
+function populateCategoryChips(results){
+  const container = document.getElementById('categoryChips');
+  container.innerHTML = '';
+  currentCategoryFilter = null;
+
+  const cats = [...new Set(results.map(r => r.category).filter(Boolean))];
+  if(cats.length <= 1){
+    container.style.display = 'none';
+    return;
+  }
+
+  const allChip = document.createElement('div');
+  allChip.className = 'chip active';
+  allChip.textContent = 'All categories';
+  allChip.style.cssText = 'padding:6px 12px; font-size:11px;';
+  allChip.onclick = () => applyCategoryFilter(null, allChip);
+  container.appendChild(allChip);
+
+  cats.forEach(cat => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = CATEGORY_LABELS[cat] || cat;
+    chip.style.cssText = 'padding:6px 12px; font-size:11px;';
+    chip.onclick = () => applyCategoryFilter(cat, chip);
+    container.appendChild(chip);
+  });
+  container.style.display = 'flex';
+}
+
+function applyCategoryFilter(cat, chipEl){
+  currentCategoryFilter = cat;
+  document.querySelectorAll('#categoryChips .chip').forEach(c => c.classList.remove('active'));
+  chipEl.classList.add('active');
+  renderResults(currentlyFilteredResults());
+}
 
 // A "size" isn't always just unitCount — a crate or keg is a distinct
 // container type a shopper searches for on its own terms, not just
@@ -1119,14 +1168,15 @@ function populatePackSizeChips(results){
   container.style.display = 'flex';
 }
 
-// Combines both filters currently active on the results screen (pack
-// size chips + radius slider) — currentRadiusKm is applied inside
-// renderResults itself (it affects the near-you/online split), so this
-// only needs to handle pack size before handing off.
+// Combines every filter currently active on the results screen (category
+// chips + pack size chips + radius slider) — currentRadiusKm is applied
+// inside renderResults itself (it affects the near-you/online split), so
+// this only needs to handle category + pack size before handing off.
 function currentlyFilteredResults(){
-  return currentPackSize === null
-    ? currentSearchResults
-    : currentSearchResults.filter(r => sizeCategoryOf(r) === currentPackSize);
+  let rows = currentSearchResults;
+  if(currentCategoryFilter !== null) rows = rows.filter(r => r.category === currentCategoryFilter);
+  if(currentPackSize !== null) rows = rows.filter(r => sizeCategoryOf(r) === currentPackSize);
+  return rows;
 }
 
 function applyPackSizeFilter(size, chipEl){
@@ -1170,6 +1220,8 @@ async function doSearch(term, forcedCategory){
   show('view-results');
   document.getElementById('resultsSubtitle').textContent = 'Searching live database…';
   document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('categoryChips').style.display = 'none';
+  document.getElementById('categoryChips').innerHTML = '';
   document.getElementById('packSizeChips').style.display = 'none';
   document.getElementById('packSizeChips').innerHTML = '';
   document.getElementById('radiusFilterRow').style.display = 'none';
@@ -1187,6 +1239,7 @@ async function doSearch(term, forcedCategory){
         ? `${rows.length} real products found — showing the best value near you`
         : `${rows.length} real products found in your database, sorted by best value`;
       currentSearchResults = rows;
+      populateCategoryChips(currentSearchResults);
       populatePackSizeChips(currentSearchResults);
       populateRadiusFilter(currentSearchResults);
       renderResults(currentSearchResults);
