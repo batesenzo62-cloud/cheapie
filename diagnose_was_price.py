@@ -26,13 +26,24 @@ def dump(label, url):
         return
     html = r.text
     print(f"  status={r.status_code} size={len(html)}")
-    idx = html.find("item-box")
-    if idx == -1:
-        print("  no 'item-box' found at all")
-        return
-    print(html[idx:idx + 2500])
+    print(f"  actual-price count: {html.count('actual-price')}")
+    print(f"  old-price count: {html.count('old-price')}")
+    idx = html.find("old-price")
+    if idx != -1:
+        print("  --- context around first old-price ---")
+        print(html[max(0, idx - 400):idx + 200])
+    else:
+        # No discount anywhere on this page at all -- show one full
+        # product's price block so the real (undiscounted) markup is
+        # visible regardless.
+        idx2 = html.find("actual-price")
+        if idx2 != -1:
+            print("  --- context around first actual-price (no old-price found anywhere on page) ---")
+            print(html[max(0, idx2 - 300):idx2 + 300])
 
 
 if __name__ == "__main__":
-    dump("Big Barrel (beers)", "https://bigbarrel.co.nz/en/beers")
+    dump("Big Barrel (craft beers, real products)", "https://bigbarrel.co.nz/en/craft-beers-2")
+    dump("Big Barrel (wines, real products)", "https://bigbarrel.co.nz/en/wines")
     dump("Super Liquor (Alexandra, beer)", "https://alexandra.superliquor.co.nz/beer")
+    dump("Super Liquor (Alexandra, wine)", "https://alexandra.superliquor.co.nz/wine")
