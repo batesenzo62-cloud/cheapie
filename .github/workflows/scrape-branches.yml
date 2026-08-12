@@ -54,17 +54,27 @@ jobs:
 
   super-liquor:
     runs-on: ubuntu-latest
-    # This one can genuinely run for hours (see the note above) — give it
-    # real headroom instead of hitting GitHub's 6-hour default and getting
-    # killed silently mid-run.
-    timeout-minutes: 480
+    # 2026-08-13 fix: confirmed directly — a single job covering all 147
+    # online branches got killed at exactly 6h00m by GitHub Actions' hard
+    # job time limit for hosted runners. timeout-minutes can be set higher
+    # (it was 480 here) but can't actually raise that platform ceiling —
+    # it's silently capped, not honoured. Split into 6 parallel chunks
+    # instead (see CHUNK_INDEX/CHUNK_COUNT in scrape_superliquor_branches.py
+    # — [start::step] slicing, so no chunk is skewed if catalogue depth
+    # varies regionally), each comfortably inside the real limit.
+    strategy:
+      matrix:
+        chunk: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Scrape Super Liquor branches
+      - name: Scrape Super Liquor branches (chunk ${{ matrix.chunk }}/6)
+        env:
+          CHUNK_INDEX: ${{ matrix.chunk }}
+          CHUNK_COUNT: 6
         run: python3 scrape_superliquor_branches.py
       - name: Load into Supabase
         env:

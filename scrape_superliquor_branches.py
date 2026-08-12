@@ -26,6 +26,19 @@ CSV_PATH = "independent_store_prices.csv"
 CATEGORIES = {"beer": "beer", "rtd": "premix", "wine": "wine", "spirits": "spirits"}
 DEFAULT_FIELDNAMES = ["store", "store_id", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at"]
 
+# 2026-08-13 fix: confirmed directly — a single run covering all 147
+# online branches got killed at exactly 6h00m by GitHub Actions' hard job
+# time limit for hosted runners (timeout-minutes can be set higher, but
+# can't actually raise that platform ceiling — it's silently capped, not
+# honoured). Split into CHUNK_COUNT parallel jobs (see
+# .github/workflows/scrape-branches.yml), each running its own slice of
+# the branch list via CHUNK_INDEX — [start::step] slicing interleaves
+# branches across chunks rather than splitting into contiguous blocks, so
+# no single chunk is skewed if branch catalogue depth varies regionally.
+# Defaults to "no chunking" for a plain manual/local run.
+CHUNK_INDEX = int(os.environ.get("CHUNK_INDEX", "0"))
+CHUNK_COUNT = int(os.environ.get("CHUNK_COUNT", "1"))
+
 
 def match_store_id(stores, label):
     matches = [st for st in stores if label.lower() in st["name"].lower()]
@@ -39,6 +52,8 @@ def main():
 
     r2 = requests.get("https://www.superliquor.co.nz/GetStoresByState", headers=s.HEADERS)
     branch_data = [b for b in r2.json()["stores"] if b["Value"]]
+    branch_data = branch_data[CHUNK_INDEX::CHUNK_COUNT]
+    print(f"Chunk {CHUNK_INDEX + 1}/{CHUNK_COUNT}: {len(branch_data)} branches this run")
 
     # 2026-08-14 fix: this file is gitignored (regenerated data, not
     # source) — confirmed directly a plain open() here crashed every
