@@ -1300,14 +1300,25 @@ async function loadDeals(category, chipEl){
   // for every branch of a chain is noise, not signal.
   const mapped = discounted.map(r => mapRegionSearchRow(r, r.store_id));
   mapped.forEach(r => { r.discountPct = (r.was - r.price) / r.was; });
-  mapped.sort((a, b) => b.discountPct - a.discountPct);
+  // 2026-08-13: made first priority — sort by distance (closest first)
+  // rather than discount size, without dropping any of them. Ships-
+  // NZ-wide rows (no real km) can't be ranked by distance at all, so they
+  // sink to the end, ranked by discount among themselves there instead of
+  // just being in arbitrary order.
+  mapped.sort((a, b) => {
+    if(a.km !== null && b.km !== null) return a.km - b.km;
+    if(a.km !== null) return -1;
+    if(b.km !== null) return 1;
+    return b.discountPct - a.discountPct;
+  });
 
-  // Sorted by discount first, so this can only ever drop smaller deals.
+  // Sorted by distance first, so this can only ever drop the furthest
+  // deals, never hide a closer one.
   const DEALS_CAP = 500;
   const shown = mapped.slice(0, DEALS_CAP);
 
   document.getElementById('dealsSubtitle').textContent = mapped.length
-    ? `${mapped.length} active special${mapped.length === 1 ? '' : 's'} — biggest discounts first`
+    ? `${mapped.length} active special${mapped.length === 1 ? '' : 's'} — closest to you first`
     : `No active specials found${category ? ' in this category' : ''} right now.`;
 
   const list = document.getElementById('dealsList');
