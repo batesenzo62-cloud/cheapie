@@ -750,14 +750,25 @@ function expandGenericChainMatches(rows){
   // $15.99 also exists as a second, storeless "Bottle-O" row for exactly
   // this purpose, and fanning it out indiscriminately to every branch
   // overwrote/duplicated Hastings' own different, equally real price with
-  // someone else's. Skip fanning a generic match out to any branch that
-  // already has its own confirmed row for the exact same product in this
-  // batch — that branch's real data wins, not the generic approximation.
-  const confirmedProductsByStore = {};
+  // someone else's.
+  //
+  // 2026-08-14 fix: that first fix was still too narrow — it only skipped
+  // fanning out to a branch that had its own confirmed row for the exact
+  // same product. Reported directly — "Krombacher Pils 12x660b" showed as
+  // $5.99 at Bottle-O Hastings (really Kingsland's price/link), because
+  // Hastings' own real shop simply doesn't carry that specific pack size,
+  // even though it carries plenty of other real, differently-priced
+  // Krombacher products. A branch with its own online shop having "no row
+  // for this exact product" means it genuinely doesn't stock that product
+  // — it does NOT mean "we don't know, substitute another branch's price."
+  // That approximation is only honest for the ~80 branches with no online
+  // shop at all. So: if a branch has ANY of its own confirmed rows in this
+  // batch (proving it has a real shop of its own), never fan a generic
+  // fallback row out to it, for any product — only branches with zero
+  // confirmed rows of their own get the fallback approximation.
+  const storesWithOwnCatalog = new Set();
   rows.forEach(r => {
-    if(r.store_id){
-      (confirmedProductsByStore[r.store_id] = confirmedProductsByStore[r.store_id] || new Set()).add(r.product_name);
-    }
+    if(r.store_id) storesWithOwnCatalog.add(r.store_id);
   });
 
   const expanded = [];
@@ -769,8 +780,7 @@ function expandGenericChainMatches(rows){
     const branchIds = idsByChain[r.store_name];
     if(branchIds && branchIds.length){
       branchIds.forEach(id => {
-        const hasOwnConfirmedRow = confirmedProductsByStore[id] && confirmedProductsByStore[id].has(r.product_name);
-        if(!hasOwnConfirmedRow) expanded.push(mapRegionSearchRow(r, id));
+        if(!storesWithOwnCatalog.has(id)) expanded.push(mapRegionSearchRow(r, id));
       });
     } else {
       expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
