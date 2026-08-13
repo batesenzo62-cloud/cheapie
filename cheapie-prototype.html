@@ -1462,12 +1462,13 @@ function openDetail(r){
     };
     if(r.url){
       secondaryBtn.style.display = '';
-      // r.confirmedBranch === false means this price/url came from the
-      // chain's generic fallback catalogue (one representative branch,
-      // address substituted for whichever store you're actually looking
-      // at) — the link is real, but it opens THAT branch's page, not this
-      // one's. Label it honestly instead of implying it's this store's own.
-      secondaryBtn.textContent = r.confirmedBranch === false ? 'View product page (different branch) ↗' : 'View product page ↗';
+      // 2026-08-14: used to say "(different branch)" when r.confirmedBranch
+      // is false (a nearest-neighbour substitute, not this store's own
+      // confirmed price) — removed per direct request. The provenance line
+      // above (openDetail's "sourced from X.co.nz") still shows the real
+      // source hostname either way, so the actual link destination isn't
+      // hidden, just no longer called out in the button itself.
+      secondaryBtn.textContent = 'View product page ↗';
       secondaryBtn.onclick = () => window.open(r.url, '_blank');
     }
   } else if(r.url){
