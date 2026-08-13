@@ -1,0 +1,38 @@
+name: Scrape Black Bull Liquor branches via DoorDash
+
+# Separate from scrape.yml/scrape-branches.yml on purpose — this is the
+# only scraper in this app that needs a real browser (DoorDash returns
+# 403/Cloudflare to plain requests; see scrape_blackbull_doordash.py's
+# own docstring for why Uber Eats wasn't a viable alternative). Installing
+# a full headless Chromium is heavy compared to every other scraper here,
+# so this runs on its own daily schedule rather than folding into the
+# existing every-4-hours/daily jobs and slowing them down for everyone.
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  scrape-and-load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Scrape Black Bull Liquor via DoorDash
+        run: python3 scrape_blackbull_doordash.py
+
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
