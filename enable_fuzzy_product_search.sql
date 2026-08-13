@@ -162,6 +162,27 @@ create index if not exists idx_products_product_name_trgm
 -- show that real diversity instead of being squeezed as tightly as a
 -- single-catalogue chain that only ever contributes a handful of rows
 -- regardless of the cap.
+--
+-- 2026-08-14 fix #3: reported directly — the Nearby map's search marked
+-- Bottle-O Onekawa as NOT having Steinlager in stock, when it genuinely
+-- does (real, confirmed data). Confirmed directly: Onekawa's own row
+-- simply wasn't in the RPC's response at all for that search — even
+-- within Bottle-O's own 150-row chain budget, its ~70+ real independent
+-- branches were still competing against EACH OTHER for those 150 slots,
+-- and Onekawa's specific wording happened to rank low enough this time
+-- to lose out entirely. The chain cap only ever bounded *how much extra
+-- variety* one chain could show — it never guaranteed each individual
+-- real branch gets even its single best match through, which is exactly
+-- what the map needs to tell green from grey correctly (this app's own
+-- runNearbyMapSearch colours a pin from whether that specific store's
+-- own row appears at all). Restructured: every store with ANY real
+-- match now always gets its own single best-scoring row through
+-- (store_rn = 1), unconditionally, regardless of chain competition —
+-- that's the map's accuracy guarantee. The chain cap (lowered 150 -> 40
+-- to leave headroom, since baseline coverage no longer depends on it)
+-- now only governs how much *additional* pack-size variety beyond that
+-- guaranteed first row a chain can contribute, for the main search
+-- list's benefit.
 create or replace function search_products_fuzzy(search_term text, min_similarity float default 0.5)
 returns setof products
 language plpgsql
@@ -201,7 +222,7 @@ begin
       from products prod
       where lower(search_term) <% lower(prod.product_name)
     ) ranked
-    where ranked.store_rn <= 10 and ranked.chain_rn <= 150
+    where ranked.store_rn = 1 or (ranked.store_rn <= 10 and ranked.chain_rn <= 40)
     limit 4000;
 end;
 $$;
