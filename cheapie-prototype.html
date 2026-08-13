@@ -2032,6 +2032,7 @@ function mapRegionSearchRow(row, storeId){
     ? haversineKm(userLocation.lat, userLocation.lon, store.latitude, store.longitude)
     : null;
   return {
+    storeId: storeId,
     store: store ? store.name : row.store_name,
     category: row.category,
     address: store ? store.address : "Ships NZ-wide",
@@ -2303,26 +2304,22 @@ async function runNearbyMapSearch(term){
   }
   if(token !== nearbyMapSearchToken) return; // a newer search started while this one was in flight
 
-  // Map pins grouped by chain name, so a store_name-only match (the common
-  // case — most rows aren't tied to one confirmed branch) marks every
-  // branch of that chain currently on the map, same "unconfirmed branch"
-  // approximation showStoreSheet already makes.
-  const idsByChain = {};
-  Object.keys(storesById).forEach(id => {
-    const chain = chainNameFor(storesById[id].name);
-    (idsByChain[chain] = idsByChain[chain] || []).push(id);
-  });
-
+  // 2026-08-14 fix: reported directly — the map marked Bottle-O Onekawa
+  // and other real, confirmed branches as NOT stocking a product they
+  // genuinely do, because this used its own separate, simpler matching
+  // logic that never learned about the Black Bull Hawera fallback (or
+  // any future chain-fallback) already handled by expandGenericChainMatches
+  // for the main Search tab. Two different matching implementations for
+  // the same underlying question ("does this store have this product")
+  // is exactly how they drift apart — reusing the one real
+  // implementation instead of maintaining a second one here.
+  const expanded = expandGenericChainMatches(rows);
   const matchedSet = new Set();
-  const matchesByStore = {}; // store_id -> matching rows at that store, kept for the cheapest-in-scope lookup below
-  rows.forEach(r => {
-    const targetIds = (r.store_id && storeMarkers[r.store_id])
-      ? [r.store_id] // confirmed exact-branch match
-      : (r.store_name && idsByChain[r.store_name]) ? idsByChain[r.store_name] : []; // chain catalogue, branch unconfirmed
-    targetIds.forEach(id => {
-      matchedSet.add(id);
-      (matchesByStore[id] = matchesByStore[id] || []).push(r);
-    });
+  const matchesByStore = {}; // store_id -> matching (already-mapped) rows at that store, kept for the cheapest-in-scope lookup below
+  expanded.forEach(r => {
+    if(!r.storeId || !storeMarkers[r.storeId]) return; // no real pin on this map for it (e.g. "ships NZ-wide")
+    matchedSet.add(r.storeId);
+    (matchesByStore[r.storeId] = matchesByStore[r.storeId] || []).push(r);
   });
 
   // Region + suburb search (2026-08-07/10): scopes the same in-stock/
@@ -2353,11 +2350,11 @@ async function runNearbyMapSearch(term){
   // rather than reintroducing the map's own per-store price-tier coloring
   // (removed 2026-08-03 after repeatedly breaking — see the note above
   // this function). Pin colors stay simple green/grey regardless.
+  // matchesByStore already holds fully-mapped rows (from expandGenericChainMatches
+  // above), not raw DB rows — pushed directly, no second mapping pass needed.
   nearbyRegionResultRows = [];
   coloredIds.forEach(id => {
-    (matchesByStore[id] || []).forEach(r => {
-      nearbyRegionResultRows.push(mapRegionSearchRow(r, id));
-    });
+    (matchesByStore[id] || []).forEach(r => nearbyRegionResultRows.push(r));
   });
   nearbyRegionResultLabel = region === 'all'
     ? `"${term}" — best value nationwide`
