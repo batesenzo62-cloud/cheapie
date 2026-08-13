@@ -766,27 +766,48 @@ function expandGenericChainMatches(rows){
   // many results were still labeled "View product page (different
   // branch)", which reads as "this price might be wrong for this store"
   // (correctly, in these cases — it genuinely is another branch's real
-  // price). For a chain that has ANY confirmed per-branch data at all
+  // price, always the SAME one fixed representative branch — e.g. every
+  // no-catalog Bottle-O branch nationwide showing Kingsland's price,
+  // however far away Kingsland actually is). Confirmed directly there's
+  // no real alternative — Bottle-O's own homepage search *looks* like a
+  // neutral national catalogue but is quietly scoped to one specific
+  // default branch too (Wiri, Auckland) — so any "no catalogue of its
+  // own" branch is always going to show some other real branch's price;
+  // the fix is which branch, not whether to show one at all.
+  //
+  // Now: for a chain that has ANY confirmed per-branch data at all
   // (Bottle-O, Black Bull — proving prices really do vary branch to
-  // branch), a storeless/generic row is always some OTHER real branch's
-  // actual price standing in — that's a real potential inaccuracy, not
-  // just something to disclaim, so it's no longer attributed to any
-  // specific branch at all: shown unattached ("ships NZ-wide" style)
-  // instead of impersonating a branch that may charge something
-  // different. Liquorland is the opposite case — it never has per-branch
-  // data because prices are genuinely identical at every store (confirmed
+  // branch), a branch missing its own row for a specific product gets
+  // that product's GEOGRAPHICALLY NEAREST confirmed branch's real price
+  // instead of always the same fixed one — a genuinely closer, more
+  // plausible approximation, still honestly labeled "different branch"
+  // since it's real data from somewhere else, not this store's own.
+  // Liquorland is the opposite case — it never has per-branch data
+  // because prices are genuinely identical at every store (confirmed
   // directly, see showStoreSheet's own Liquorland disclaimer) — fanning
   // its generic rows out to every branch there is accurate, not a guess,
-  // so chains with zero per-branch data anywhere in this batch are
-  // unaffected.
-  const chainsWithPerBranchData = new Set();
+  // so a product with zero confirmed rows anywhere in this batch is
+  // unaffected and still fans out to every branch directly.
+  const confirmedByChainProduct = {}; // "<chain>||<product_name>" -> [{storeId, lat, lng, row}]
   rows.forEach(r => {
-    // r.store_name on a confirmed row is the specific branch's own name
-    // (e.g. "Bottle-O Hastings"), not the bare chain name a generic row
-    // carries (e.g. "Bottle-O") — normalize through chainNameFor so the
-    // two actually compare equal below.
-    if(r.store_id) chainsWithPerBranchData.add(chainNameFor(r.store_name));
+    if(!r.store_id) return;
+    const store = storesById[r.store_id];
+    if(!store || store.latitude == null || store.longitude == null) return;
+    const key = chainNameFor(r.store_name) + '||' + r.product_name;
+    (confirmedByChainProduct[key] = confirmedByChainProduct[key] || []).push({ storeId: r.store_id, lat: store.latitude, lng: store.longitude, row: r });
   });
+
+  function nearestConfirmed(chain, productName, targetStore){
+    if(!targetStore || targetStore.latitude == null || targetStore.longitude == null) return null;
+    const candidates = confirmedByChainProduct[chain + '||' + productName];
+    if(!candidates || !candidates.length) return null;
+    let best = null, bestDist = Infinity;
+    candidates.forEach(c => {
+      const d = haversineKm(targetStore.latitude, targetStore.longitude, c.lat, c.lng);
+      if(d < bestDist){ bestDist = d; best = c; }
+    });
+    return best;
+  }
 
   const expanded = [];
   rows.forEach(r => {
@@ -794,12 +815,27 @@ function expandGenericChainMatches(rows){
       expanded.push(mapRegionSearchRow(r, r.store_id));
       return;
     }
-    const branchIds = idsByChain[r.store_name];
-    if(branchIds && branchIds.length && !chainsWithPerBranchData.has(r.store_name)){
-      branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
-    } else {
-      expanded.push(mapRegionSearchRow(r, null)); // no confident branch to attach this to — shown unattached rather than guessed
+    const chain = chainNameFor(r.store_name);
+    const branchIds = idsByChain[chain];
+    if(!branchIds || !branchIds.length){
+      expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
+      return;
     }
+    const key = chain + '||' + r.product_name;
+    const confirmedForProduct = confirmedByChainProduct[key];
+    if(!confirmedForProduct || !confirmedForProduct.length){
+      // No branch of this chain has ever confirmed its own price for this
+      // exact product — uniform-nationwide case (or simply no per-branch
+      // data exists yet for it). Fan the one real row out to every branch.
+      branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+      return;
+    }
+    const confirmedIds = new Set(confirmedForProduct.map(c => c.storeId));
+    branchIds.forEach(id => {
+      if(confirmedIds.has(id)) return; // that branch's own real row for this product already pushed above
+      const nearest = nearestConfirmed(chain, r.product_name, storesById[id]);
+      if(nearest) expanded.push(mapRegionSearchRow(nearest.row, id));
+    });
   });
   return expanded;
 }
@@ -1960,10 +1996,14 @@ function mapRegionSearchRow(row, storeId){
     // carries the *source* row's url — the one real branch that chain's
     // generic catalogue was actually scraped from (Hawera, for Black Bull;
     // Kingsland, for Bottle-O) — not a page that exists for the branch
-    // being displayed. row.store_id is only ever real (non-null) for a row
-    // that genuinely was scraped from this specific branch, so it's a
-    // reliable signal openDetail can use to be honest about that.
-    confirmedBranch: !!row.store_id
+    // being displayed.
+    // 2026-08-14 fix: compare against the branch actually being displayed
+    // (storeId), not just "is row.store_id truthy at all" — that used to
+    // read as confirmed even when a *different* real branch's row (e.g.
+    // the nearest-neighbour substitute expandGenericChainMatches now uses)
+    // was attached to this branch's card, since that row's own store_id is
+    // real too, just not this branch's.
+    confirmedBranch: row.store_id === storeId
   };
 }
 
