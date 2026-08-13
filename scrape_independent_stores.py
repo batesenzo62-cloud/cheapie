@@ -43,6 +43,22 @@ import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 
+# Real per-branch store_id for TARGETS entries below where the target
+# genuinely IS one confirmed real physical branch, not a representative
+# stand-in for the rest of an unconfirmed chain — every "Black Bull
+# Liquor" TARGETS row below is actually blackbullliquorhawera.co.nz,
+# which is Black Bull Liquor Hawera's own real site (confirmed directly:
+# the site's own page states its address as "57 High Street, Hawera
+# 4610", matching that branch's row in the stores table exactly). This
+# used to only be set by a one-off manual DB patch, which every scheduled
+# scrape.yml run since then silently wiped back to null (load_data_to_
+# supabase.py's upsert overwrites every column, and this file never wrote
+# a store_id at all) — now the scraper itself sets it every run so it
+# actually sticks.
+TARGET_STORE_ID_OVERRIDES = {
+    "Black Bull Liquor": "bf139701-d11f-47c0-a410-0850e1f7315f",  # Black Bull Liquor Hawera
+}
+
 # Each target: (store_name, url, category, platform)
 # Wine/spirits URLs added 2026-07-23 — verified to return HTTP 200 (these
 # sites are plain server-rendered HTML, so a 200 here is a much stronger
@@ -763,6 +779,7 @@ def scrape_one(store_name, url, category, platform):
             "in_stock": p["in_stock"],
             "url": p["url"],
             "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
+            "store_id": TARGET_STORE_ID_OVERRIDES.get(store_name, ""),
         })
     return results
 
@@ -770,7 +787,7 @@ def scrape_one(store_name, url, category, platform):
 # Fixed field list (rather than deriving fieldnames from the first result)
 # so the CSV header can be written immediately, before any target has even
 # run — needed for the incremental writing below.
-PRODUCT_FIELDNAMES = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at"]
+PRODUCT_FIELDNAMES = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at", "store_id"]
 
 
 def main():
