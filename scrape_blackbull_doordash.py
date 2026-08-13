@@ -183,6 +183,20 @@ async def scrape_store(page, url):
     await page.wait_for_timeout(4000)
     await dismiss_age_gate(page)
 
+    # 2026-08-14 fix: reported directly — this worked locally but failed
+    # for 5 of 6 branches in GitHub Actions with "Cannot read properties
+    # of undefined (reading 'extract')" — window.__APOLLO_CLIENT__ simply
+    # wasn't there yet after the fixed 4s wait above, in that environment
+    # (slower/different rendering than a local run, or Cloudflare treating
+    # a datacenter IP more cautiously — either way, a fixed delay was
+    # gambling on it being fast enough). Poll for it to actually exist
+    # instead of assuming a flat wait covers it, same principle as this
+    # app's own retry-once pattern used elsewhere for real transients.
+    await page.wait_for_function(
+        "() => window.__APOLLO_CLIENT__ && typeof window.__APOLLO_CLIENT__.extract === 'function'",
+        timeout=20000,
+    )
+
     cats = await page.evaluate(
         """
         () => {
@@ -296,39 +310,49 @@ async def main():
                 user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
                 viewport={"width": 1280, "height": 1200},
             )
-            try:
-                # A real, occasional transient — confirmed directly a
-                # store that scraped fine on one run came back with 0
-                # items on the next, no error raised, just slow/incomplete
-                # rendering that round. One retry after a real pause
-                # clears it, same treatment already used elsewhere in
-                # this app for this exact kind of flakiness.
-                raw_items = await scrape_store(page, url)
-                if not raw_items:
-                    print("  0 items first try, retrying once...")
-                    await asyncio.sleep(8)
+            # A real, recurring transient — confirmed directly across both
+            # a plain "0 items, no error" case (slow/incomplete rendering)
+            # and an outright exception (Apollo Client not ready yet —
+            # failed for 5 of 6 branches in one real GitHub Actions run,
+            # not just a one-off). One retry after a real pause, after a
+            # fresh page reload, same treatment already used elsewhere in
+            # this app for this kind of flakiness.
+            raw_items = []
+            for attempt in (1, 2):
+                try:
                     raw_items = await scrape_store(page, url)
-                fetched_at = time.strftime("%Y-%m-%d %H:%M")
-                count = 0
-                for raw in raw_items:
-                    parsed = parse_item(raw, raw["category"])
-                    if not parsed:
-                        continue
-                    new_rows.append({
-                        "store": store_name,
-                        "store_id": store_id,
-                        "category": parsed["category"],
-                        "product_name": parsed["product_name"],
-                        "price": parsed["price"],
-                        "was_price": "",
-                        "in_stock": "True",
-                        "url": url,  # DoorDash doesn't expose a per-product URL, the store page is the closest real link
-                        "fetched_at": fetched_at,
-                    })
-                    count += 1
-                print(f"  Found {count} products.")
-            except Exception as e:
-                print(f"  Could not scrape {store_name}: {e}")
+                    if raw_items:
+                        break
+                    print(f"  0 items (attempt {attempt})")
+                except Exception as e:
+                    print(f"  Attempt {attempt} failed: {e}")
+                if attempt == 1:
+                    await page.close()
+                    await asyncio.sleep(8)
+                    page = await browser.new_page(
+                        user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+                        viewport={"width": 1280, "height": 1200},
+                    )
+
+            fetched_at = time.strftime("%Y-%m-%d %H:%M")
+            count = 0
+            for raw in raw_items:
+                parsed = parse_item(raw, raw["category"])
+                if not parsed:
+                    continue
+                new_rows.append({
+                    "store": store_name,
+                    "store_id": store_id,
+                    "category": parsed["category"],
+                    "product_name": parsed["product_name"],
+                    "price": parsed["price"],
+                    "was_price": "",
+                    "in_stock": "True",
+                    "url": url,  # DoorDash doesn't expose a per-product URL, the store page is the closest real link
+                    "fetched_at": fetched_at,
+                })
+                count += 1
+            print(f"  Found {count} products.")
             await page.close()
             await asyncio.sleep(4)  # polite delay between stores
         await browser.close()
