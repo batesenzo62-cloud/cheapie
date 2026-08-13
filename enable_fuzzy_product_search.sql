@@ -144,14 +144,24 @@ create index if not exists idx_products_product_name_trgm
 -- store_id-less "store" bucket, so rn <= 10 only ever gives that whole
 -- chain 10 rows total) ever got through, in whatever arbitrary order
 -- Postgres happened to return rows in. Added a second, per-CHAIN cap
--- alongside the existing per-store one — capped at 60 so up to ~15+
--- different chains can all fit inside the 1000-row ceiling instead of a
--- couple of big chains silently consuming the whole thing. Chain is
--- derived the same way this app's own chainNameFor() does client-side —
--- longest matching known prefix, falling back to the raw store_name for
--- anything not in the list (independent single-location stores like Vino
--- Fino, so they still get their own small budget rather than being
--- merged into "everything else").
+-- alongside the existing per-store one — chain is derived the same way
+-- this app's own chainNameFor() does client-side — longest matching
+-- known prefix, falling back to the raw store_name for anything not in
+-- the list (independent single-location stores like Vino Fino, so they
+-- still get their own small budget rather than being merged into
+-- "everything else").
+--
+-- 2026-08-14 fix #2: reported directly — Super Liquor (194 branches,
+-- every single one with its own genuinely independent real data, unlike
+-- Bottle-O/Black Bull where most branches fall back to one representative
+-- catalogue) still felt underrepresented at the original cap of 60 —
+-- confirmed directly it was landing right at the cap (51/60) for a real
+-- search. Raised 60 -> 150: still well short of the ~1000-row ceiling
+-- even if 2-3 big chains all hit the new cap simultaneously, but gives a
+-- chain with hundreds of fully-independent real branches room to actually
+-- show that real diversity instead of being squeezed as tightly as a
+-- single-catalogue chain that only ever contributes a handful of rows
+-- regardless of the cap.
 create or replace function search_products_fuzzy(search_term text, min_similarity float default 0.5)
 returns setof products
 language plpgsql
@@ -191,7 +201,7 @@ begin
       from products prod
       where lower(search_term) <% lower(prod.product_name)
     ) ranked
-    where ranked.store_rn <= 10 and ranked.chain_rn <= 60
+    where ranked.store_rn <= 10 and ranked.chain_rn <= 150
     limit 4000;
 end;
 $$;
