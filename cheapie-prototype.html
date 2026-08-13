@@ -2495,7 +2495,53 @@ async function showStoreSheet(store){
     confirmedBranch = false;
     try{
       const chain = chainNameFor(store.name);
-      rows = await fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`);
+      // 2026-08-14 fix: reported directly — this always fell back to the
+      // whole chain's generic/bare-name catalogue (Kingsland's data for
+      // Bottle-O, Hawera's for Black Bull, no matter how far away that
+      // branch actually is) — the same fixed-representative problem
+      // already fixed for the main Search tab's results
+      // (expandGenericChainMatches). Mirrors that fix here: pull from the
+      // geographically nearest real branches of this chain instead of
+      // always the same one. Bounded to a handful of nearby branches
+      // (not the whole chain) rather than fetching every branch
+      // nationwide just to find the closest one per product — a real
+      // product carried by any of the closest few branches is the normal
+      // case, and the generic/bare-name catalogue below still covers
+      // anything none of them happen to stock.
+      await ensureStoresLoaded();
+      const NEARBY_BRANCH_COUNT = 8;
+      const hasCoords = store.latitude != null && store.longitude != null;
+      const nearbyIds = hasCoords
+        ? Object.values(storesById)
+            .filter(s => s.id !== store.id && chainNameFor(s.name) === chain && s.latitude != null && s.longitude != null)
+            .sort((a, b) => haversineKm(store.latitude, store.longitude, a.latitude, a.longitude) - haversineKm(store.latitude, store.longitude, b.latitude, b.longitude))
+            .slice(0, NEARBY_BRANCH_COUNT)
+            .map(s => s.id)
+        : [];
+
+      const [nearbyRows, genericRows] = await Promise.all([
+        nearbyIds.length
+          ? fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_id=in.(${nearbyIds.join(',')})&order=price.asc`)
+          : Promise.resolve([]),
+        fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`)
+      ]);
+
+      // One row per product: the nearest confirmed branch's own row wins
+      // if any of the nearby branches carry it, otherwise the generic/
+      // nationwide row (Liquorland-style uniform pricing, or simply no
+      // per-branch data exists yet for that product).
+      const byProduct = {};
+      nearbyRows.forEach(r => {
+        const s = storesById[r.store_id];
+        if(!s || s.latitude == null || s.longitude == null) return;
+        const dist = haversineKm(store.latitude, store.longitude, s.latitude, s.longitude);
+        const existing = byProduct[r.product_name];
+        if(!existing || dist < existing._dist) byProduct[r.product_name] = Object.assign({}, r, { _dist: dist });
+      });
+      genericRows.forEach(r => {
+        if(!byProduct[r.product_name]) byProduct[r.product_name] = r;
+      });
+      rows = Object.values(byProduct);
     } catch(err){
       console.error(err);
     }
