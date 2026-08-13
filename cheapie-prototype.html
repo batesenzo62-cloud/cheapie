@@ -1441,6 +1441,18 @@ function openDetail(r){
   const secondaryBtn = document.getElementById('detailSecondaryBtn');
   actionBtn.style.display = '';
   secondaryBtn.style.display = 'none';
+  // 2026-08-14: reported directly — a DoorDash-sourced row's "url" is
+  // never a real per-product (or even per-branch) page, it's always just
+  // that branch's generic DoorDash store listing (see doordash_scraper_
+  // lib.py's own comment: "DoorDash doesn't expose a per-product URL").
+  // Clicking "View product page" for one of these doesn't take you
+  // anywhere genuinely informative about THIS product, and for a branch
+  // with no real website of its own, it's the only link that exists — so
+  // rather than show a link that could easily be mistaken for that
+  // branch's actual site, it's hidden entirely for DoorDash-sourced rows.
+  // Branches with a real website of their own (Shopify, nopCommerce,
+  // etc.) are completely unaffected — this only checks the URL itself.
+  const isDoorDashUrl = !!(r.url && r.url.toLowerCase().includes('doordash.com'));
   const hasCoords = r.lat !== null && r.lat !== undefined && r.lng !== null && r.lng !== undefined;
   if(hasCoords){
     // Real store location known — directions is the primary action for a
@@ -1460,23 +1472,17 @@ function openDetail(r){
       }
       window.open(mapsUrl, '_blank');
     };
-    if(r.url){
+    if(r.url && !isDoorDashUrl){
       secondaryBtn.style.display = '';
-      // 2026-08-14: used to say "(different branch)" when r.confirmedBranch
-      // is false (a nearest-neighbour substitute, not this store's own
-      // confirmed price) — removed per direct request. The provenance line
-      // above (openDetail's "sourced from X.co.nz") still shows the real
-      // source hostname either way, so the actual link destination isn't
-      // hidden, just no longer called out in the button itself.
       secondaryBtn.textContent = 'View product page ↗';
       secondaryBtn.onclick = () => window.open(r.url, '_blank');
     }
-  } else if(r.url){
+  } else if(r.url && !isDoorDashUrl){
     // No confirmed physical store (e.g. "Ships NZ-wide") — send them to buy
     // it online instead of showing a directions button with nowhere to go.
     actionBtn.textContent = 'View product page ↗';
     actionBtn.onclick = () => window.open(r.url, '_blank');
-  } else {
+  } else if(!hasCoords){
     actionBtn.style.display = 'none';
   }
   show('view-detail');
