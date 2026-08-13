@@ -78,9 +78,14 @@ def haversine_km(lat1, lon1, lat2, lon2):
 
 
 def fetch_osm_new_world():
+    # Overpass's usage policy requires a real identifying User-Agent —
+    # without one it returns 406 Not Acceptable rather than serving the
+    # request (confirmed live: all 3 retries failed identically with a
+    # generic requests User-Agent, so this isn't a transient issue).
+    headers = {"User-Agent": "cheapie-nz-price-app/1.0 (store location audit)"}
     for attempt in (1, 2, 3):
         try:
-            r = requests.post(OVERPASS_URL, data={"data": OVERPASS_QUERY}, timeout=90)
+            r = requests.post(OVERPASS_URL, data={"data": OVERPASS_QUERY}, headers=headers, timeout=90)
             r.raise_for_status()
             elements = r.json().get("elements", [])
             points = []
