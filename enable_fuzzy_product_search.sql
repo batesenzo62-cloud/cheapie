@@ -129,6 +129,29 @@ create index if not exists idx_products_product_name_trgm
 -- survives, while still bounding how many rows one giant chain (100+
 -- branches) can flood in under the overall limit below, raised from 1000
 -- to 4000 to match.
+--
+-- 2026-08-14 fix: reported directly — searching "Jack Daniels" only ever
+-- showed Super Liquor/Bottle-O/Thirsty Liquor/Black Bull results, never
+-- Big Barrel, Liquorland, New World, Woolworths, or anything else.
+-- Confirmed directly: this project's Supabase API has a hard per-request
+-- row ceiling (1000) that a Range header can't override — verified by
+-- requesting rows 1000-1999 and getting the same first 1000 back anyway.
+-- With per-STORE capping only (rn <= 10 above), a chain with 100+ real
+-- per-branch stores (Super Liquor ~140, Bottle-O ~157) can contribute up
+-- to ~1,400-1,570 rows on its own — several times the entire 1000-row
+-- ceiling — so those few chains filled the whole response before a
+-- single-listing chain (Big Barrel, Liquorland — every row shares one
+-- store_id-less "store" bucket, so rn <= 10 only ever gives that whole
+-- chain 10 rows total) ever got through, in whatever arbitrary order
+-- Postgres happened to return rows in. Added a second, per-CHAIN cap
+-- alongside the existing per-store one — capped at 60 so up to ~15+
+-- different chains can all fit inside the 1000-row ceiling instead of a
+-- couple of big chains silently consuming the whole thing. Chain is
+-- derived the same way this app's own chainNameFor() does client-side —
+-- longest matching known prefix, falling back to the raw store_name for
+-- anything not in the list (independent single-location stores like Vino
+-- Fino, so they still get their own small budget rather than being
+-- merged into "everything else").
 create or replace function search_products_fuzzy(search_term text, min_similarity float default 0.5)
 returns setof products
 language plpgsql
@@ -144,11 +167,31 @@ begin
         row_number() over (
           partition by coalesce(prod.store_id::text, prod.store_name)
           order by word_similarity(lower(search_term), lower(prod.product_name)) desc
-        ) as rn
+        ) as store_rn,
+        row_number() over (
+          partition by (
+            case
+              when lower(prod.store_name) like 'liquorland%' then 'Liquorland'
+              when lower(prod.store_name) like 'super liquor%' then 'Super Liquor'
+              when lower(prod.store_name) like 'big barrel%' then 'Big Barrel'
+              when lower(prod.store_name) like 'black bull%' then 'Black Bull Liquor'
+              when lower(prod.store_name) like 'vino fino%' then 'Vino Fino'
+              when lower(prod.store_name) like 'thirsty liquor%' then 'Thirsty Liquor'
+              when lower(prod.store_name) like 'bottle-o%' then 'Bottle-O'
+              when lower(prod.store_name) like 'new world%' then 'New World'
+              when lower(prod.store_name) like 'pak''nsave%' then 'PAK''nSAVE'
+              when lower(prod.store_name) like 'woolworths%' then 'Woolworths'
+              when lower(prod.store_name) like 'glengarry%' then 'Glengarry'
+              when lower(prod.store_name) like 'liquor mart%' then 'Liquor Mart'
+              else prod.store_name
+            end
+          )
+          order by word_similarity(lower(search_term), lower(prod.product_name)) desc
+        ) as chain_rn
       from products prod
       where lower(search_term) <% lower(prod.product_name)
     ) ranked
-    where ranked.rn <= 10
+    where ranked.store_rn <= 10 and ranked.chain_rn <= 60
     limit 4000;
 end;
 $$;
