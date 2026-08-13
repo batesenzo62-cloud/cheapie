@@ -1,0 +1,24 @@
+name: Audit New World store locations against OpenStreetMap
+
+# One-off/rare maintenance job (workflow_dispatch only, no schedule) --
+# cross-checks every New World store's coordinates against real OSM
+# supermarket POIs and corrects any significant mismatch (see
+# audit_supermarket_locations.py for why this needs an independent source
+# rather than just re-scraping New World's own site again).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  audit-supermarket-locations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Audit New World store locations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 audit_supermarket_locations.py
