@@ -788,26 +788,28 @@ function expandGenericChainMatches(rows){
   // its generic rows out to every branch there is accurate, not a guess,
   // so a product with zero confirmed rows anywhere in this batch is
   // unaffected and still fans out to every branch directly.
-  const confirmedByChainProduct = {}; // "<chain>||<product_name>" -> [{storeId, lat, lng, row}]
+  // 2026-08-14 fourth fix: reported directly — "Steinlager Ultra Low Carb
+  // Bottles 24 x 330mL" showed as Bottle-O Onekawa, but its link opened
+  // Hastings' site — even though Onekawa genuinely stocks that exact
+  // product itself. Root cause: the nearest-neighbour fill above matched
+  // products by exact product_name string — a differently-formatted
+  // listing of what's really the same product at another branch (e.g.
+  // slightly different spacing/capitalization) was treated as a
+  // completely separate product Onekawa was "missing", so its real card
+  // got a second, wrongly-attributed one stacked on top of it. Removed
+  // the whole nearest-neighbour substitution mechanism per direct
+  // request rather than patch matching further — a branch with no
+  // catalogue of its own simply won't show a product it hasn't
+  // confirmed, instead of guessing at another branch's price for it.
+  // Liquorland is unaffected — it's not a guess, prices are genuinely
+  // identical at every store (confirmed directly), so a product with no
+  // confirmed store_id anywhere is still fanned out to every branch.
+  const confirmedByChainProduct = {}; // "<chain>||<product_name>" -> true (has anyone confirmed this at all)
   rows.forEach(r => {
     if(!r.store_id) return;
-    const store = storesById[r.store_id];
-    if(!store || store.latitude == null || store.longitude == null) return;
     const key = chainNameFor(r.store_name) + '||' + r.product_name;
-    (confirmedByChainProduct[key] = confirmedByChainProduct[key] || []).push({ storeId: r.store_id, lat: store.latitude, lng: store.longitude, row: r });
+    confirmedByChainProduct[key] = true;
   });
-
-  function nearestConfirmed(chain, productName, targetStore){
-    if(!targetStore || targetStore.latitude == null || targetStore.longitude == null) return null;
-    const candidates = confirmedByChainProduct[chain + '||' + productName];
-    if(!candidates || !candidates.length) return null;
-    let best = null, bestDist = Infinity;
-    candidates.forEach(c => {
-      const d = haversineKm(targetStore.latitude, targetStore.longitude, c.lat, c.lng);
-      if(d < bestDist){ bestDist = d; best = c; }
-    });
-    return best;
-  }
 
   const expanded = [];
   rows.forEach(r => {
@@ -822,44 +824,18 @@ function expandGenericChainMatches(rows){
       return;
     }
     const key = chain + '||' + r.product_name;
-    if(confirmedByChainProduct[key] && confirmedByChainProduct[key].length){
-      // Real confirmed data exists for this product elsewhere in the
-      // chain — handled below (every branch missing its own row gets
-      // filled from there), so this particular storeless row is already
-      // superseded and shouldn't also be fanned out as if uniform.
+    if(confirmedByChainProduct[key]){
+      // Some real branch has already confirmed its own price for this
+      // exact product — this storeless row is a stale/duplicate leftover
+      // for the same chain, not a genuine "nobody's confirmed this"
+      // uniform case. Drop it rather than guess which branch it belongs to.
       return;
     }
     // No branch of this chain has ever confirmed its own price for this
-    // exact product — uniform-nationwide case (or simply no per-branch
-    // data exists yet for it). Fan the one real row out to every branch.
+    // exact product — uniform-nationwide case (Liquorland) or simply no
+    // per-branch data exists yet for it. Fan the one real row out to
+    // every branch.
     branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
-  });
-
-  // 2026-08-14 third fix: reported directly — "Steinlager" stopped
-  // showing any Black Bull results at all for branches with no shop of
-  // their own, right after Black Bull Liquor Hawera's rows got their own
-  // real store_id (a real, separate fix, earlier the same night). Root
-  // cause: the loop above only ever fills a branch's gap while iterating
-  // a STORELESS row — once every one of a chain's rows has a real
-  // store_id (as Black Bull's now does, between its handful of real
-  // branches and Hawera), there's no storeless row left to trigger the
-  // fill at all, so branches with no catalogue of their own silently got
-  // zero coverage instead of a nearest-neighbour approximation. Decoupled
-  // from that: for every (chain, product) pair that has ANY confirmed
-  // data anywhere in this batch, fill every branch of that chain missing
-  // its own row, directly — not conditional on a storeless row existing.
-  Object.keys(confirmedByChainProduct).forEach(key => {
-    const sepIdx = key.lastIndexOf('||');
-    const chain = key.slice(0, sepIdx);
-    const productName = key.slice(sepIdx + 2);
-    const confirmedIds = new Set(confirmedByChainProduct[key].map(c => c.storeId));
-    const branchIds = idsByChain[chain];
-    if(!branchIds) return;
-    branchIds.forEach(id => {
-      if(confirmedIds.has(id)) return; // that branch's own real row for this product already pushed above
-      const nearest = nearestConfirmed(chain, productName, storesById[id]);
-      if(nearest) expanded.push(mapRegionSearchRow(nearest.row, id));
-    });
   });
 
   return expanded;
@@ -1453,6 +1429,18 @@ function openDetail(r){
   // Branches with a real website of their own (Shopify, nopCommerce,
   // etc.) are completely unaffected — this only checks the URL itself.
   const isDoorDashUrl = !!(r.url && r.url.toLowerCase().includes('doordash.com'));
+  // 2026-08-14 second fix: reported directly, right after nearest-branch
+  // substitution was removed — a branch with no confirmed data of its
+  // own (r.confirmedBranch === false) still showed a "View product page"
+  // link when its store sheet fell back to the chain's generic catalogue,
+  // which opens whichever branch that catalogue actually belongs to, not
+  // this one — the same wrong-branch confusion the substitution removal
+  // was meant to fix. Hidden too, except Liquorland: its generic catalogue
+  // genuinely IS the same real price/page at every store (confirmed
+  // directly), so that link is accurate regardless of which branch you're
+  // looking at.
+  const isUnconfirmedNonUniform = r.confirmedBranch === false && chainNameFor(r.store || '') !== 'Liquorland';
+  const hideProductLink = isDoorDashUrl || isUnconfirmedNonUniform;
   const hasCoords = r.lat !== null && r.lat !== undefined && r.lng !== null && r.lng !== undefined;
   if(hasCoords){
     // Real store location known — directions is the primary action for a
@@ -1472,12 +1460,12 @@ function openDetail(r){
       }
       window.open(mapsUrl, '_blank');
     };
-    if(r.url && !isDoorDashUrl){
+    if(r.url && !hideProductLink){
       secondaryBtn.style.display = '';
       secondaryBtn.textContent = 'View product page ↗';
       secondaryBtn.onclick = () => window.open(r.url, '_blank');
     }
-  } else if(r.url && !isDoorDashUrl){
+  } else if(r.url && !hideProductLink){
     // No confirmed physical store (e.g. "Ships NZ-wide") — send them to buy
     // it online instead of showing a directions button with nowhere to go.
     actionBtn.textContent = 'View product page ↗';
@@ -2526,54 +2514,22 @@ async function showStoreSheet(store){
   if(!rows.length){
     confirmedBranch = false;
     try{
+      // 2026-08-14 fix: reported directly — a nearest-real-branch fallback
+      // here (and in the main Search tab's expandGenericChainMatches) led
+      // to a genuinely wrong-branch link showing (Bottle-O Onekawa's card
+      // opening Hastings' site), because matching by exact product_name
+      // string treated the same real product, formatted slightly
+      // differently at two branches, as two different products — one
+      // branch's own real listing plus a wrongly-attributed "gap fill"
+      // stacked on top of it. Removed per direct request rather than
+      // patch the matching further: a branch with no catalogue of its
+      // own just shows the chain's generic/bare-name catalogue (Liquorland
+      // -style uniform pricing where that's genuinely accurate, or
+      // whatever representative data exists) with the honest "not
+      // confirmed for this store" disclaimer below — no per-branch
+      // guessing.
       const chain = chainNameFor(store.name);
-      // 2026-08-14 fix: reported directly — this always fell back to the
-      // whole chain's generic/bare-name catalogue (Kingsland's data for
-      // Bottle-O, Hawera's for Black Bull, no matter how far away that
-      // branch actually is) — the same fixed-representative problem
-      // already fixed for the main Search tab's results
-      // (expandGenericChainMatches). Mirrors that fix here: pull from the
-      // geographically nearest real branches of this chain instead of
-      // always the same one. Bounded to a handful of nearby branches
-      // (not the whole chain) rather than fetching every branch
-      // nationwide just to find the closest one per product — a real
-      // product carried by any of the closest few branches is the normal
-      // case, and the generic/bare-name catalogue below still covers
-      // anything none of them happen to stock.
-      await ensureStoresLoaded();
-      const NEARBY_BRANCH_COUNT = 8;
-      const hasCoords = store.latitude != null && store.longitude != null;
-      const nearbyIds = hasCoords
-        ? Object.values(storesById)
-            .filter(s => s.id !== store.id && chainNameFor(s.name) === chain && s.latitude != null && s.longitude != null)
-            .sort((a, b) => haversineKm(store.latitude, store.longitude, a.latitude, a.longitude) - haversineKm(store.latitude, store.longitude, b.latitude, b.longitude))
-            .slice(0, NEARBY_BRANCH_COUNT)
-            .map(s => s.id)
-        : [];
-
-      const [nearbyRows, genericRows] = await Promise.all([
-        nearbyIds.length
-          ? fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_id=in.(${nearbyIds.join(',')})&order=price.asc`)
-          : Promise.resolve([]),
-        fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`)
-      ]);
-
-      // One row per product: the nearest confirmed branch's own row wins
-      // if any of the nearby branches carry it, otherwise the generic/
-      // nationwide row (Liquorland-style uniform pricing, or simply no
-      // per-branch data exists yet for that product).
-      const byProduct = {};
-      nearbyRows.forEach(r => {
-        const s = storesById[r.store_id];
-        if(!s || s.latitude == null || s.longitude == null) return;
-        const dist = haversineKm(store.latitude, store.longitude, s.latitude, s.longitude);
-        const existing = byProduct[r.product_name];
-        if(!existing || dist < existing._dist) byProduct[r.product_name] = Object.assign({}, r, { _dist: dist });
-      });
-      genericRows.forEach(r => {
-        if(!byProduct[r.product_name]) byProduct[r.product_name] = r;
-      });
-      rows = Object.values(byProduct);
+      rows = await fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`);
     } catch(err){
       console.error(err);
     }
