@@ -822,21 +822,46 @@ function expandGenericChainMatches(rows){
       return;
     }
     const key = chain + '||' + r.product_name;
-    const confirmedForProduct = confirmedByChainProduct[key];
-    if(!confirmedForProduct || !confirmedForProduct.length){
-      // No branch of this chain has ever confirmed its own price for this
-      // exact product — uniform-nationwide case (or simply no per-branch
-      // data exists yet for it). Fan the one real row out to every branch.
-      branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+    if(confirmedByChainProduct[key] && confirmedByChainProduct[key].length){
+      // Real confirmed data exists for this product elsewhere in the
+      // chain — handled below (every branch missing its own row gets
+      // filled from there), so this particular storeless row is already
+      // superseded and shouldn't also be fanned out as if uniform.
       return;
     }
-    const confirmedIds = new Set(confirmedForProduct.map(c => c.storeId));
+    // No branch of this chain has ever confirmed its own price for this
+    // exact product — uniform-nationwide case (or simply no per-branch
+    // data exists yet for it). Fan the one real row out to every branch.
+    branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+  });
+
+  // 2026-08-14 third fix: reported directly — "Steinlager" stopped
+  // showing any Black Bull results at all for branches with no shop of
+  // their own, right after Black Bull Liquor Hawera's rows got their own
+  // real store_id (a real, separate fix, earlier the same night). Root
+  // cause: the loop above only ever fills a branch's gap while iterating
+  // a STORELESS row — once every one of a chain's rows has a real
+  // store_id (as Black Bull's now does, between its handful of real
+  // branches and Hawera), there's no storeless row left to trigger the
+  // fill at all, so branches with no catalogue of their own silently got
+  // zero coverage instead of a nearest-neighbour approximation. Decoupled
+  // from that: for every (chain, product) pair that has ANY confirmed
+  // data anywhere in this batch, fill every branch of that chain missing
+  // its own row, directly — not conditional on a storeless row existing.
+  Object.keys(confirmedByChainProduct).forEach(key => {
+    const sepIdx = key.lastIndexOf('||');
+    const chain = key.slice(0, sepIdx);
+    const productName = key.slice(sepIdx + 2);
+    const confirmedIds = new Set(confirmedByChainProduct[key].map(c => c.storeId));
+    const branchIds = idsByChain[chain];
+    if(!branchIds) return;
     branchIds.forEach(id => {
       if(confirmedIds.has(id)) return; // that branch's own real row for this product already pushed above
-      const nearest = nearestConfirmed(chain, r.product_name, storesById[id]);
+      const nearest = nearestConfirmed(chain, productName, storesById[id]);
       if(nearest) expanded.push(mapRegionSearchRow(nearest.row, id));
     });
   });
+
   return expanded;
 }
 
