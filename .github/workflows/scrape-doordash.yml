@@ -1,12 +1,14 @@
-name: Scrape Black Bull Liquor branches via DoorDash
+name: Scrape independent chain branches via DoorDash
 
 # Separate from scrape.yml/scrape-branches.yml on purpose — this is the
-# only scraper in this app that needs a real browser (DoorDash returns
-# 403/Cloudflare to plain requests; see scrape_blackbull_doordash.py's
-# own docstring for why Uber Eats wasn't a viable alternative). Installing
-# a full headless Chromium is heavy compared to every other scraper here,
+# only scraping path in this app that needs a real browser (DoorDash
+# returns 403/Cloudflare to plain requests; see doordash_scraper_lib.py's
+# docstring for why Uber Eats wasn't a viable alternative). Installing a
+# full headless Chromium is heavy compared to every other scraper here,
 # so this runs on its own daily schedule rather than folding into the
 # existing every-4-hours/daily jobs and slowing them down for everyone.
+# Both chains share one job (and one Chromium install) rather than two
+# separate jobs paying that cost twice.
 on:
   schedule:
     - cron: '0 5 * * *'
@@ -30,6 +32,9 @@ jobs:
 
       - name: Scrape Black Bull Liquor via DoorDash
         run: python3 scrape_blackbull_doordash.py
+
+      - name: Scrape Thirsty Liquor via DoorDash
+        run: python3 scrape_thirsty_doordash.py
 
       - name: Load into Supabase
         env:
