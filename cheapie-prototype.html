@@ -761,14 +761,31 @@ function expandGenericChainMatches(rows){
   // Krombacher products. A branch with its own online shop having "no row
   // for this exact product" means it genuinely doesn't stock that product
   // — it does NOT mean "we don't know, substitute another branch's price."
-  // That approximation is only honest for the ~80 branches with no online
-  // shop at all. So: if a branch has ANY of its own confirmed rows in this
-  // batch (proving it has a real shop of its own), never fan a generic
-  // fallback row out to it, for any product — only branches with zero
-  // confirmed rows of their own get the fallback approximation.
-  const storesWithOwnCatalog = new Set();
+  //
+  // 2026-08-14 second fix: reported directly — even after the above, too
+  // many results were still labeled "View product page (different
+  // branch)", which reads as "this price might be wrong for this store"
+  // (correctly, in these cases — it genuinely is another branch's real
+  // price). For a chain that has ANY confirmed per-branch data at all
+  // (Bottle-O, Black Bull — proving prices really do vary branch to
+  // branch), a storeless/generic row is always some OTHER real branch's
+  // actual price standing in — that's a real potential inaccuracy, not
+  // just something to disclaim, so it's no longer attributed to any
+  // specific branch at all: shown unattached ("ships NZ-wide" style)
+  // instead of impersonating a branch that may charge something
+  // different. Liquorland is the opposite case — it never has per-branch
+  // data because prices are genuinely identical at every store (confirmed
+  // directly, see showStoreSheet's own Liquorland disclaimer) — fanning
+  // its generic rows out to every branch there is accurate, not a guess,
+  // so chains with zero per-branch data anywhere in this batch are
+  // unaffected.
+  const chainsWithPerBranchData = new Set();
   rows.forEach(r => {
-    if(r.store_id) storesWithOwnCatalog.add(r.store_id);
+    // r.store_name on a confirmed row is the specific branch's own name
+    // (e.g. "Bottle-O Hastings"), not the bare chain name a generic row
+    // carries (e.g. "Bottle-O") — normalize through chainNameFor so the
+    // two actually compare equal below.
+    if(r.store_id) chainsWithPerBranchData.add(chainNameFor(r.store_name));
   });
 
   const expanded = [];
@@ -778,12 +795,10 @@ function expandGenericChainMatches(rows){
       return;
     }
     const branchIds = idsByChain[r.store_name];
-    if(branchIds && branchIds.length){
-      branchIds.forEach(id => {
-        if(!storesWithOwnCatalog.has(id)) expanded.push(mapRegionSearchRow(r, id));
-      });
+    if(branchIds && branchIds.length && !chainsWithPerBranchData.has(r.store_name)){
+      branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
     } else {
-      expanded.push(mapRegionSearchRow(r, null)); // genuinely online-only chain (e.g. Big Barrel) — no branches to fan out to
+      expanded.push(mapRegionSearchRow(r, null)); // no confident branch to attach this to — shown unattached rather than guessed
     }
   });
   return expanded;
