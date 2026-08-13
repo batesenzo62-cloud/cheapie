@@ -804,12 +804,27 @@ function expandGenericChainMatches(rows){
   // Liquorland is unaffected — it's not a guess, prices are genuinely
   // identical at every store (confirmed directly), so a product with no
   // confirmed store_id anywhere is still fanned out to every branch.
-  const confirmedByChainProduct = {}; // "<chain>||<product_name>" -> true (has anyone confirmed this at all)
+  const confirmedIdsByChainProduct = {}; // "<chain>||<product_name>" -> Set(storeId) of every branch that's confirmed it
   rows.forEach(r => {
     if(!r.store_id) return;
     const key = chainNameFor(r.store_name) + '||' + r.product_name;
-    confirmedByChainProduct[key] = true;
+    (confirmedIdsByChainProduct[key] = confirmedIdsByChainProduct[key] || new Set()).add(r.store_id);
   });
+
+  // 2026-08-14 fifth fix: reported directly — after the nearest-neighbour
+  // removal above, branches with no independent website of their own
+  // (Black Bull Napier, Royal Oak, ...) went all the way to showing
+  // NOTHING at all, rather than the honest approximation they had before
+  // — asked directly to bring back "fetch from Black Bull Hawera" for
+  // those. Deliberately NOT nearest-neighbour again (that's what caused
+  // the wrong-branch Onekawa/Hastings mismatch) — always the SAME one
+  // specific real branch per chain, so there's only ever one real source
+  // to reason about, not several competing near-duplicates. The product-
+  // page link is still hidden for these (see openDetail's confirmedBranch
+  // check) since it would open Hawera's page, not the branch being shown.
+  const CHAIN_FALLBACK_STORE_ID = {
+    'Black Bull Liquor': 'bf139701-d11f-47c0-a410-0850e1f7315f', // Black Bull Liquor Hawera
+  };
 
   const expanded = [];
   rows.forEach(r => {
@@ -824,7 +839,7 @@ function expandGenericChainMatches(rows){
       return;
     }
     const key = chain + '||' + r.product_name;
-    if(confirmedByChainProduct[key]){
+    if(confirmedIdsByChainProduct[key] && confirmedIdsByChainProduct[key].size){
       // Some real branch has already confirmed its own price for this
       // exact product — this storeless row is a stale/duplicate leftover
       // for the same chain, not a genuine "nobody's confirmed this"
@@ -836,6 +851,27 @@ function expandGenericChainMatches(rows){
     // per-branch data exists yet for it. Fan the one real row out to
     // every branch.
     branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+  });
+
+  // Designated-fallback pass: for chains in CHAIN_FALLBACK_STORE_ID, fill
+  // every branch missing its own row for a product with that SAME one
+  // real branch's row, whenever the fallback branch itself has confirmed
+  // it — separate from (and in addition to) the uniform-fan-out loop
+  // above, since the fallback branch's own rows aren't storeless (it has
+  // a real store_id of its own) so they never enter that loop at all.
+  Object.entries(CHAIN_FALLBACK_STORE_ID).forEach(([chain, fallbackId]) => {
+    const branchIds = idsByChain[chain];
+    if(!branchIds) return;
+    rows.forEach(r => {
+      if(r.store_id !== fallbackId) return;
+      const key = chain + '||' + r.product_name;
+      const confirmedIds = confirmedIdsByChainProduct[key];
+      branchIds.forEach(id => {
+        if(id === fallbackId) return; // fallback branch's own row already pushed above
+        if(confirmedIds && confirmedIds.has(id)) return; // this specific branch already has its own real row for this exact product
+        expanded.push(mapRegionSearchRow(r, id));
+      });
+    });
   });
 
   return expanded;
