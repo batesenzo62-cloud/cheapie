@@ -57,6 +57,16 @@ BRANCHES = {
     "Huntsbury": ("https://thirstyliquorhuntsbury.co.nz", "e93e8684-524c-40fd-8dc0-b85bdefa3e6a"),
     "Tauranga": ("https://www.thirstyliquortauranga.co.nz", "c9e54a08-aae5-4eeb-b8a5-2a6c3168fcee"),
     "Te Rapa": ("https://tlterapa.co.nz", "377320fd-3b7c-424d-9ce0-b46f7c7893b9"),
+    # 2026-08-14: found via a systematic audit of every branch with no
+    # catalogue of its own — same staleness issue Bottle-O's store list
+    # had (this file's own BRANCHES dict is really a one-time discovery
+    # too, despite the module docstring's "found via the site's store
+    # locator" claim). Both single, unambiguous stores matches in the
+    # database (no address-collision risk like Dunedin's three real
+    # branches had), so hardcoded directly rather than left to
+    # match_store_id()'s substring guess.
+    "Papakura": ("https://thirstyliquorpapakura.co.nz", "fb3a4d58-b84a-48cb-ad78-5523f049e985"),
+    "Churchill Ave": ("https://thirstyliquorchurchillave.co.nz", "43f2041e-e673-48fb-a83e-637a16c7d48c"),
 }
 CATEGORIES = {"beer": "collections/beer", "rtd": "collections/rtds", "wine": "collections/wine", "spirits": "collections/spirits"}
 
