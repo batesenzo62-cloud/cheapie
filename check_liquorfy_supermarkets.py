@@ -8,7 +8,7 @@ import requests
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 BASE = "https://api.liquorfy.co.nz/products"
 # Napier, roughly central to a decent chunk of stores we already track
-PARAMS_BASE = {"lat": -39.4928, "lon": 176.9120, "radius_km": 500, "page_size": 8, "unique_products": "true"}
+PARAMS_BASE = {"lat": -39.4928, "lon": 176.9120, "radius_km": 10, "page_size": 8, "unique_products": "true"}
 
 for chain in ["new_world", "countdown", "paknsave"]:
     print(f"=== chain={chain} ===")
