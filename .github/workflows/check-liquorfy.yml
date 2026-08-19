@@ -8,6 +8,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install playwright
-      - run: playwright install --with-deps chromium
+      - run: pip install requests beautifulsoup4
       - run: python3 check_liquorfy_sample.py

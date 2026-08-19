@@ -1,69 +1,78 @@
 """
-One-off diagnostic: liquorfy.co.nz (a competitor liquor price-comparison
-site) is a client-side React SPA with no data in its static HTML, so this
-renders it with Playwright and logs every XHR/fetch response it makes while
-loading and searching, to find its underlying API and pull a few sample
-product prices before deciding whether the site is worth scraping and
-whether its prices are trustworthy. Not part of the app — delete after use,
-same as this project's other one-off check_*.py scripts.
+One-off diagnostic, phase 2: Liquorfy's own API attributed three different
+promo prices to three different Black Bull Liquor branches (Opunake, The
+Peg, Manurewa) but all three product_urls pointed at the SAME domain
+(blackbullliquorhornbyhub.co.nz) — the same kind of branch-misattribution
+bug this project already found and fixed in its own app. This checks each
+product's REAL current price directly on the site the URL actually points
+to, and (where a branch has its own independent site) on that branch's own
+site too, to see whether Liquorfy's per-branch prices are genuine or just
+one scraped catalogue relabelled under multiple branch names.
 
 HOW TO RUN:
     python3 check_liquorfy_sample.py
 """
-import asyncio
-import json
-from playwright.async_api import async_playwright
+import requests
+from bs4 import BeautifulSoup
+
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+# (liquorfy's claimed store, liquorfy's claimed price, liquorfy's product_url,
+#  a real independent site to cross-check against if one exists)
+SAMPLES = [
+    {
+        "name": "Cody'S Gold 7% 12pk Can",
+        "liquorfy_store": "Black Bull Liquor Opunake",
+        "liquorfy_price": 29.99,
+        "liquorfy_was": 34.99,
+        "liquorfy_url": "https://blackbullliquorhornbyhub.co.nz/products/codys-gold-7-12pk-can",
+        "own_site_guess": "https://blackbullliquoropunake.co.nz",
+    },
+    {
+        "name": "Woodstock 7% 18pk Cans",
+        "liquorfy_store": "Black Bull Liquor The Peg",
+        "liquorfy_price": 44.99,
+        "liquorfy_was": 48.99,
+        "liquorfy_url": "https://blackbullliquorhornbyhub.co.nz/products/woodstock-7-18-pk-cans",
+        "own_site_guess": "https://blackbullliquorthepeg.co.nz",
+    },
+    {
+        "name": "Woodstock Bourbon & Cola Zero Sugar 7% 18pk Cans",
+        "liquorfy_store": "Black Bull Liquor Manurewa",
+        "liquorfy_price": 44.99,
+        "liquorfy_was": 46.99,
+        "liquorfy_url": "https://blackbullliquorhornbyhub.co.nz/products/woodstock-bourbon-cola-zero-sugar-7-18pk-cans",
+        "own_site_guess": "https://blackbullliquormanurewa.co.nz",
+    },
+]
 
 
-async def main():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page()
-        responses = []
+def fetch_shopify_price(url):
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=20)
+        if r.status_code != 200:
+            return f"HTTP {r.status_code}"
+        soup = BeautifulSoup(r.text, "html.parser")
+        text = soup.get_text(" ", strip=True)
+        # crude: grab anything that looks like a price near the top of the page
+        import re
+        prices = re.findall(r"\$\d+\.\d{2}", text[:4000])
+        return f"OK, prices seen near top of page: {prices[:6]}"
+    except Exception as e:
+        return f"error: {e}"
 
-        async def on_response(resp):
-            ct = resp.headers.get("content-type", "")
-            if "json" in ct:
-                try:
-                    body = await resp.text()
-                except Exception:
-                    body = None
-                responses.append({"url": resp.url, "status": resp.status, "body": body})
 
-        page.on("response", lambda r: asyncio.create_task(on_response(r)))
-
-        print("Loading homepage...")
-        await page.goto("https://www.liquorfy.co.nz/", wait_until="networkidle", timeout=30000)
-        await page.wait_for_timeout(2000)
-
-        # Try a search if there's a search input on the page.
-        for selector in ["input[type=search]", "input[placeholder*=earch]", "input[type=text]"]:
-            try:
-                el = await page.query_selector(selector)
-                if el:
-                    print(f"Found search input via {selector}, typing 'Steinlager'...")
-                    await el.fill("Steinlager")
-                    await page.wait_for_timeout(2500)
-                    break
-            except Exception:
-                pass
-
-        print(f"\nCaptured {len(responses)} JSON responses:\n")
-        for r in responses:
-            print(f"--- {r['status']} {r['url']} ---")
-            if r["body"]:
-                print(r["body"][:3000])
-            print()
-
-        print("\n=== Page title ===")
-        print(await page.title())
-
-        print("\n=== Visible text sample (first 3000 chars of body innerText) ===")
-        text = await page.inner_text("body")
-        print(text[:3000])
-
-        await browser.close()
+def main():
+    for s in SAMPLES:
+        print(f"=== {s['name']} ===")
+        print(f"Liquorfy says: {s['liquorfy_store']} — ${s['liquorfy_price']} (was ${s['liquorfy_was']})")
+        print(f"Liquorfy's product_url: {s['liquorfy_url']}")
+        print(f"  -> {fetch_shopify_price(s['liquorfy_url'])}")
+        print(f"That branch's own likely site: {s['own_site_guess']}")
+        r = requests.get(s['own_site_guess'], headers=HEADERS, timeout=15)
+        print(f"  -> homepage status: {r.status_code}")
+        print()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
