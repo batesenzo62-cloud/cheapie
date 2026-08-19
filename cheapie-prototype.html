@@ -1637,7 +1637,16 @@ async function initNearbyMap(){
     }).addTo(nearbyMap);
   }
 
-  const firstLoad = !storesCache;
+  // Deliberately NOT keyed off "!storesCache" — ensureStoresLoaded() is
+  // also called from the main search flow (fetchLiveProducts), so
+  // storesCache can already be populated the first time this function
+  // ever runs if the user searched before opening Nearby. That silently
+  // skipped adding any markers at all — confirmed directly: search
+  // something, then open Nearby, and no store pins appeared. Keying off
+  // the marker cluster's own layer count instead ties "have markers been
+  // added" to the one thing that actually matters, independent of when/
+  // where storesCache happened to get fetched.
+  const firstLoad = storeMarkerCluster.getLayers().length === 0;
   await ensureStoresLoaded();
   if(firstLoad){
     storesCache.forEach(store => {
