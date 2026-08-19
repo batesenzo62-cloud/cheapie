@@ -43,6 +43,36 @@ import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 
+# 2026-08-19 fix: reported directly — "Speights Summit Ultra" (a lager)
+# kept showing under Spirits, re-appearing after every scheduled scrape
+# even after being manually corrected in the database once. Root cause:
+# Black Bull Liquor Hawera's "classic" page (TARGETS below, hardcoded
+# "spirits") isn't a real spirits category at all — confirmed directly,
+# right now it has exactly 2 real products and both are Speights Summit
+# Ultra, under a "THE GIFT Everyone Wants!" banner. It's a rotating
+# promotional page, not a fixed department — whatever they're currently
+# featuring gets scraped and blindly tagged "spirits" regardless of what
+# it actually is. A fixed category is wrong by construction for a target
+# like this, so "classic" now uses CATEGORY_AUTO (see scrape_one) to
+# classify each product by its own name instead, defaulting to "spirits"
+# (the historical assumption) only when no clear beer/wine/rtd signal is
+# found — future-proof against whatever they promote there next.
+CATEGORY_AUTO = "auto"
+
+_AUTO_CATEGORY_KEYWORDS = (
+    ("beer", ("lager", "beer", "ale", "pilsner", "pils", "stout", "cider", "ipa", "summit ultra")),
+    ("wine", ("wine", "sauvignon", "pinot", "merlot", "chardonnay", "shiraz", "riesling", "champagne", "prosecco")),
+    ("rtd", ("cruiser", "seltzer", "premix", "long white", "vodka cross", "& cola", "and cola", "& tonic", "and tonic")),
+)
+
+
+def classify_auto_category(product_name):
+    name = (product_name or "").lower()
+    for category, keywords in _AUTO_CATEGORY_KEYWORDS:
+        if any(kw in name for kw in keywords):
+            return category
+    return "spirits"  # the historical default for this page — no confident beer/wine/rtd signal found
+
 # Real per-branch store_id for TARGETS entries below where the target
 # genuinely IS one confirmed real physical branch, not a representative
 # stand-in for the rest of an unconfirmed chain — every "Black Bull
@@ -200,7 +230,7 @@ TARGETS = [
     ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/tequila", "spirits", "hotcakes"),
     ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/vodka", "spirits", "hotcakes"),
     ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/whisky", "spirits", "hotcakes"),
-    ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/classic", "spirits", "hotcakes"),
+    ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/classic", CATEGORY_AUTO, "hotcakes"),
     ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/bourbon-rtd", "rtd", "hotcakes"),
     ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/gin-rtd", "rtd", "hotcakes"),
     ("Black Bull Liquor", "https://blackbullliquorhawera.co.nz/Shop-Online/rum-rtd", "rtd", "hotcakes"),
@@ -770,9 +800,10 @@ def scrape_one(store_name, url, category, platform):
 
     results = []
     for p in raw_products:
+        row_category = classify_auto_category(p["name"]) if category == CATEGORY_AUTO else category
         results.append({
             "store": store_name,
-            "category": category,
+            "category": row_category,
             "product_name": p["name"],
             "price": p["price"],
             "was_price": p["was_price"],
