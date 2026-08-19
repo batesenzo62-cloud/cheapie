@@ -1,4 +1,4 @@
-name: One-off - check which page Summit Ultra is scraped from
+name: One-off - check what's really on Black Bull's classic page
 
 on:
   workflow_dispatch: {}
@@ -11,5 +11,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install requests
-      - run: python3 check_summit_ultra_source.py
+      - run: pip install -r requirements.txt
+      - run: python3 check_classic_page.py
