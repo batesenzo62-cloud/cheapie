@@ -51,15 +51,16 @@ def fetch_shopify_price(url):
     try:
         r = requests.get(url, headers=HEADERS, timeout=20)
         if r.status_code != 200:
-            return f"HTTP {r.status_code}"
+            return f"HTTP {r.status_code}", None
         soup = BeautifulSoup(r.text, "html.parser")
         text = soup.get_text(" ", strip=True)
+        title = soup.title.get_text(strip=True) if soup.title else None
         # crude: grab anything that looks like a price near the top of the page
         import re
         prices = re.findall(r"\$\d+\.\d{2}", text[:4000])
-        return f"OK, prices seen near top of page: {prices[:6]}"
+        return f"OK, page title: {title!r}, prices seen near top of page: {prices[:6]}", text[:2000]
     except Exception as e:
-        return f"error: {e}"
+        return f"error: {e}", None
 
 
 def main():
@@ -67,12 +68,31 @@ def main():
         print(f"=== {s['name']} ===")
         print(f"Liquorfy says: {s['liquorfy_store']} — ${s['liquorfy_price']} (was ${s['liquorfy_was']})")
         print(f"Liquorfy's product_url: {s['liquorfy_url']}")
-        print(f"  -> {fetch_shopify_price(s['liquorfy_url'])}")
+        summary, snippet = fetch_shopify_price(s['liquorfy_url'])
+        print(f"  -> {summary}")
+        if snippet:
+            print(f"  -> page text snippet: {snippet}")
         print(f"That branch's own likely site: {s['own_site_guess']}")
-        r = requests.get(s['own_site_guess'], headers=HEADERS, timeout=15)
-        print(f"  -> homepage status: {r.status_code}")
+        try:
+            r = requests.get(s['own_site_guess'], headers=HEADERS, timeout=15)
+            print(f"  -> homepage status: {r.status_code}")
+        except Exception as e:
+            print(f"  -> {e}")
         print()
+
+
+def check_homepage_for_store_selector():
+    print("=== blackbullliquorhornbyhub.co.nz homepage (checking if it's a shared multi-branch storefront) ===")
+    try:
+        r = requests.get("https://blackbullliquorhornbyhub.co.nz", headers=HEADERS, timeout=20)
+        text = BeautifulSoup(r.text, "html.parser").get_text(" ", strip=True)
+        for branch in ["Opunake", "The Peg", "Manurewa", "Waiouru", "Petone", "Hornby"]:
+            print(f"  mentions '{branch}': {branch.lower() in text.lower()}")
+    except Exception as e:
+        print(f"  error: {e}")
+    print()
 
 
 if __name__ == "__main__":
     main()
+    check_homepage_for_store_selector()
