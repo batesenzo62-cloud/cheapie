@@ -1,7 +1,7 @@
-"""One-off: find EVERY occurrence of 'Billy Maverick 6pk Cans' in the raw
-page and dump the actual visible product-card HTML (not the analytics
-JSON blob) to see what price a real shopper would actually see. Delete
-after use."""
+"""One-off: check price__units text across several products (both
+correctly-priced multi-packs and the broken Billy Maverick 6pk) to find
+the actual site convention for per-unit vs per-pack pricing. Delete after
+use."""
 import sys, re
 sys.path.insert(0, ".")
 import scrape_bottleo_products as bo
@@ -14,23 +14,13 @@ url = f"{base}/search?q%5B%5D=category%3A{dept_id}"
 r = requests.get(url, headers=bo.HEADERS, timeout=20)
 html = r.text
 
-indices = [m.start() for m in re.finditer(re.escape("Billy Maverick 6pk Cans"), html)]
-print("all occurrence indices:", indices)
-for idx in indices:
-    print(f"\n=== occurrence at {idx} ===")
-    print(html[max(0,idx-300):idx+600])
-
-# Also directly test what parse_page's regex itself captures, isolated
-print("\n\n=== what parse_page's own regex captures for this product ===")
+# Capture product name + price + price__units for every product card
 for m in re.finditer(
-    r'<a href="(/lines/[^"]*)">(?:(?!<a href="/lines/).)*?'
     r'talker__product-name">([^<]+)</span>\s*'
-    r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?'
-    r'(?:(?!<a href="/lines/).)*?'
-    r'(?:talker__prices__was[^>]*>\s*was \$([\d.]+)\s*</span>(?:(?!<a href="/lines/).)*?)?'
-    r'price__sell"[^>]*>\$([\d.]+)<',
+    r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?.*?'
+    r'price__sell"[^>]*>\$([\d.]+)</strong>\s*'
+    r'(?:<span class="price__units weak">\s*([^<]*?)\s*</span>)?',
     html, re.S
 ):
-    if "Billy Maverick 6pk" in (m.group(2) or ""):
-        print("full match:")
-        print(repr(m.group(0)))
+    name, size, price, units = m.groups()
+    print(f"{name!r} | size={size!r} | price=${price} | units={units!r}")
