@@ -279,14 +279,20 @@ from with_typo;
 -- a bad listing). This caps duplicate rows *per distinct product name*
 -- instead, so a handful of over-represented listings can't crowd out real
 -- variety, whether their price happens to be right or wrong.
--- 2026-08-24 fix: the function below timed out (Postgres error 57014) on
--- its first real run — the window function has to sort every matching row
--- (100,000+ for a category like spirits) with no index shaped to match its
--- partition/order, so Postgres fell back to a full scan + full sort. Same
--- root cause as idx_products_product_name_trgm above, different query
--- shape: this index's column order exactly matches the function's
--- partition-by/order-by, so Postgres can compute the row_number() window
--- straight off the index instead of sorting 100k+ rows from scratch.
+-- 2026-08-24 fix: the row_number()-over-a-window version below timed out
+-- (Postgres error 57014) even after adding a supporting index — confirmed
+-- directly the SQL Editor itself has no timeout (index + function both
+-- reported "Success"), but the same call through the REST API still hit
+-- 57014, meaning the API role's statement_timeout is real and much
+-- tighter, and the window-function shape is just too heavy regardless of
+-- indexing: it still has to materialize a row_number() over every matching
+-- row in the category (100,000+ for spirits) in one pass. Restructured
+-- entirely instead of indexing harder: get the (much smaller, low
+-- thousands at most) set of distinct product names in the category first,
+-- then a LATERAL join does one small indexed "cheapest name_cap rows for
+-- this exact name" lookup per name — the index below satisfies each of
+-- those lookups directly (no sort needed per name), so the total cost is
+-- many cheap indexed lookups instead of one giant whole-category sort.
 create index if not exists idx_products_category_name_price
   on products (category, lower(product_name), price_per_litre asc nulls last, price asc);
 
@@ -295,19 +301,20 @@ returns setof products
 language sql
 stable
 as $$
-  select (ranked.prod).*
+  select p.*
   from (
-    select
-      prod,
-      row_number() over (
-        partition by lower(prod.product_name)
-        order by prod.price_per_litre asc nulls last, prod.price asc
-      ) as name_rn
-    from products prod
-    where prod.category = cat
-  ) ranked
-  where ranked.name_rn <= name_cap
-  order by (ranked.prod).price_per_litre asc nulls last, (ranked.prod).price asc
+    select distinct lower(product_name) as lname
+    from products
+    where category = cat
+  ) names
+  cross join lateral (
+    select *
+    from products p2
+    where p2.category = cat and lower(p2.product_name) = names.lname
+    order by p2.price_per_litre asc nulls last, p2.price asc
+    limit name_cap
+  ) p
+  order by p.price_per_litre asc nulls last, p.price asc
   limit 6000;
 $$;
 
