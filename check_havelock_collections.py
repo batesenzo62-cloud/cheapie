@@ -1,27 +1,21 @@
-"""One-off: list every real collection on Thirsty Liquor Havelock North's
-site, and directly search their site search for "black heart" to see if a
-4-pack exists somewhere outside the rtds/spirits collections we scrape.
-Delete after use."""
-import re, json
-import requests
+"""One-off: check the granular RTD sub-collections (rum-rtds, other-rtds,
+specials, hot-deals, bundles) for a Black Heart 4-pack our scraper's
+generic "rtds" collection might not include. Delete after use."""
+import sys
+sys.path.insert(0, ".")
+import scrape_independent_stores as s
 
-HEADERS = {"User-Agent": "Mozilla/5.0"}
 base = "https://thirstyliquorhavelocknorth.co.nz"
-
-# Shopify sites expose a collections.json endpoint
-r = requests.get(f"{base}/collections.json?limit=250", headers=HEADERS, timeout=20)
-print("collections.json status:", r.status_code)
-if r.status_code == 200:
-    data = r.json()
-    for c in data.get("collections", []):
-        print(f"  {c.get('handle')} — {c.get('title')}")
-
-print("\n=== site search for 'black heart' ===")
-r2 = requests.get(f"{base}/search", headers=HEADERS, params={"q": "black heart", "type": "product"}, timeout=20)
-print("status:", r2.status_code)
-text = r2.text
-# crude: find product card blocks mentioning black heart
-import re
-matches = re.findall(r'talker__product-name">([^<]*[Bb]lack [Hh]eart[^<]*)</span>\s*(?:<span class="weak size talker__name__size">([^<]*)</span>)?', text)
-for name, size in matches:
-    print(f"  {name} | size={size}")
+for slug in ["rum-rtds", "other-rtds", "specials", "hot-deals", "bundles", "bourbon-rtds"]:
+    url = f"{base}/collections/{slug}"
+    print(f"=== {url} ===")
+    try:
+        products = s.scrape_shopify(url)
+        black_heart = [p for p in products if "black heart" in p["name"].lower()]
+        print(f"  {len(products)} total products, {len(black_heart)} Black Heart products:")
+        for p in black_heart:
+            print(f"    {p['name']} -> ${p['price']}")
+        if not black_heart and products:
+            print(f"    (sample of what IS here: {[p['name'] for p in products[:5]]})")
+    except Exception as e:
+        print(f"  error: {e}")
