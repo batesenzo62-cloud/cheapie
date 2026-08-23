@@ -877,6 +877,28 @@ function expandGenericChainMatches(rows){
   return expanded;
 }
 
+// 2026-08-24: caps how many rows of the exact same product name survive a
+// raw fetch, before expandGenericChainMatches runs — see fetchLiveProducts'
+// category-browse path for why. Rows arrive already sorted cheapest-first
+// (the fetch's own order=price_per_litre.asc), so keeping the first `cap`
+// per name keeps the cheapest ones, same guarantee renderResults' own
+// sort-then-cap already relies on elsewhere. Deliberately NOT a price
+// filter — every row here is genuinely in the dataset, this only stops one
+// over-represented listing from consuming the whole result on its own.
+function capRowsPerProductName(rows, cap){
+  const seenCount = {};
+  const result = [];
+  rows.forEach(r => {
+    const key = (r.product_name || '').toLowerCase();
+    const count = seenCount[key] || 0;
+    if(count < cap){
+      result.push(r);
+      seenCount[key] = count + 1;
+    }
+  });
+  return result;
+}
+
 async function fetchLiveProducts(category, query){
   const hasFreeTextQuery = query && query.trim().length && query.toLowerCase() !== category;
   await ensureStoresLoaded(); // resolves each match to a real store's address/coordinates, same as the Nearby map search
@@ -908,6 +930,25 @@ async function fetchLiveProducts(category, query){
     return expandGenericChainMatches(rows).sort(byValue);
   }
 
+  // 2026-08-21/24: reported directly — filtering RTD to "12-pack" showed
+  // only one product despite the table genuinely having dozens. Root
+  // cause: the plain "category=eq.X, cheapest-per-litre first" fetch below
+  // has no protection against a handful of identically-worded listings
+  // (repeated across dozens of branches scraped from the same source
+  // template) filling the whole capped result before genuinely different
+  // products/pack-sizes ever get fetched — same "one thing dominates a
+  // capped, price-sorted list" failure already fixed for search, never
+  // applied here. First attempt was a Postgres RPC (browse_products_by_
+  // category, still in enable_fuzzy_product_search.sql, unused) doing this
+  // capping server-side — abandoned after three different query shapes
+  // (window function, then an indexed version, then a LATERAL join) all
+  // hit the API role's statement_timeout on a 100,000+-row category,
+  // confirmed directly even the cheap LATERAL version still failed.
+  // Capping client-side instead: the plain fetch itself is cheap (pure
+  // indexed order+limit, no grouping), so fetch a wider raw window than
+  // before and cap duplicate rows per product name in JS, which has no
+  // such timeout to fight.
+  //
   // 2026-08-12: dropped the postgREST stores(...) embed — it only ever
   // resolved coordinates for rows with a confirmed store_id, which is
   // exactly the "near you" gap expandGenericChainMatches below now closes
@@ -918,7 +959,8 @@ async function fetchLiveProducts(category, query){
   if(category){
     url += `&category=eq.${category}`;
   }
-  const rows = await fetchAllRows(url, 6000);
+  const rawRows = await fetchAllRows(url, 6000);
+  const rows = capRowsPerProductName(rawRows, 5);
   const expanded = expandGenericChainMatches(rows).sort(byValue);
   // 2026-08-12: renderResults no longer caps what it's given (see its own
   // 2026-08-12 note) — right for a specific product search (a few hundred
