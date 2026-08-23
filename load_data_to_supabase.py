@@ -50,6 +50,80 @@ HEADERS = {
 MAX_PLAUSIBLE_PRICE = 5000
 
 
+# 2026-08-24 fix: reported directly — most of what shows up browsing
+# Spirits is mixed drinks (premixed cocktails, canned RTD-style products),
+# not straight spirits. A one-time DB patch fixed the 109 known cases at
+# the time, but a handful were already back under "spirits" again within
+# days — every store's own site still lists them under its "Spirits"
+# department, and this project's scrapers still just inherit whatever
+# category label each source page/URL was tagged with (same root-cause
+# shape as the Summit Ultra beer-vs-spirits fix earlier this session).
+# Reclassifying at load time instead of patching the DB after the fact
+# means this survives every future scheduled scrape, not just today's.
+#
+# Patterns were built from a manual review of every distinct product name
+# under spirits at the time — a few patterns tried initially caused real
+# false positives and were narrowed or dropped: "X & Ginger Gin/Rum/Vodka"
+# is a flavour name, not a mixer, so "and/& ginger" was dropped entirely;
+# "Cocktail Glass Gift Pack" bundles a glass, not a drink, so "cocktail" is
+# excluded when immediately followed by "glass"; "Pale & Dry Cognac" is a
+# real cognac style term, so "& dry" excludes when preceded by "pale".
+_RTD_PATTERNS = [
+    re.compile(p, re.I) for p in [
+        # "and/& (up to 2 extra words, e.g. Zero Sugar/Diet) cola/tonic/etc."
+        r"(?:and|&)\s*(?:\w+\s+){0,2}cola\b",
+        r"(?<!pale )(?:and|&)\s*(?:\w+\s+){0,2}dry\b",
+        r"(?:and|&)\s*(?:\w+\s+){0,2}tonic\b",
+        r"(?:and|&)\s*(?:\w+\s+){0,2}soda\b(?!.*\bsiphon\b)",
+        r"(?:and|&)\s*(?:\w+\s+){0,2}lemonade\b",
+        r"ready.to.serve", r"\bcocktail\b(?!\s+glass)", r"\bspritz\b",
+        r"\bmojito\b", r"pina\s+colada", r"pineapple\s+colada",
+        r"\bbuzzballz\b",
+    ]
+]
+# Canned multipacks with no other RTD wording (e.g. "Malibu Watermelon
+# 10x250ml Cans", "Wild Turkey 101 7% 10x330ml Cans") — genuine full-
+# strength spirits are essentially never packaged in small multi-can packs
+# at all, that's exclusively an RTD/premixed convention, so this doesn't
+# need a stated ABV the way the false-positive review elsewhere here does.
+# "cans" and the can-sized volume can appear in either order depending on
+# the source site's wording, so these are checked independently rather
+# than as one ordered pattern.
+_CAN_VOLUME = re.compile(r"\b\d+\s*x?\s*(250|330|355|375|440)\s*ml", re.I)
+_CAN_WORD = re.compile(r"\bcans?\b", re.I)
+
+
+def reclassify_category(product_name, category):
+    if category != "spirits" or not product_name:
+        return category
+    name = product_name
+    if any(p.search(name) for p in _RTD_PATTERNS):
+        return "rtd"
+    if _CAN_VOLUME.search(name) and _CAN_WORD.search(name):
+        return "rtd"
+    return category
+
+
+# Non-alcoholic mixers/mocktails occasionally turn up tagged as spirits on
+# a retailer's own site (they're shelved near real spirits in-store) — they
+# don't belong under any alcohol category at all, so these are dropped
+# entirely rather than reclassified. "non alcoholic" alone is a strong,
+# general signal; the specific brands below cover real cases (Schweppes/
+# Fever-Tree ginger ale, Master of Mixes) that don't say it explicitly.
+_MIXER_BRANDS = ["schweppes", "fever-tree", "fever tree", "fentimans", "master of mixes"]
+
+
+def is_nonalcoholic_mixer(product_name, category):
+    if category != "spirits" or not product_name:
+        return False
+    name = product_name.lower()
+    if "non alcoholic" in name or "non-alcoholic" in name:
+        return True
+    if any(b in name for b in _MIXER_BRANDS) and not re.search(r"\d+(\.\d+)?\s*%", name):
+        return True
+    return False
+
+
 def parse_price(raw):
     if not raw:
         return None
@@ -112,6 +186,9 @@ def load_independent_stores(filename):
             name = row.get("product_name")
             price = parse_price(row.get("price"))
             category = row.get("category") or "beer"
+            if is_nonalcoholic_mixer(name, category):
+                continue
+            category = reclassify_category(name, category)
             row_out = {
                 "product_name": name,
                 "category": category,
@@ -147,6 +224,9 @@ def load_chain_stores(filename):
             name = row.get("product_name")
             price = parse_price(row.get("price"))
             category = row.get("category") or "beer"
+            if is_nonalcoholic_mixer(name, category):
+                continue
+            category = reclassify_category(name, category)
             rows.append({
                 "product_name": name,
                 "category": category,
