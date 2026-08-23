@@ -260,3 +260,55 @@ select
   round(word_similarity(lower(product_name), lower(product_name))::numeric, 3) as score_self,
   round(word_similarity(lower(typo_name), lower(product_name))::numeric, 3) as score_typo
 from with_typo;
+
+-- 2026-08-21: category browse (tapping Beer/Wine/Spirits/RTD, not a
+-- free-text search) never got the fair-representation fix above at all —
+-- it goes straight to a plain REST query (products?category=eq.X, ordered
+-- cheapest-per-litre first, capped client-side). Reported directly: RTD
+-- filtered to "12-pack" showed only one product, when the table genuinely
+-- has dozens of real 12-pack RTDs. Confirmed directly: the same handful of
+-- products (identical wording, scraped from the same source template)
+-- repeat across dozens of Bottle-O/Thirsty Liquor/Black Bull branches, and
+-- since they happen to rank cheapest-per-litre, they alone fill most of
+-- the row budget before genuinely different products (different pack
+-- sizes, different brands) ever get fetched at all — the exact same
+-- "one thing dominates a capped, price-sorted list" failure mode already
+-- fixed for search above, just never applied to category browsing.
+-- Deliberately NOT a price floor (see load_data_to_supabase.py's
+-- 2026-08-14 walk-back on that — price alone can't tell a real deal from
+-- a bad listing). This caps duplicate rows *per distinct product name*
+-- instead, so a handful of over-represented listings can't crowd out real
+-- variety, whether their price happens to be right or wrong.
+-- 2026-08-24 fix: the function below timed out (Postgres error 57014) on
+-- its first real run — the window function has to sort every matching row
+-- (100,000+ for a category like spirits) with no index shaped to match its
+-- partition/order, so Postgres fell back to a full scan + full sort. Same
+-- root cause as idx_products_product_name_trgm above, different query
+-- shape: this index's column order exactly matches the function's
+-- partition-by/order-by, so Postgres can compute the row_number() window
+-- straight off the index instead of sorting 100k+ rows from scratch.
+create index if not exists idx_products_category_name_price
+  on products (category, lower(product_name), price_per_litre asc nulls last, price asc);
+
+create or replace function browse_products_by_category(cat text, name_cap int default 5)
+returns setof products
+language sql
+stable
+as $$
+  select (ranked.prod).*
+  from (
+    select
+      prod,
+      row_number() over (
+        partition by lower(prod.product_name)
+        order by prod.price_per_litre asc nulls last, prod.price asc
+      ) as name_rn
+    from products prod
+    where prod.category = cat
+  ) ranked
+  where ranked.name_rn <= name_cap
+  order by (ranked.prod).price_per_litre asc nulls last, (ranked.prod).price asc
+  limit 6000;
+$$;
+
+grant execute on function browse_products_by_category(text, int) to anon;
