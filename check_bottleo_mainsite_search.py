@@ -1,28 +1,29 @@
-"""One-off: user found thebottleo.co.nz's own search for "steinlager"
-returns real results — check what endpoint/mechanism that actually uses,
-since earlier /shop and /products checks (static paths only) missed
-this entirely. Delete after use."""
+"""One-off: inspect thebottleo.co.nz/search's actual product results to
+see whether this is a true national catalog or defaults to one specific
+branch's data under the hood. Delete after use."""
 import re
 import requests
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-base = "https://www.thebottleo.co.nz"
+url = "https://www.thebottleo.co.nz/search?q=steinlager"
+r = requests.get(url, headers=HEADERS, timeout=20)
+html = r.text
 
-# Check the homepage for a search form/endpoint
-r = requests.get(base + "/", headers=HEADERS, timeout=20)
-print("homepage status:", r.status_code)
-forms = re.findall(r'<form[^>]*action="([^"]*)"[^>]*>', r.text)
-print("forms found:", forms)
-search_hints = re.findall(r'(search[a-zA-Z_-]*\.php|/search[^"\'\s]*|api[^"\'\s]*search[^"\'\s]*)', r.text, re.I)
-print("search-related URL hints:", set(search_hints))
+# Same parse pattern as scrape_bottleo_products.py's parse_page()
+for m in re.finditer(
+    r'<a href="(/lines/[^"]*)">(?:(?!<a href="/lines/).)*?'
+    r'talker__product-name">([^<]+)</span>\s*'
+    r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?'
+    r'(?:(?!<a href="/lines/).)*?'
+    r'price__sell"[^>]*>\$([\d.]+)<',
+    html, re.S
+):
+    url_path, name, size, price = m.groups()
+    print(f"{name} {size} -> ${price} (link: {url_path})")
 
-# Try common search URL patterns directly
-for path in ["/search?q=steinlager", "/search?query=steinlager", "/search/steinlager", "/?s=steinlager", "/products/search?q=steinlager"]:
-    url = base + path
-    try:
-        r2 = requests.get(url, headers=HEADERS, timeout=15)
-        print(f"\n{url} -> status {r2.status_code}, bytes {len(r2.content)}")
-        if r2.status_code == 200 and "steinlager" in r2.text.lower():
-            print("  CONTAINS 'steinlager' in response!")
-    except Exception as e:
-        print(f"\n{url} -> error: {e}")
+# Check if there's any indication of which specific store this search is scoped to
+print("\n=== looking for store/location context in the page ===")
+loc_hints = re.findall(r'(store[_-]?name|current[_-]?store|selected[_-]?store)["\':]?\s*[:=]\s*["\']?([^"\'<>,}]{2,40})', html, re.I)
+print(loc_hints[:10])
+title_match = re.search(r"<title>([^<]*)</title>", html)
+print("page title:", title_match.group(1) if title_match else None)
