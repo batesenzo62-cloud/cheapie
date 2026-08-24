@@ -1,24 +1,23 @@
-"""One-off: Mt Eden resolves real department IDs but scrape_department()
-returns 0 products for all of them — dump the raw first-page response for
-the beer department to see what's actually happening. Delete after use."""
-import sys, requests
+"""One-off: "No results" for Mt Eden's beer department — check if this is
+a genuinely empty/new store, or an ID-mismatch bug, by checking the
+homepage itself and a couple other departments. Delete after use."""
+import sys, requests, re
 sys.path.insert(0, ".")
 import scrape_bottleo_products as bo
 
 base = bo.base_url("mt-eden")
-depts = bo.get_departments(base)
-dept_id = depts.get("beer")
-url = f"{base}/search?q%5B%5D=category%3A{dept_id}"
-print("url:", url)
-r = requests.get(url, headers=bo.HEADERS, timeout=20)
-print("status:", r.status_code, "bytes:", len(r.text))
-products = bo.parse_page(r.text, base)
-print("parsed products:", len(products))
+r = requests.get(base + "/", headers=bo.HEADERS, timeout=20)
+print("homepage status:", r.status_code, "bytes:", len(r.text))
+print("homepage contains 'talker__product-name':", "talker__product-name" in r.text)
+print("homepage contains 'No results':", "No results" in r.text)
 
-# Check for common failure signals in the raw HTML
-html = r.text
-for marker in ["talker__product-name", "No results", "no products", "empty", "Sorry"]:
-    print(f"  contains {marker!r}: {marker in html}")
-
-print("\nfirst 3000 chars of body:")
-print(html[:3000])
+# Check if this store even has a sidebar JSON with real department IDs matching what /search expects
+m = re.search(r'(dtgxwmigmg3gc\.cloudfront\.net/sidebar/[a-zA-Z0-9/_.-]+\.json[^"\']*)', r.text)
+print("sidebar url found:", bool(m))
+if m:
+    sidebar_url = "https://" + m.group(1).replace("&amp;", "&")
+    print("sidebar url:", sidebar_url)
+    r2 = requests.get(sidebar_url, headers=bo.HEADERS, timeout=20)
+    print("sidebar status:", r2.status_code)
+    data = r2.json()
+    print("departments in sidebar:", [(d.get("slug"), d.get("id"), d.get("count")) for d in data.get("departments", [])])
