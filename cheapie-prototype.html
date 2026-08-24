@@ -2638,22 +2638,24 @@ async function showStoreSheet(store){
   // 2026-08-24 fix: reported directly — a $15.99 Steinlager shown for
   // Bottle-O Mt Eden (no confirmed data of its own) turned out to be
   // Bottle-O Kingsland's own real, specific price, misread as if it were
-  // Mt Eden's actual price. The wording wasn't wrong, just too easy to
-  // misread that way — "catalogue prices" reads like a menu, not "this is
-  // literally one other real branch's own pricing, borrowed as a stand-in
-  // because there's no unified national site to scrape instead" (confirmed
-  // directly for Bottle-O: thebottleo.co.nz is a marketing page only, no
-  // /shop or /products at all — this stand-in is the best available data,
-  // not a shortcut around better data that exists). Made explicit, and
-  // backed by real evidence now on hand rather than a vague caveat: a
-  // same-session check found other branches in this same chain differ in
-  // price 60% of the time, sometimes by several dollars — so this isn't a
-  // hedge, it's a genuine "don't assume this is what you'll pay here."
+  // Mt Eden's actual price. Root-caused and fixed at the source: Bottle-O's
+  // fallback catalogue now comes from a genuine national site scrape
+  // (scrape_bottleo_products.py's scrape_national_catalog()) instead of
+  // one specific branch's real data standing in for ~70 others — but the
+  // disclaimer itself is shared across every chain still using some kind
+  // of non-branch-specific fallback (Black Bull's still is one real
+  // branch's data, same pattern this fix removed for Bottle-O), so it
+  // stays deliberately non-specific about *why* rather than claiming a
+  // source that isn't always true. What it does claim is backed by real
+  // evidence gathered this session: comparable branches in the same chain
+  // differ in price 60% of the time, sometimes by several dollars — this
+  // isn't a hedge, it's a genuine "don't assume this is what you'll pay
+  // here."
   const chain = chainNameFor(store.name);
   const disclaimer = (!confirmedBranch && rows.length)
     ? (chain === 'Liquorland'
         ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">Liquorland prices are the same at every store nationwide (confirmed directly) — this isn't a generic fallback, just not tied to this specific branch in the data.</div>`
-        : `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">Showing another ${chain} branch's real prices as a stand-in — this store's own prices aren't confirmed, and branches often charge differently, so don't expect this exact price here.</div>`)
+        : `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chain} catalogue prices — not confirmed for this specific store, and branches often charge differently, so don't expect this exact price here.</div>`)
     : '';
 
   body.innerHTML = `

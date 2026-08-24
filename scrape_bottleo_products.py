@@ -24,11 +24,17 @@ means re-geocoding everything, so it's kept out of this frequent-refresh
 script. Re-run scrape_bottleo_stores.py separately, occasionally, if
 Bottle-O opens/closes locations.
 
-One store (picked for having a large, representative catalogue) is also
-written under the plain "Bottle-O" name with no store_id — the fallback
-catalogue shown (with an honest "not confirmed for this specific store"
-disclaimer) for the ~80 Bottle-O locations that don't have their own
-online shop at all.
+The national site (www.thebottleo.co.nz) runs on the exact same platform
+as every branch subdomain — same get_departments()/category-browse
+mechanism, just scraped once via scrape_national_catalog() and written
+under the plain "Bottle-O" name with no store_id — the fallback catalogue
+shown (with an honest "not confirmed for this specific store" disclaimer)
+for the ~70 Bottle-O locations that don't have their own online shop at
+all. This used to be one specific real branch's own catalogue (Bottle-O
+Kingsland) duplicated under the generic name — reported directly as
+misleading (a real, specific branch's real price read as if it applied
+everywhere) once the national site turned out to have real data of its
+own after all, not just a marketing homepage as first assumed.
 
 Departments map to this app's 4-category taxonomy: Cider -> beer, Port ->
 wine (same reasoning as Liquorland's craft-beer/cider -> beer, liqueurs ->
@@ -53,10 +59,24 @@ WANTED_SLUGS = {
     "cider": "beer",
 }
 
-# Representative store used as the generic fallback catalogue for branches
-# with no online shop of their own — picked once for having one of the
-# largest, most complete catalogues among the online-enabled branches.
-FALLBACK_STORE_NAME = "Bottle-O Kingsland"
+# 2026-08-24 fix: this used to be "Bottle-O Kingsland" — one specific real
+# branch's own catalogue, duplicated under the generic "Bottle-O" name and
+# shown (with a disclaimer) at every branch with no online shop of its
+# own. Reported directly: a user checked Bottle-O Mt Eden, searched
+# Steinlager, and got Kingsland's own real $15.99 price — easy to mistake
+# for Mt Eden's actual price despite the disclaimer, and genuinely
+# misleading regardless, since it's one specific branch's real (possibly
+# promotional) price standing in for ~70 different branches. Assumed at
+# the time that thebottleo.co.nz had no real shop to scrape instead
+# (confirmed then: /shop and /products both 404) — turned out that was
+# only true of those two guessed paths. The user found thebottleo.co.nz's
+# own search returns real results; checked further and confirmed it's not
+# just search — it runs on the exact same platform as every branch
+# subdomain (same get_departments()/category-browse mechanism, same 48-
+# per-page pagination), just at www.thebottleo.co.nz instead of a branch
+# subdomain. That's a genuine national catalogue, not any one branch's
+# real price standing in for the others — see scrape_national_catalog().
+NATIONAL_SITE_BASE = "https://www.thebottleo.co.nz"
 
 
 def base_url(subdomain):
@@ -185,6 +205,41 @@ def scrape_store(store):
     return rows
 
 
+def scrape_national_catalog():
+    print(f"Scraping national catalogue ({NATIONAL_SITE_BASE})...")
+    depts = get_departments(NATIONAL_SITE_BASE)
+    if not depts:
+        print("  skipping — could not resolve departments")
+        return []
+    print(f"  resolved {len(depts)} departments: {list(depts.keys())}")
+
+    rows = []
+    seen_names = set()
+    for slug, app_category in WANTED_SLUGS.items():
+        dept_id = depts.get(slug)
+        if not dept_id:
+            continue
+        products = scrape_department(NATIONAL_SITE_BASE, dept_id)
+        for p in products:
+            if p["name"] in seen_names:
+                continue
+            seen_names.add(p["name"])
+            rows.append({
+                "store": "Bottle-O",
+                "category": app_category,
+                "product_name": p["name"],
+                "price": p["price"],
+                "was_price": p.get("was_price") or "",
+                "in_stock": True,
+                "url": p["url"],
+                "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
+                "store_id": "",
+            })
+        time.sleep(0.3)
+    print(f"  {len(rows)} national catalogue products")
+    return rows
+
+
 def main():
     with open("bottleo_stores.json") as f:
         stores = json.load(f)
@@ -197,9 +252,9 @@ def main():
         all_new_rows += scrape_store(store)
         time.sleep(0.5)
 
-    fallback_rows = [dict(r, store="Bottle-O", store_id="") for r in all_new_rows if r["store"] == FALLBACK_STORE_NAME]
-    all_new_rows += fallback_rows
-    print(f"\nTotal fresh Bottle-O rows (incl. {len(fallback_rows)} generic fallback rows): {len(all_new_rows)}")
+    national_rows = scrape_national_catalog()
+    all_new_rows += national_rows
+    print(f"\nTotal fresh Bottle-O rows (incl. {len(national_rows)} generic national-catalogue rows): {len(all_new_rows)}")
 
     # 2026-08-14 fix: this file is gitignored (regenerated data, not
     # source) — confirmed directly a plain open() here crashed every
