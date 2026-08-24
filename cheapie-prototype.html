@@ -805,10 +805,29 @@ function expandGenericChainMatches(rows){
   // identical at every store (confirmed directly), so a product with no
   // confirmed store_id anywhere is still fanned out to every branch.
   const confirmedIdsByChainProduct = {}; // "<chain>||<product_name>" -> Set(storeId) of every branch that's confirmed it
+  // 2026-08-24 sixth fix: reported directly — searching "Steinlager" on
+  // the Nearby map marked most of the country grey ("out of stock"), 626
+  // of 908 stores, for a brand carried almost everywhere. Root cause: the
+  // chain-wide supersession check right below this was written for
+  // branches that DO have their own confirmed catalogue (correctly, "no
+  // row for this exact product at a branch we've actually scraped means
+  // it genuinely doesn't stock it, don't guess") — but it was applying
+  // that same logic to branches with ZERO confirmed data of their own,
+  // where it makes no sense at all: those branches haven't been scraped,
+  // so "no confirmed row" says nothing about whether they stock it, and
+  // dropping their only fallback data because some OTHER branch happens
+  // to confirm the product denies them the best information actually
+  // available. Same reasoning the Black Bull Hawera fallback pass below
+  // already uses correctly per-branch — generalized here so every chain's
+  // generic/national fallback gets it, not just Black Bull's hardcoded
+  // case (see CHAIN_FALLBACK_STORE_ID below).
+  const branchesWithOwnCatalog = {}; // "<chain>" -> Set(storeId) of every branch with ANY confirmed data at all
   rows.forEach(r => {
     if(!r.store_id) return;
     const key = chainNameFor(r.store_name) + '||' + r.product_name;
     (confirmedIdsByChainProduct[key] = confirmedIdsByChainProduct[key] || new Set()).add(r.store_id);
+    const chain = chainNameFor(r.store_name);
+    (branchesWithOwnCatalog[chain] = branchesWithOwnCatalog[chain] || new Set()).add(r.store_id);
   });
 
   // 2026-08-14 fifth fix: reported directly — after the nearest-neighbour
@@ -839,18 +858,20 @@ function expandGenericChainMatches(rows){
       return;
     }
     const key = chain + '||' + r.product_name;
-    if(confirmedIdsByChainProduct[key] && confirmedIdsByChainProduct[key].size){
-      // Some real branch has already confirmed its own price for this
-      // exact product — this storeless row is a stale/duplicate leftover
-      // for the same chain, not a genuine "nobody's confirmed this"
-      // uniform case. Drop it rather than guess which branch it belongs to.
-      return;
-    }
-    // No branch of this chain has ever confirmed its own price for this
-    // exact product — uniform-nationwide case (Liquorland) or simply no
-    // per-branch data exists yet for it. Fan the one real row out to
-    // every branch.
-    branchIds.forEach(id => expanded.push(mapRegionSearchRow(r, id)));
+    const confirmedIds = confirmedIdsByChainProduct[key];
+    const ownCatalogBranches = branchesWithOwnCatalog[chain];
+    // Per branch, not per chain (see the sixth-fix note above this
+    // function): only skip a branch that has SOME confirmed catalogue of
+    // its own and specifically doesn't have this product — that's a real
+    // "doesn't stock it," not a guess. A branch with no confirmed data at
+    // all hasn't said either way, so the generic/national fallback is
+    // still the best information available for it.
+    branchIds.forEach(id => {
+      const hasOwnCatalog = ownCatalogBranches && ownCatalogBranches.has(id);
+      const hasThisProduct = confirmedIds && confirmedIds.has(id);
+      if(hasOwnCatalog && !hasThisProduct) return;
+      expanded.push(mapRegionSearchRow(r, id));
+    });
   });
 
   // Designated-fallback pass: for chains in CHAIN_FALLBACK_STORE_ID, fill
