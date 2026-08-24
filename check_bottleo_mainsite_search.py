@@ -1,29 +1,20 @@
-"""One-off: inspect thebottleo.co.nz/search's actual product results to
-see whether this is a true national catalog or defaults to one specific
-branch's data under the hood. Delete after use."""
-import re
-import requests
+"""One-off: check if thebottleo.co.nz supports the same department/sidebar
+JSON + category browse mechanism each branch subdomain uses, which would
+let us scrape a genuine national generic catalog instead of borrowing one
+specific branch's real data as a stand-in. Delete after use."""
+import sys, re, requests
+sys.path.insert(0, ".")
+import scrape_bottleo_products as bo
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-url = "https://www.thebottleo.co.nz/search?q=steinlager"
-r = requests.get(url, headers=HEADERS, timeout=20)
-html = r.text
+base = "https://www.thebottleo.co.nz"
+depts = bo.get_departments(base)
+print("departments resolved via get_departments():", depts)
 
-# Same parse pattern as scrape_bottleo_products.py's parse_page()
-for m in re.finditer(
-    r'<a href="(/lines/[^"]*)">(?:(?!<a href="/lines/).)*?'
-    r'talker__product-name">([^<]+)</span>\s*'
-    r'(?:<span class="weak size talker__name__size">([^<]*)</span>)?'
-    r'(?:(?!<a href="/lines/).)*?'
-    r'price__sell"[^>]*>\$([\d.]+)<',
-    html, re.S
-):
-    url_path, name, size, price = m.groups()
-    print(f"{name} {size} -> ${price} (link: {url_path})")
-
-# Check if there's any indication of which specific store this search is scoped to
-print("\n=== looking for store/location context in the page ===")
-loc_hints = re.findall(r'(store[_-]?name|current[_-]?store|selected[_-]?store)["\':]?\s*[:=]\s*["\']?([^"\'<>,}]{2,40})', html, re.I)
-print(loc_hints[:10])
-title_match = re.search(r"<title>([^<]*)</title>", html)
-print("page title:", title_match.group(1) if title_match else None)
+if depts:
+    for cat, dept_id in list(depts.items())[:2]:
+        url = f"{base}/search?q%5B%5D=category%3A{dept_id}"
+        r = requests.get(url, headers=bo.HEADERS, timeout=20)
+        products = bo.parse_page(r.text, base)
+        print(f"\n{cat} ({dept_id}): {len(products)} products via page 1")
+        for p in products[:5]:
+            print(f"  {p['name']} -> ${p['price']}")
