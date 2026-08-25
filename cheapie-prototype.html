@@ -536,6 +536,9 @@
         <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('spirits', this)">🥃 Spirits</div>
         <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('rtd', this)">🍹 RTD</div>
       </div>
+      <select id="dealsStoreSelect" onchange="onDealsStoreChange()" style="margin:0 20px 8px; width:calc(100% - 40px); background:var(--white); border:2px solid var(--ink); border-radius:4px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:var(--ink);">
+        <option value="">All stores</option>
+      </select>
       <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;" id="dealsSubtitle"></div>
       <div class="perforation" style="margin:10px 0;"></div>
       <div id="dealsList" style="padding:0 20px 16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1;"></div>
@@ -599,6 +602,8 @@ function chainNameFor(storeName){
 }
 
 let dealsLoadedOnce = false;
+let currentDealsCategory = null;
+let currentDealsStoreFilter = ''; // '' = all stores, else a chain name from chainNameFor()
 function show(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1423,7 +1428,13 @@ async function doSearch(term, forcedCategory){
 // (a genuine markdown, whatever produced it — straight discount or an
 // effective multi-buy price). Ranked by real discount %, not price or
 // $/L, since that's the actual question this tab answers.
+function onDealsStoreChange(){
+  currentDealsStoreFilter = document.getElementById('dealsStoreSelect').value;
+  loadDeals(currentDealsCategory);
+}
+
 async function loadDeals(category, chipEl){
+  currentDealsCategory = category;
   if(chipEl){
     document.querySelectorAll('#dealsChips .chip').forEach(c => c.classList.remove('active'));
     chipEl.classList.add('active');
@@ -1463,18 +1474,48 @@ async function loadDeals(category, chipEl){
   // artifact (e.g. a since-ended special the scrape caught mid-transition),
   // not a real deal — same "is this genuinely real" bar as everywhere else.
   let discounted = rows.filter(r => r.was_price !== null && Number(r.was_price) > Number(r.price));
-  // Cap per chain before distance-sorting/capping, so a chain with many
-  // more real branches (hence many more real deal rows) can't crowd out
-  // every other chain's genuine deals just by outnumbering them — each
-  // chain still gets a generous slice, just not the whole list.
-  const DEALS_PER_CHAIN_CAP = 150;
-  const chainDealCounts = {};
-  discounted = discounted.filter(r => {
-    const chain = chainNameFor(r.store_name);
-    const count = chainDealCounts[chain] || 0;
-    chainDealCounts[chain] = count + 1;
-    return count < DEALS_PER_CHAIN_CAP;
-  });
+
+  // 2026-08-26: "what store do you want to see deals from" — populated
+  // from whichever chains genuinely have deals right now (not a static
+  // list), so there's never a dead-end option that just shows "no active
+  // specials". Built from the FULL discounted set, before the per-chain
+  // cap below narrows it — otherwise a chain capped down to 0 visible
+  // rows here could still wrongly appear as a pickable option. The
+  // user's current pick is preserved if it's still valid, otherwise
+  // falls back to "All stores" rather than silently resetting on reload.
+  const dealChains = [...new Set(discounted.map(r => chainNameFor(r.store_name)))].sort();
+  const storeSelect = document.getElementById('dealsStoreSelect');
+  const previousValue = currentDealsStoreFilter;
+  storeSelect.innerHTML = '<option value="">All stores</option>' +
+    dealChains.map(c => `<option value="${c}">${c}</option>`).join('');
+  if(dealChains.includes(previousValue)){
+    storeSelect.value = previousValue;
+  } else {
+    currentDealsStoreFilter = '';
+    storeSelect.value = '';
+  }
+
+  if(currentDealsStoreFilter){
+    // One specific store picked — no fairness concern (there's only one
+    // chain in play), so it gets the full DEALS_CAP below instead of
+    // being capped down to fit alongside everyone else.
+    discounted = discounted.filter(r => chainNameFor(r.store_name) === currentDealsStoreFilter);
+  } else {
+    // "All stores" — cap per chain before distance-sorting/capping, so a
+    // chain with many more real branches (hence many more real deal
+    // rows) can't crowd out every other chain's genuine deals just by
+    // outnumbering them — each chain still gets a generous slice, just
+    // not the whole list.
+    const DEALS_PER_CHAIN_CAP = 150;
+    const chainDealCounts = {};
+    discounted = discounted.filter(r => {
+      const chain = chainNameFor(r.store_name);
+      const count = chainDealCounts[chain] || 0;
+      chainDealCounts[chain] = count + 1;
+      return count < DEALS_PER_CHAIN_CAP;
+    });
+  }
+
   await ensureStoresLoaded(); // resolves confirmed-branch rows to a real address/km, same as elsewhere
 
   // 2026-08-12: deliberately NOT fanned out across every branch here (the
@@ -1504,13 +1545,14 @@ async function loadDeals(category, chipEl){
   const DEALS_CAP = 500;
   const shown = mapped.slice(0, DEALS_CAP);
 
+  const storeSuffix = currentDealsStoreFilter ? ` at ${currentDealsStoreFilter}` : '';
   document.getElementById('dealsSubtitle').textContent = mapped.length
-    ? `${mapped.length} active special${mapped.length === 1 ? '' : 's'} — closest to you first`
-    : `No active specials found${category ? ' in this category' : ''} right now.`;
+    ? `${mapped.length} active special${mapped.length === 1 ? '' : 's'}${storeSuffix} — closest to you first`
+    : `No active specials found${category ? ' in this category' : ''}${storeSuffix} right now.`;
 
   const list = document.getElementById('dealsList');
   if(!shown.length){
-    list.innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">No active specials found${category ? ' in this category' : ''} right now.</div>`;
+    list.innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">No active specials found${category ? ' in this category' : ''}${storeSuffix} right now.</div>`;
     return;
   }
   shown.forEach(r => {
