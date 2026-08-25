@@ -604,6 +604,7 @@ function chainNameFor(storeName){
 let dealsLoadedOnce = false;
 let currentDealsCategory = null;
 let currentDealsStoreFilter = ''; // '' = all stores, else a chain name from chainNameFor()
+let dealsLoadToken = 0; // guards against a slower earlier load finishing after a newer one and corrupting the list — same pattern as nearbyMapSearchToken
 function show(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1434,6 +1435,15 @@ function onDealsStoreChange(){
 }
 
 async function loadDeals(category, chipEl){
+  // 2026-08-26: reported indirectly while testing the new store filter —
+  // show('view-deals') fires its own un-awaited loadDeals(null) on first
+  // visit, and nothing stopped a second call (e.g. picking a store or
+  // category quickly after) from finishing out of order and corrupting
+  // the list — confirmed directly, two overlapping loads produced 1000
+  // cards instead of the intended 500-max. Token-guarded the same way
+  // nearbyMapSearchToken already protects the map search from the same
+  // failure mode.
+  const token = ++dealsLoadToken;
   currentDealsCategory = category;
   if(chipEl){
     document.querySelectorAll('#dealsChips .chip').forEach(c => c.classList.remove('active'));
@@ -1443,6 +1453,7 @@ async function loadDeals(category, chipEl){
   document.getElementById('dealsList').innerHTML = '';
 
   await requestUserLocation();
+  if(token !== dealsLoadToken) return; // a newer load started while this one was awaiting location
 
   // 2026-08-26 fix: reported directly — the Deals tab only ever seemed to
   // show Bottle-O and Thirsty Liquor, even though Glengarry/Black Bull/
@@ -1465,10 +1476,13 @@ async function loadDeals(category, chipEl){
     rows = await fetchAllRows(url, 13000);
   } catch(err){
     console.error(err);
-    document.getElementById('dealsSubtitle').textContent = 'Couldn’t reach the database';
-    document.getElementById('dealsList').innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">Something went wrong loading deals. Try again in a moment.</div>`;
+    if(token === dealsLoadToken){
+      document.getElementById('dealsSubtitle').textContent = 'Couldn’t reach the database';
+      document.getElementById('dealsList').innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">Something went wrong loading deals. Try again in a moment.</div>`;
+    }
     return;
   }
+  if(token !== dealsLoadToken) return; // a newer load started while this one was fetching
 
   // was_price present but not actually higher than price is a data
   // artifact (e.g. a since-ended special the scrape caught mid-transition),
@@ -1517,6 +1531,7 @@ async function loadDeals(category, chipEl){
   }
 
   await ensureStoresLoaded(); // resolves confirmed-branch rows to a real address/km, same as elsewhere
+  if(token !== dealsLoadToken) return; // a newer load started while this one was resolving store data
 
   // 2026-08-12: deliberately NOT fanned out across every branch here (the
   // way search results are) — confirmed directly that doing so blew a
