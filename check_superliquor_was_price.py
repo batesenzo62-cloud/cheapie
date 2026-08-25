@@ -1,30 +1,25 @@
-"""One-off: check /super-specials (real product page, likely has real
-was_price data) and the promos.superliquor.co.nz link (looks like bundle/
-multi-buy deal content). Delete after use."""
+"""One-off: /super-specials products all show was=None despite being a
+dedicated specials page — check the raw HTML around one item's price
+block directly to find the actual markup. Also check a regular category
+page for bundle/multi-buy promotional text ("2 for $X", "any 3 for $Y")
+that our simple was/now scraper doesn't capture at all. Delete after use."""
 import requests
 from bs4 import BeautifulSoup
+import re
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 base = "https://alexandra.superliquor.co.nz"
 
-print("=== /super-specials ===")
 r = requests.get(base + "/super-specials", headers=HEADERS, timeout=20)
-print("status:", r.status_code, "bytes:", len(r.text))
 soup = BeautifulSoup(r.text, "html.parser")
-items = soup.select("div.item-box")
-print(f"item-box count: {len(items)}")
-for item in items[:8]:
-    name_el = item.select_one(".product-title a, h2.product-title")
-    name = name_el.get_text(strip=True) if name_el else "???"
-    price_el = item.select_one(".prices .actual-price, .price.actual-price")
-    price = price_el.get_text(strip=True) if price_el else "?"
-    was_el = item.select_one(".prices .old-product-price, .old-product-price, .prices .old-price, .old-price")
-    was = was_el.get_text(strip=True) if was_el else None
-    print(f"  {name}: price={price} was={was}")
+item = soup.select_one("div.item-box")
+print("=== raw HTML of one item-box on /super-specials ===")
+print(item.prettify()[:3000])
 
-print("\n=== promos.superliquor.co.nz/oedfys1 ===")
-r2 = requests.get("https://promos.superliquor.co.nz/oedfys1", headers=HEADERS, timeout=20)
-print("status:", r2.status_code, "bytes:", len(r2.text))
-text = BeautifulSoup(r2.text, "html.parser").get_text(" ", strip=True)
-print("page text sample (first 2000 chars):")
-print(text[:2000])
+print("\n\n=== searching regular category page for bundle/multi-buy text ===")
+r2 = requests.get(base + "/beer", headers=HEADERS, timeout=20)
+text = r2.text
+patterns = [r'\b\d+\s+for\s+\$?\d+', r'any\s+\d+\s+for', r'mix\s*(?:&|and)?\s*match', r'buy\s+\d+.{0,20}save']
+for pat in patterns:
+    matches = re.findall(pat, text, re.I)
+    print(f"pattern {pat!r}: {matches[:10]}")
