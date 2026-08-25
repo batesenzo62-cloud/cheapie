@@ -70,6 +70,19 @@ BRANCHES = {
 }
 CATEGORIES = {"beer": "collections/beer", "rtd": "collections/rtds", "wine": "collections/wine", "spirits": "collections/spirits"}
 
+# 2026-08-26: reported directly — asked for "2 for 1"-style bundle deals
+# on the Deals tab. Confirmed there's no such thing on Super Liquor (their
+# specials page has no comparison price in the markup at all, nothing to
+# scrape), but Thirsty Liquor genuinely has a real collections/bundles
+# page — e.g. "Jim Beam, Canadian Club, Chatelle 1L. Any Two For $99".
+# These don't fit the was_price/price pair the Deals tab is built around
+# (it's a multi-buy deal on one listing, not a single markdown), so the
+# deal terms are just part of the product name for now rather than a
+# separate price field — still real, useful information either way, and
+# shows up in normal search/category browsing even before the Deals tab
+# gains real support for this deal shape.
+BUNDLE_CATEGORY_SLUG = "collections/bundles"
+
 
 def main():
     new_rows = []
@@ -95,6 +108,28 @@ def main():
             except Exception as e:
                 print(f"  {cat} error: {e}")
             time.sleep(1)
+
+        # Bundles can span any category (a whisky/gin/rum multi-buy is
+        # still "spirits", but nothing guarantees that) — classify_auto_
+        # category (already proven for Black Bull's mixed-department
+        # "classic" page) keyword-matches each product's own name instead
+        # of assuming one fixed category for the whole collection.
+        try:
+            bundle_products = s.scrape_shopify(f"{base}/{BUNDLE_CATEGORY_SLUG}")
+            for p in bundle_products:
+                new_rows.append({
+                    "store": store_name,
+                    "store_id": store_id or "",
+                    "category": s.classify_auto_category(p["name"]),
+                    "product_name": p["name"],
+                    "price": p["price"],
+                    "was_price": p["was_price"],
+                    "in_stock": p["in_stock"],
+                    "url": p["url"],
+                    "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
+                })
+        except Exception as e:
+            print(f"  bundles error: {e}")
         time.sleep(1)
 
     print(f"\nTotal new branch-specific rows: {len(new_rows)}")

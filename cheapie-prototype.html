@@ -1433,12 +1433,25 @@ async function loadDeals(category, chipEl){
 
   await requestUserLocation();
 
+  // 2026-08-26 fix: reported directly — the Deals tab only ever seemed to
+  // show Bottle-O and Thirsty Liquor, even though Glengarry/Black Bull/
+  // Liquorland/Big Barrel all genuinely have real was_price deals too
+  // (confirmed directly querying the database). Two compounding causes:
+  // this fetch had no order=, so which rows landed in the first 6000 (of
+  // 12,700+ total) was arbitrary DB order, not representative — bumped
+  // the cap high enough to reach essentially everything instead. And even
+  // among rows that WERE fetched, Bottle-O + Thirsty Liquor alone have
+  // ~2,900 of them between their much larger branch counts, which
+  // dominated the distance-sorted top 500 for most locations before
+  // smaller chains' real deals ever got a look in — same "one thing
+  // dominates a capped list" shape already fixed for search and category
+  // browsing, fixed the same way below (cap per chain, not by price).
   let url = `${SUPABASE_URL}/rest/v1/products?select=*&was_price=not.is.null`;
   if(category) url += `&category=eq.${category}`;
 
   let rows;
   try{
-    rows = await fetchAllRows(url, 6000);
+    rows = await fetchAllRows(url, 13000);
   } catch(err){
     console.error(err);
     document.getElementById('dealsSubtitle').textContent = 'Couldn’t reach the database';
@@ -1449,7 +1462,19 @@ async function loadDeals(category, chipEl){
   // was_price present but not actually higher than price is a data
   // artifact (e.g. a since-ended special the scrape caught mid-transition),
   // not a real deal — same "is this genuinely real" bar as everywhere else.
-  const discounted = rows.filter(r => r.was_price !== null && Number(r.was_price) > Number(r.price));
+  let discounted = rows.filter(r => r.was_price !== null && Number(r.was_price) > Number(r.price));
+  // Cap per chain before distance-sorting/capping, so a chain with many
+  // more real branches (hence many more real deal rows) can't crowd out
+  // every other chain's genuine deals just by outnumbering them — each
+  // chain still gets a generous slice, just not the whole list.
+  const DEALS_PER_CHAIN_CAP = 150;
+  const chainDealCounts = {};
+  discounted = discounted.filter(r => {
+    const chain = chainNameFor(r.store_name);
+    const count = chainDealCounts[chain] || 0;
+    chainDealCounts[chain] = count + 1;
+    return count < DEALS_PER_CHAIN_CAP;
+  });
   await ensureStoresLoaded(); // resolves confirmed-branch rows to a real address/km, same as elsewhere
 
   // 2026-08-12: deliberately NOT fanned out across every branch here (the
