@@ -1,42 +1,26 @@
-"""One-off: Super Liquor shows zero was_price rows in the DB despite the
-nopCommerce parser having a specific, previously-verified was_price
-selector (confirmed working for Big Barrel, same platform). Check a real
-live Super Liquor branch page directly to see if their actual HTML uses a
-different class, or if there's genuinely nothing on special right now.
-Delete after use."""
-import sys, re, requests
-sys.path.insert(0, ".")
-import scrape_independent_stores as s
+"""One-off: check whether Super Liquor has a dedicated specials/promotions
+page not in our CATEGORIES dict, since the sampled beer category page had
+zero items on special right now. Delete after use."""
+import requests
 from bs4 import BeautifulSoup
 
-# Get a real Super Liquor branch URL
-r = requests.get("https://www.superliquor.co.nz/GetStoresByState", headers=s.HEADERS, timeout=20)
-branches = [b for b in r.json()["stores"] if b["Value"]]
-print(f"{len(branches)} real branches found")
-test_branch = branches[0]
-print("testing branch:", test_branch["Text"], test_branch["Value"])
+HEADERS = {"User-Agent": "Mozilla/5.0"}
+base = "https://alexandra.superliquor.co.nz"
 
-base = test_branch["Value"]
-url = f"{base}/beer"
-resp = requests.get(url, headers=s.HEADERS, timeout=20)
-print("status:", resp.status_code, "bytes:", len(resp.text))
+# Check homepage nav for any specials/promo links
+r = requests.get(base + "/", headers=HEADERS, timeout=20)
+soup = BeautifulSoup(r.text, "html.parser")
+nav_links = soup.select("a[href]")
+promo_links = [a["href"] for a in nav_links if any(w in a["href"].lower() or w in a.get_text(" ", strip=True).lower() for w in ["special", "promo", "deal", "sale", "clearance"])]
+print("promo-looking nav links:", set(promo_links))
 
-soup = BeautifulSoup(resp.text, "html.parser")
-items = soup.select("div.item-box")
-print(f"item-box count: {len(items)}")
-
-# Check the actual class names present on price-related elements for the first few items
-for item in items[:5]:
-    name_el = item.select_one(".product-title a, h2.product-title")
-    name = name_el.get_text(strip=True) if name_el else "???"
-    price_divs = item.select("[class*=price]")
-    classes_found = set()
-    for d in price_divs:
-        classes_found.update(d.get("class", []))
-    print(f"  {name}: price-related classes = {classes_found}")
-
-# Also check overall page for any "old-price"/"was"/"special" indicators anywhere
-full_text = resp.text
-for marker in ["old-product-price", "old-price", "was-price", "special-price", "sale-price", "discount"]:
-    count = full_text.count(marker)
-    print(f"occurrences of {marker!r} in raw HTML: {count}")
+# Try common specials URL patterns directly
+for path in ["/specials", "/promotions", "/deals", "/on-sale", "/clearance", "/specials-1"]:
+    url = base + path
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=15)
+        item_count = resp.text.count("item-box")
+        old_price_count = resp.text.count("old-product-price") + resp.text.count("old-price")
+        print(f"{path}: status={resp.status_code} item-box mentions={item_count} old-price mentions={old_price_count}")
+    except Exception as e:
+        print(f"{path}: error {e}")
