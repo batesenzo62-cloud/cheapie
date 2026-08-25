@@ -1,26 +1,30 @@
-"""One-off: check whether Super Liquor has a dedicated specials/promotions
-page not in our CATEGORIES dict, since the sampled beer category page had
-zero items on special right now. Delete after use."""
+"""One-off: check /super-specials (real product page, likely has real
+was_price data) and the promos.superliquor.co.nz link (looks like bundle/
+multi-buy deal content). Delete after use."""
 import requests
 from bs4 import BeautifulSoup
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 base = "https://alexandra.superliquor.co.nz"
 
-# Check homepage nav for any specials/promo links
-r = requests.get(base + "/", headers=HEADERS, timeout=20)
+print("=== /super-specials ===")
+r = requests.get(base + "/super-specials", headers=HEADERS, timeout=20)
+print("status:", r.status_code, "bytes:", len(r.text))
 soup = BeautifulSoup(r.text, "html.parser")
-nav_links = soup.select("a[href]")
-promo_links = [a["href"] for a in nav_links if any(w in a["href"].lower() or w in a.get_text(" ", strip=True).lower() for w in ["special", "promo", "deal", "sale", "clearance"])]
-print("promo-looking nav links:", set(promo_links))
+items = soup.select("div.item-box")
+print(f"item-box count: {len(items)}")
+for item in items[:8]:
+    name_el = item.select_one(".product-title a, h2.product-title")
+    name = name_el.get_text(strip=True) if name_el else "???"
+    price_el = item.select_one(".prices .actual-price, .price.actual-price")
+    price = price_el.get_text(strip=True) if price_el else "?"
+    was_el = item.select_one(".prices .old-product-price, .old-product-price, .prices .old-price, .old-price")
+    was = was_el.get_text(strip=True) if was_el else None
+    print(f"  {name}: price={price} was={was}")
 
-# Try common specials URL patterns directly
-for path in ["/specials", "/promotions", "/deals", "/on-sale", "/clearance", "/specials-1"]:
-    url = base + path
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
-        item_count = resp.text.count("item-box")
-        old_price_count = resp.text.count("old-product-price") + resp.text.count("old-price")
-        print(f"{path}: status={resp.status_code} item-box mentions={item_count} old-price mentions={old_price_count}")
-    except Exception as e:
-        print(f"{path}: error {e}")
+print("\n=== promos.superliquor.co.nz/oedfys1 ===")
+r2 = requests.get("https://promos.superliquor.co.nz/oedfys1", headers=HEADERS, timeout=20)
+print("status:", r2.status_code, "bytes:", len(r2.text))
+text = BeautifulSoup(r2.text, "html.parser").get_text(" ", strip=True)
+print("page text sample (first 2000 chars):")
+print(text[:2000])
