@@ -2665,14 +2665,27 @@ async function fetchAllRows(url, maxRows = Infinity){
     // bulk upsert (see showStoreSheet's own fallback for the same root
     // cause) is exactly the kind of thing a scheduled scraper run
     // triggers, and it clears up within a second or two on its own.
-    let resp = await fetch(url, {
-      headers: { apikey: SUPABASE_ANON_KEY, Range: `${offset}-${offset + PAGE_SIZE - 1}` }
-    });
-    if(!resp.ok){
-      await new Promise(r => setTimeout(r, 1500));
+    //
+    // 2026-08-26 fix: one retry wasn't enough — reported as "Beer only
+    // shows some pack sizes" and confirmed directly: paging through the
+    // beer category (61,000+ rows now, this table keeps growing) hit
+    // real 500s on two DIFFERENT pages in the same request sequence, not
+    // just one. A single 1.5s retry can't ride out a slow window that
+    // spans more than one page's worth of requests. Retries each page up
+    // to 3 times with growing backoff (1.5s/3s/6s) instead of once, and
+    // covers the SUCCESS path too now, not just the failure path — a
+    // transient blip on page 0 used to permanently poison that whole
+    // fetch even if the retry then succeeded fine.
+    let resp, page;
+    for(let attempt = 0; attempt < 4; attempt++){
+      if(attempt > 0) await new Promise(r => setTimeout(r, 1500 * (2 ** (attempt - 1))));
       resp = await fetch(url, {
         headers: { apikey: SUPABASE_ANON_KEY, Range: `${offset}-${offset + PAGE_SIZE - 1}` }
       });
+      if(resp.ok){
+        page = await resp.json();
+        break;
+      }
     }
     if(!resp.ok){
       // A total connection failure should still surface as an error (same
@@ -2682,7 +2695,6 @@ async function fetchAllRows(url, maxRows = Infinity){
       if(offset === 0) throw new Error('Supabase request failed: ' + resp.status);
       break;
     }
-    const page = await resp.json();
     all = all.concat(page);
     if(page.length < PAGE_SIZE || all.length >= maxRows) break;
     offset += PAGE_SIZE;
