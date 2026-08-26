@@ -1233,6 +1233,7 @@ function showEmptyResults(message){
 let currentSearchResults = [];
 let currentPackSize = null; // null = no filter (show every pack size)
 let currentCategoryFilter = null; // null = no filter (show every category)
+let searchToken = 0; // guards against a slower earlier doSearch finishing after a newer one and corrupting the results/chips — same pattern as nearbyMapSearchToken and dealsLoadToken
 
 // 2026-08-13: reported directly — searching "Vodka" turned up 503 RTD
 // results and 3 beer alongside the 449 genuine spirits matches, with no
@@ -1389,6 +1390,17 @@ function onRadiusSliderChange(value){
 }
 
 async function doSearch(term, forcedCategory){
+  // 2026-08-26 fix: reported indirectly ("clicking Beer only shows 1000,
+  // and 24-pack shows nothing") — direct testing of the category browse
+  // and pack-size filter both worked correctly in isolation, pointing at
+  // a timing issue rather than the data/filter logic itself. Confirmed
+  // directly: doSearch had zero protection against an overlapping call
+  // (e.g. tapping a different category before the first one's fetch
+  // finished) finishing out of order and overwriting currentSearchResults
+  // and the pack-size chips with stale data — the exact same failure mode
+  // already found and fixed for loadDeals(), and already guarded against
+  // in runNearbyMapSearch. Token-guarded the same way.
+  const token = ++searchToken;
   const query = term || document.getElementById('searchInput').value || '';
 
   document.getElementById('resultsTitle').textContent = query.length ? query : 'Results';
@@ -1402,12 +1414,14 @@ async function doSearch(term, forcedCategory){
   document.getElementById('radiusFilterRow').style.display = 'none';
 
   await requestUserLocation(); // best effort — doesn't block the search if denied/unavailable
+  if(token !== searchToken) return; // a newer search started while this one was awaiting location
 
   try{
     // Already mapped to the same shape mapDbRow produces regardless of
     // which path (fuzzy RPC vs plain category fetch) fetchLiveProducts
     // took internally — no further mapping needed here.
     const rows = await fetchLiveProducts(forcedCategory || null, query);
+    if(token !== searchToken) return; // a newer search started while this one was fetching
     if(rows && rows.length){
       const nearCount = userLocation ? rows.filter(r => r.km !== null).length : 0;
       document.getElementById('resultsSubtitle').textContent = nearCount
@@ -1424,6 +1438,7 @@ async function doSearch(term, forcedCategory){
     showEmptyResults(`No products matched${query.length ? ` "${query}"` : ''}. Try a different search or category.`);
   } catch(err){
     console.error(err);
+    if(token !== searchToken) return;
     document.getElementById('resultsSubtitle').textContent = 'Couldn’t reach the database';
     showEmptyResults('Something went wrong loading live prices. Try again in a moment.');
   }
