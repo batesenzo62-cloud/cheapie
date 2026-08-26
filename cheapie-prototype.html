@@ -1085,7 +1085,14 @@ function valueLine(r){
 // the schedule changed. Unlike everything else in the app (refreshes every
 // 4 hours), it's worth a quiet heads-up rather than labelling old data
 // "Live" the same as everything else.
-const MONTHLY_REFRESH_CHAINS = ['Liquorland', 'Woolworths', 'New World', "PAK'nSAVE"];
+// 2026-08-26 fix: reported directly — Liquorland deals showed "updated
+// fortnightly, not live" even though it hasn't been on the monthly
+// Firecrawl schedule for a while. Confirmed directly: scrape_liquorland_
+// full.py scrapes every real category via plain HTTP (no Cloudflare
+// block, no Firecrawl credits needed) and runs in scrape-branches.yml on
+// a daily cron ('0 3 * * *'), same as Black Bull/Thirsty Liquor/Bottle-O/
+// Super Liquor — this list just never got updated after that move.
+const MONTHLY_REFRESH_CHAINS = ['Woolworths', 'New World', "PAK'nSAVE"];
 
 function isMonthlyRefreshChain(storeName){
   return !!storeName && MONTHLY_REFRESH_CHAINS.some(c => storeName.startsWith(c));
