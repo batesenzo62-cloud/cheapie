@@ -1,0 +1,28 @@
+name: Add missing Big Barrel branch stores
+
+# One-off data-fix job (workflow_dispatch only, no schedule) — inserts the
+# 16 real Big Barrel branches add_bigbarrel_stores.py's docstring explains
+# had a confirmed real subdomain shop but no `stores` row at all, so
+# scrape_bigbarrel_branches.py's hardcoded store_ids resolve to real rows.
+# Safe to re-run (on_conflict=id upsert).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  add-bigbarrel-stores:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Add missing Big Barrel branch stores
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 add_bigbarrel_stores.py

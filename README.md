@@ -5,7 +5,9 @@ the data spike:
 
 ## 1. `scrape_independent_stores.py` — works right now, no signup needed
 Scrapes independent NZ liquor retailers (Vino Fino, and now also Thirsty
-Liquor, Black Bull Liquor, Super Liquor, and Big Barrel) that render prices
+Liquor, Black Bull Liquor, Super Liquor, and Big Barrel — 47 of Big
+Barrel's branches have their own per-branch site, scraped by the separate
+scrape_bigbarrel_branches.py) that render prices
 directly in server-side HTML, so this script works today with nothing to
 set up beyond Python itself.
 
