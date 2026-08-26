@@ -133,15 +133,35 @@ PROMPT = (
 )
 
 
+# 2026-08-26 fix: reported directly — New World's 7 targets scraped fine,
+# but every single PAK'nSAVE target (which comes after New World in
+# PAGINATED_TARGETS) failed with "429 Too Many Requests". Confirmed
+# directly in the run log: this is a real rate limit, not a credits/
+# payment issue (that fails with 402, already handled separately by just
+# reporting it) — New World's requests used up whatever the account's
+# short-window rate allowance is before PAK'nSAVE ever got a turn, and
+# the 2-second sleep between requests elsewhere in this file wasn't
+# enough headroom. Retries with backoff specifically for 429 (reading a
+# real Retry-After header when the API sends one, since guessing a delay
+# is more likely to either wait too long or trip the limit again).
 def scrape_with_firecrawl(url):
-    submit = requests.post(
-        "https://api.firecrawl.dev/v1/extract",
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={"urls": [url], "prompt": PROMPT, "schema": SCHEMA},
-        timeout=60,
-    )
-    submit.raise_for_status()
-    submit_data = submit.json()
+    for attempt in range(5):
+        submit = requests.post(
+            "https://api.firecrawl.dev/v1/extract",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            json={"urls": [url], "prompt": PROMPT, "schema": SCHEMA},
+            timeout=60,
+        )
+        if submit.status_code == 429:
+            wait = int(submit.headers.get("Retry-After", 15 * (attempt + 1)))
+            print(f"  Rate limited (429) — waiting {wait}s before retry {attempt + 1}/5...")
+            time.sleep(wait)
+            continue
+        submit.raise_for_status()
+        submit_data = submit.json()
+        break
+    else:
+        raise RuntimeError("Still rate limited after 5 retries — giving up on this target.")
 
     if "data" in submit_data:
         return submit_data
