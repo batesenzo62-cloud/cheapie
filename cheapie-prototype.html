@@ -591,7 +591,7 @@ async function requestUserLocation(){
 }
 
 function chainNameFor(storeName){
-  const knownChains = ['Liquorland', 'Super Liquor', 'Big Barrel', 'Black Bull Liquor', 'Vino Fino', 'Thirsty Liquor', 'Bottle-O', 'New World', "PAK'nSAVE", 'Woolworths'];
+  const knownChains = ['Liquorland', 'Super Liquor', 'Big Barrel', 'Black Bull Liquor', 'Vino Fino', 'Thirsty Liquor', 'Bottle-O', 'New World', "PAK'nSAVE"];
   // Case-insensitive match (e.g. "THIRSTY LIQUOR TARADALE" is the one
   // all-caps branch name in the stores table and wouldn't match a plain
   // startsWith) — but return the chain's canonical-case name, since that's
@@ -1092,7 +1092,7 @@ function valueLine(r){
 // block, no Firecrawl credits needed) and runs in scrape-branches.yml on
 // a daily cron ('0 3 * * *'), same as Black Bull/Thirsty Liquor/Bottle-O/
 // Super Liquor — this list just never got updated after that move.
-const MONTHLY_REFRESH_CHAINS = ['Woolworths', 'New World', "PAK'nSAVE"];
+const MONTHLY_REFRESH_CHAINS = ['New World', "PAK'nSAVE"];
 
 function isMonthlyRefreshChain(storeName){
   return !!storeName && MONTHLY_REFRESH_CHAINS.some(c => storeName.startsWith(c));
@@ -1744,7 +1744,7 @@ async function ensureStoresLoaded(){
 
 function iconForStore(name, tierClass){
   const n = name.toLowerCase();
-  const isSupermarket = n.includes('woolworths') || n.includes('new world') || n.includes("pak'nsave") || n.includes('countdown');
+  const isSupermarket = n.includes('new world') || n.includes("pak'nsave") || n.includes('countdown');
   const emoji = isSupermarket ? '🛒' : '🍾';
   const cls = tierClass ? ` ${tierClass}` : '';
   return L.divIcon({
@@ -2743,7 +2743,7 @@ async function showStoreSheet(store){
   // of which real store was selected (checked against several, including
   // a deliberately-niche long-tail SKU page). The generic "not confirmed"
   // wording is actually less accurate for this one chain than saying so
-  // plainly — everyone else here (New World, Woolworths, ...) has no such
+  // plainly — everyone else here (New World, PAK'nSAVE, ...) has no such
   // confirmation, so keeps the honest "can't confirm" version.
   // 2026-08-24 fix: reported directly — a $15.99 Steinlager shown for
   // Bottle-O Mt Eden (no confirmed data of its own) turned out to be

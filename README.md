@@ -17,8 +17,8 @@ python scrape_independent_stores.py
 Output: `independent_store_prices.csv`
 
 ## 2. `scrape_chain_stores_firecrawl.py` — needs your Firecrawl API key
-Scrapes the big chains (Liquorland, and later Woolworths, New World,
-PAK'nSAVE) whose product listings only appear after JavaScript runs.
+Scrapes the big chains (New World, PAK'nSAVE) whose product listings
+only appear after JavaScript runs.
 Needs a free Firecrawl account — see the instructions inside the script
 file itself.
 

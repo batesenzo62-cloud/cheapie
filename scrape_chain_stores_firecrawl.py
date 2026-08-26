@@ -1,7 +1,15 @@
 """
 Cheapie — chain store scraper using Firecrawl
 
-Covers the big JS-rendered chains: Woolworths, New World, PAK'nSAVE.
+Covers the big JS-rendered chains: New World, PAK'nSAVE.
+
+2026-08-26: Woolworths removed entirely, per direct request — it's the
+only one of the three supermarket chains with no real store-location data
+at all (its store-locator is a client-side shell with no server-rendered
+data and blocks headless automation outright, confirmed directly in
+scrape_supermarket_stores.py), so unlike New World/PAK'nSAVE there's no
+way to attribute its prices to real branches even once scraped. Not worth
+carrying the Firecrawl cost for a chain we can't map to real locations.
 
 2026-08-03: Liquorland removed from this scraper — it used to be here too,
 but that approach only ever covered 4 of Liquorland's 9 real categories,
@@ -10,28 +18,21 @@ every time (Firecrawl was calling it correctly; the assumption that this
 site needed JS rendering to page through results was just wrong). Fully
 replaced by scrape_liquorland_full.py, which scrapes every real category
 directly via plain HTTP requests — no Firecrawl credits needed at all.
-Left in TARGETS here, it would have re-introduced that stale, incomplete
-data on this workflow's next scheduled run.
 
 HOW TO RUN:
 1. export FIRECRAWL_API_KEY="fc-your-key-here"
 2. pip install -r requirements.txt
 3. python3 scrape_chain_stores_firecrawl.py
 
-NOTE on URLs: as of 2026-07-23 all URLs below were verified to exist via
-search-engine indexing (title/snippet match for each page), which is a much
-stronger signal than the original pattern-matched guesses. As of the same
-date, beer/RTD targets have also been confirmed live via an actual Firecrawl
-run (166 products found across Liquorland/Woolworths/New World); PAK'nSAVE
-and the new wine/spirits targets below are URL-verified only, not yet
-confirmed by a live scrape.
+NOTE on URLs: as of 2026-07-23 the New World/PAK'nSAVE URLs below were
+verified to exist via search-engine indexing (title/snippet match for
+each page), a much stronger signal than the original pattern-matched
+guesses.
 
 NOTE on spirits: by NZ law (Sale and Supply of Alcohol Act), supermarkets
-can only sell beer, wine and cider — not spirits. That's why none of
-Woolworths, New World or PAK'nSAVE have a "spirits" entry below — this
-isn't a scraping gap, it's real (and it's why Liquorland, the one dedicated
-bottle store that used to be in this list, needed spirits coverage that
-this Firecrawl-based approach could never do properly anyway).
+can only sell beer, wine and cider — not spirits. That's why neither
+New World nor PAK'nSAVE have a "spirits" entry below — this isn't a
+scraping gap, it's real.
 
 NOTE on wine: none of the three supermarket chains has one single "wine"
 category the way they do for beer — it's split into red/white/rosé/etc.
@@ -69,21 +70,11 @@ if not API_KEY:
         "instructions at the top of this file."
     )
 
-# Each target: (store_name, url, category). Not paginated — Woolworths'
-# category URLs show no visible page param at all (possibly infinite
-# scroll under the hood), and guessing one would repeat exactly the
-# mistake this file's docstring already warns about.
-TARGETS = [
-    ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/beer/lager-ale-stout-beer", "beer"),
-    ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/seltzer-alcoholic-kombucha", "rtd"),
-    ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/red-wine", "wine"),
-    ("Woolworths", "https://www.woolworths.co.nz/shop/browse/beer-wine/white-wine", "wine"),
-]
 
 # Each target: (store_name, url_template, category). url_template contains
 # a literal "{page}" placeholder — New World/PAK'nSAVE's own URLs already
-# use a confirmed real "?pg=N" param (unlike Woolworths above), so these
-# go through scrape_paginated_firecrawl() instead of a single fetch.
+# use a confirmed real "?pg=N" param, so these go through
+# scrape_paginated_firecrawl() instead of a single fetch.
 PAGINATED_TARGETS = [
     ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/beer?pg={page}", "beer"),
     ("New World", "https://www.newworld.co.nz/shop/category/beer-wine-and-cider/cider?pg={page}", "beer"),
@@ -181,11 +172,6 @@ def scrape_with_firecrawl(url):
     return {"data": {}}
 
 
-def scrape_target(store_name, url, category):
-    result = scrape_with_firecrawl(url)
-    return result.get("data", {}).get("products", []), result
-
-
 def scrape_paginated_firecrawl(url_template):
     # Verifies the pagination param is real instead of trusting it: stops
     # the moment a page's product names exactly match the previous page's,
@@ -217,22 +203,6 @@ def scrape_paginated_firecrawl(url_template):
 
 def main():
     all_products = []
-    for store_name, url, category in TARGETS:
-        print(f"Scraping {store_name} ({category}) via Firecrawl...")
-        try:
-            products, last_result = scrape_target(store_name, url, category)
-            print(f"  Found {len(products)} products total.")
-            if not products:
-                print(f"  Raw response for debugging: {last_result}")
-            for p in products:
-                p["store"] = store_name
-                p["category"] = category
-                p["fetched_at"] = time.strftime("%Y-%m-%d %H:%M")
-                all_products.append(p)
-        except Exception as exc:
-            print(f"  Could not scrape {store_name} ({category}): {exc}")
-        time.sleep(2)
-
     for store_name, url_template, category in PAGINATED_TARGETS:
         print(f"Scraping {store_name} ({category}) via Firecrawl (paginated)...")
         try:
