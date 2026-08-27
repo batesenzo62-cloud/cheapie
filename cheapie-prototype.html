@@ -1234,6 +1234,23 @@ let currentSearchResults = [];
 let currentPackSize = null; // null = no filter (show every pack size)
 let currentCategoryFilter = null; // null = no filter (show every category)
 let searchToken = 0; // guards against a slower earlier doSearch finishing after a newer one and corrupting the results/chips — same pattern as nearbyMapSearchToken and dealsLoadToken
+// 2026-08-28: doSearch's own category-browse fetch (fetchLiveProducts)
+// only ever pulls the cheapest-per-litre 6000 raw rows across the WHOLE
+// category before any pack-size is considered, then caps again to 1000
+// for the DOM — reported directly ("24-pack still shows nothing"): a
+// less-common pack size can rank outside that price-sorted window and
+// never even reach the browser, so applyPackSizeFilter below was just
+// filtering an array that never had any 24-packs in it to begin with.
+// These two remember enough about how the current view was reached (a
+// plain category browse vs. a free-text search) so a specific pack-size
+// chip can trigger its OWN fresh, size-filtered fetch instead of only
+// ever filtering what's already in memory.
+let lastForcedCategory = null;
+let lastSearchQuery = '';
+// Holds the full (not the 1000-row browse cap) result set for whichever
+// specific pack size is currently selected — null when on "All sizes" or
+// when the fresh fetch above wasn't possible (free-text search).
+let currentPackSizeFullResults = null;
 
 // 2026-08-13: reported directly — searching "Vodka" turned up 503 RTD
 // results and 3 beer alongside the 449 genuine spirits matches, with no
@@ -1277,6 +1294,11 @@ function populateCategoryChips(results){
 
 function applyCategoryFilter(cat, chipEl){
   currentCategoryFilter = cat;
+  // A previously-fetched full pack-size result set (see applyPackSizeFilter)
+  // was only ever fetched for one specific category — switching category
+  // here would otherwise silently filter it down against the wrong
+  // category and could show 0 results even when real matches exist.
+  currentPackSizeFullResults = null;
   document.querySelectorAll('#categoryChips .chip').forEach(c => c.classList.remove('active'));
   chipEl.classList.add('active');
   renderResults(currentlyFilteredResults());
@@ -1317,6 +1339,7 @@ function populatePackSizeChips(results){
   const container = document.getElementById('packSizeChips');
   container.innerHTML = '';
   currentPackSize = null;
+  currentPackSizeFullResults = null;
 
   const numeric = [...new Set(results.map(sizeCategoryOf).filter(s => typeof s === 'number'))].sort((a, b) => a - b);
   const named = ['crate', 'keg'].filter(s => results.some(r => sizeCategoryOf(r) === s));
@@ -1349,16 +1372,83 @@ function populatePackSizeChips(results){
 // inside renderResults itself (it affects the near-you/online split), so
 // this only needs to handle category + pack size before handing off.
 function currentlyFilteredResults(){
-  let rows = currentSearchResults;
+  // Prefer the full size-specific fetch (see applyPackSizeFilter) over the
+  // capped general browse results whenever one's actually loaded for the
+  // currently-selected size — falls back to filtering the in-memory browse
+  // set for "All sizes" and for the free-text-search case that fetch can't
+  // cover.
+  let rows = (currentPackSize !== null && currentPackSizeFullResults) ? currentPackSizeFullResults : currentSearchResults;
   if(currentCategoryFilter !== null) rows = rows.filter(r => r.category === currentCategoryFilter);
   if(currentPackSize !== null) rows = rows.filter(r => sizeCategoryOf(r) === currentPackSize);
   return rows;
 }
 
-function applyPackSizeFilter(size, chipEl){
+// 2026-08-28: fetches every real row for one specific category + pack size
+// combo, same shape as fetchLiveProducts' plain category-browse path but
+// filtered at the DB level BEFORE the 6000-row cap — narrowing first means
+// that cap can actually hold the whole real answer instead of an arbitrary
+// cheapest-overall slice that might not contain this pack size at all.
+// Crate/keg aren't a real column (see sizeCategoryOf) so they filter on
+// product_name instead of unit_count.
+//
+// Deliberately no `order=price_per_litre...` here (unlike the plain
+// category-browse fetch) — confirmed directly this combination of filters
+// hits a real Postgres statement timeout with that ORDER BY attached (a
+// price_per_litre sort forces the planner to work through the whole
+// 60,000+-row Beer category before the highly-selective unit_count=eq.24
+// filter narrows anything down), where the same query with no ORDER BY
+// returns in well under a second. Not a problem here either way — the
+// .sort(byValue) below already re-sorts client-side, same guarantee.
+async function fetchProductsByCategoryAndPackSize(category, size){
+  let url = `${SUPABASE_URL}/rest/v1/products?select=*&category=eq.${category}`;
+  if(size === 'crate') url += `&product_name=ilike.*crate*`;
+  else if(size === 'keg') url += `&product_name=ilike.*keg*`;
+  else url += `&unit_count=eq.${size}`;
+  const rawRows = await fetchAllRows(url, 6000);
+  const rows = capRowsPerProductName(rawRows, 5);
+  return expandGenericChainMatches(rows).sort(byValue);
+}
+
+async function applyPackSizeFilter(size, chipEl){
   currentPackSize = size;
   document.querySelectorAll('#packSizeChips .chip').forEach(c => c.classList.remove('active'));
   chipEl.classList.add('active');
+
+  const effectiveCategory = currentCategoryFilter || lastForcedCategory;
+  // Same "is this actually free text" check fetchLiveProducts itself uses
+  // (see hasFreeTextQuery) — a category-tile click still passes a non-empty
+  // term (quickSearch('Beer','beer')), so "lastSearchQuery is empty" alone
+  // would wrongly treat every category browse as a free-text search here.
+  // Only a plain category browse can be cleanly re-fetched by category+size
+  // alone — a genuine free-text match ("Steinlager") isn't a single
+  // category=eq. filter, so that case keeps the previous in-memory-filter
+  // behaviour rather than guessing at a query to rerun.
+  const isPlainCategoryBrowse = effectiveCategory &&
+    (!lastSearchQuery || lastSearchQuery.toLowerCase() === effectiveCategory);
+  if(size !== null && isPlainCategoryBrowse){
+    const token = ++searchToken;
+    document.getElementById('resultsSubtitle').textContent = `Finding every ${sizeCategoryLabel(size)} option…`;
+    try{
+      const rows = await fetchProductsByCategoryAndPackSize(effectiveCategory, size);
+      if(token !== searchToken) return; // a newer search/filter started while this one was fetching
+      currentPackSizeFullResults = rows;
+      const filtered = currentlyFilteredResults();
+      document.getElementById('resultsSubtitle').textContent = filtered.length
+        ? `${filtered.length} real products found, sorted by best value`
+        : 'No products found';
+      if(filtered.length) renderResults(filtered);
+      else showEmptyResults(`No ${sizeCategoryLabel(size)} products matched. Try a different size.`);
+    } catch(err){
+      console.error(err);
+      if(token !== searchToken) return;
+      // Fall back to what's already loaded rather than leaving the view stuck.
+      currentPackSizeFullResults = null;
+      renderResults(currentlyFilteredResults());
+    }
+    return;
+  }
+
+  currentPackSizeFullResults = null;
   renderResults(currentlyFilteredResults());
 }
 
@@ -1400,8 +1490,21 @@ async function doSearch(term, forcedCategory){
   // and the pack-size chips with stale data — the exact same failure mode
   // already found and fixed for loadDeals(), and already guarded against
   // in runNearbyMapSearch. Token-guarded the same way.
+  //
+  // 2026-08-28 fix: that timing fix was real but turned out not to be the
+  // whole story — reported directly again, still empty after that fix
+  // shipped. The actual remaining cause was fetchLiveProducts' category
+  // browse only ever fetching the cheapest-per-litre 6000 raw rows across
+  // the WHOLE category before any pack size is considered, then capping
+  // again to 1000 — a less-common size like 24-pack can rank outside that
+  // window and never reach the browser at all. lastForcedCategory/
+  // lastSearchQuery below let applyPackSizeFilter run its own fresh,
+  // size-filtered fetch instead (see fetchProductsByCategoryAndPackSize).
   const token = ++searchToken;
   const query = term || document.getElementById('searchInput').value || '';
+  lastForcedCategory = forcedCategory || null;
+  lastSearchQuery = query.trim();
+  currentPackSizeFullResults = null;
 
   document.getElementById('resultsTitle').textContent = query.length ? query : 'Results';
   show('view-results');
