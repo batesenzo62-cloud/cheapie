@@ -51,11 +51,32 @@ Designed to be safe to re-run on a schedule: replaces this run's
 branches' rows in independent_store_prices.csv rather than appending
 duplicates on top of the previous run's.
 
+2026-08-28: a first full run hit GitHub Actions' hard 6h execution
+ceiling and was force-cancelled. Confirmed directly (not a bug) — 70
+categories per branch really does add up; see CHUNK_INDEX/CHUNK_COUNT
+below, same fix already used for Super Liquor's 147 branches.
+
 HOW TO RUN:
     python3 scrape_bigbarrel_branches.py
+    # or, chunked (see scrape-branches.yml's big-barrel matrix job):
+    CHUNK_INDEX=0 CHUNK_COUNT=4 python3 scrape_bigbarrel_branches.py
 """
 import csv, time, os
 import scrape_independent_stores as s
+
+# 2026-08-28 fix: the first full run of this script hit GitHub Actions'
+# hard 6h execution ceiling and was force-cancelled, same failure mode
+# already documented for Super Liquor's 147-branch scrape. Confirmed
+# directly (not a bug/runaway pagination) — a single real category (Beers
+# at Havelock North) genuinely took 45s across 20 real pages, and with 70
+# categories x 47 branches that adds up to something in the same ballpark
+# as the 6h ceiling. Same fix as Super Liquor: CHUNK_INDEX/CHUNK_COUNT env
+# vars split BRANCHES into N parallel jobs via [start::step] slicing (not
+# contiguous blocks), so no single chunk is skewed if catalogue depth
+# varies branch to branch. Defaults to "no chunking" for a plain
+# manual/local run.
+CHUNK_INDEX = int(os.environ.get("CHUNK_INDEX", "0"))
+CHUNK_COUNT = int(os.environ.get("CHUNK_COUNT", "1"))
 
 BRANCHES = {
     "Albert, Palmerston North": ("https://albert.bigbarrel.co.nz", "0c9461d6-1f7d-4a00-b1e4-11b34a86cca1"),
@@ -136,9 +157,10 @@ CATEGORY_PATHS = [
 
 
 def main():
-    print(f"{len(BRANCHES)} Big Barrel branches to scrape, {len(CATEGORY_PATHS)} category pages each")
+    branch_items = list(BRANCHES.items())[CHUNK_INDEX::CHUNK_COUNT]
+    print(f"Chunk {CHUNK_INDEX + 1}/{CHUNK_COUNT}: {len(branch_items)} of {len(BRANCHES)} Big Barrel branches this run, {len(CATEGORY_PATHS)} category pages each")
     new_rows = []
-    for label, (base, store_id) in BRANCHES.items():
+    for label, (base, store_id) in branch_items:
         store_name = f"Big Barrel {label}"
         print(f"Scraping {store_name} ({base})...")
         branch_products = 0
@@ -170,7 +192,7 @@ def main():
     # is gitignored (regenerated data, not source), so a plain open() here
     # would crash every fresh GitHub Actions checkout. This run's own
     # fresh rows still get written either way.
-    scraped_store_names = {f"Big Barrel {label}" for label in BRANCHES}
+    scraped_store_names = {f"Big Barrel {label}" for label, _ in branch_items}
     if os.path.exists("independent_store_prices.csv"):
         with open("independent_store_prices.csv") as f:
             existing = list(csv.DictReader(f))

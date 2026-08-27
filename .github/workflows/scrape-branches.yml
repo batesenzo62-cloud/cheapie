@@ -116,13 +116,25 @@ jobs:
 
   big-barrel:
     runs-on: ubuntu-latest
+    # 2026-08-28 fix: a single job covering all 47 branches (70 category
+    # pages each) hit GitHub Actions' hard 6h job time limit and was
+    # force-cancelled — confirmed directly this is real cumulative time,
+    # not a bug (e.g. a single real category, Beers at Havelock North,
+    # genuinely took 45s across 20 real pages). Same fix as Super Liquor:
+    # split into parallel chunks, each comfortably inside the real limit.
+    strategy:
+      matrix:
+        chunk: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Scrape Big Barrel branches
+      - name: Scrape Big Barrel branches (chunk ${{ matrix.chunk }}/4)
+        env:
+          CHUNK_INDEX: ${{ matrix.chunk }}
+          CHUNK_COUNT: 4
         run: python3 scrape_bigbarrel_branches.py
       - name: Load into Supabase
         env:
