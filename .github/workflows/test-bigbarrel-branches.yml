@@ -1,21 +1,17 @@
-name: TEMP - test Big Barrel branch scraper
+name: TEMP - diagnose Big Barrel branch scrape timing
 
 on:
   workflow_dispatch: {}
 
 jobs:
-  test:
+  diagnose:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Scrape Big Barrel branches
-        run: python3 scrape_bigbarrel_branches.py
-      - name: Load into Supabase
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python3 load_data_to_supabase.py
+      - name: Diagnose timing
+        run: python3 diagnose_bigbarrel_timing.py
