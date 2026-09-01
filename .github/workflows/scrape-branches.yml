@@ -52,6 +52,7 @@ jobs:
     # this and hit GitHub Actions' 6h ceiling unchunked — sizing this one
     # generously up front instead of discovering the timeout the hard way).
     strategy:
+      fail-fast: false
       matrix:
         chunk: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
@@ -98,6 +99,7 @@ jobs:
     # — [start::step] slicing, so no chunk is skewed if catalogue depth
     # varies regionally), each comfortably inside the real limit.
     strategy:
+      fail-fast: false
       matrix:
         chunk: [0, 1, 2, 3, 4, 5]
     steps:
@@ -164,6 +166,7 @@ jobs:
     # run got cancelled right at the 6h mark instead of finishing. Resized
     # to 12 chunks (~4 branches each, ~2h per chunk) for real headroom.
     strategy:
+      fail-fast: false
       matrix:
         chunk: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
@@ -172,10 +175,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Scrape Big Barrel branches (chunk ${{ matrix.chunk }}/4)
+      - name: Scrape Big Barrel branches (chunk ${{ matrix.chunk }}/12)
         env:
           CHUNK_INDEX: ${{ matrix.chunk }}
-          CHUNK_COUNT: 4
+          CHUNK_COUNT: 12
         run: python3 scrape_bigbarrel_branches.py
       - name: Load into Supabase
         env:

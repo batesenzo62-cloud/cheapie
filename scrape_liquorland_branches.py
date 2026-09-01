@@ -97,17 +97,39 @@ def build_branch_list():
     return branches
 
 
+# 2026-09-02 fix: reported directly — a run of 8 chunks produced zero
+# successful branches. Root cause: chunk 5 hit a real but transient error
+# (a DNS resolution failure on GitHub's runner network) inside this
+# function, which had no retry/error handling at all — an uncaught
+# exception here crashed the whole script, losing every remaining branch
+# in that chunk, not just the one bad request. Worse, because none of the
+# three matrix jobs in scrape-branches.yml set fail-fast: false, that one
+# chunk failing cancelled all 7 of its siblings too (GitHub Actions'
+# default matrix behaviour) — so a single transient network blip took out
+# the entire per-branch Liquorland scrape for the day. fail-fast: false is
+# fixed at the workflow level; this retry (matching the same 3-attempt/
+# backoff shape already used in scrape_liquorland_full.py's fetch_page)
+# handles it at the source too, so a future blip only costs a few seconds
+# instead of a whole chunk.
 def set_preferred_store(storeid):
     # Fresh session per branch — matches exactly what was verified live
     # (each store tested with its own clean session), rather than assuming
     # a shared session correctly re-scopes on every preferred-store switch.
-    sl.SESSION = requests.Session()
-    sl.SESSION.headers.update(sl.HEADERS)
-    sl.SESSION.get("https://www.liquorland.co.nz/")
-    sl.SESSION.post(
-        "https://www.liquorland.co.nz/api/stores/preferred",
-        files={"storeid": (None, str(storeid))},
-    )
+    for attempt in (1, 2, 3):
+        try:
+            sl.SESSION = requests.Session()
+            sl.SESSION.headers.update(sl.HEADERS)
+            sl.SESSION.get("https://www.liquorland.co.nz/", timeout=20)
+            sl.SESSION.post(
+                "https://www.liquorland.co.nz/api/stores/preferred",
+                files={"storeid": (None, str(storeid))},
+                timeout=20,
+            )
+            return
+        except Exception as e:
+            print(f"  set_preferred_store attempt {attempt} error: {e}")
+            time.sleep(5)
+    raise RuntimeError(f"Could not set preferred store {storeid} after 3 attempts")
 
 
 def main():
@@ -117,21 +139,29 @@ def main():
     new_rows = []
     for label, ll_storeid, store_id in branches:
         print(f"Scraping {label} (Liquorland store {ll_storeid})...")
-        set_preferred_store(ll_storeid)
-        branch_products = 0
-        for site_slug, url, app_category in sl.CATEGORIES:
-            try:
-                rows = sl.scrape_category(site_slug, url, app_category)
-                for row in rows:
-                    row["store"] = label
-                    row["store_id"] = store_id
-                    del row["_barcode"]
-                    new_rows.append(row)
-                branch_products += len(rows)
-            except Exception as e:
-                print(f"  {site_slug} error: {e}")
-            time.sleep(0.5)
-        print(f"  {branch_products} products")
+        # 2026-09-02 fix: this whole per-branch block used to run outside
+        # any try/except — one branch's total failure (e.g. set_preferred_
+        # store exhausting its retries) crashed the script and lost every
+        # branch still left in this chunk. Isolated per-branch so a single
+        # bad branch is skipped, not fatal to the whole chunk.
+        try:
+            set_preferred_store(ll_storeid)
+            branch_products = 0
+            for site_slug, url, app_category in sl.CATEGORIES:
+                try:
+                    rows = sl.scrape_category(site_slug, url, app_category)
+                    for row in rows:
+                        row["store"] = label
+                        row["store_id"] = store_id
+                        del row["_barcode"]
+                        new_rows.append(row)
+                    branch_products += len(rows)
+                except Exception as e:
+                    print(f"  {site_slug} error: {e}")
+                time.sleep(0.5)
+            print(f"  {branch_products} products")
+        except Exception as e:
+            print(f"  Skipping {label} entirely — {e}")
 
     print(f"\nTotal new branch-specific rows: {len(new_rows)}")
 
