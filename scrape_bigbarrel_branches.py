@@ -56,10 +56,18 @@ ceiling and was force-cancelled. Confirmed directly (not a bug) — 70
 categories per branch really does add up; see CHUNK_INDEX/CHUNK_COUNT
 below, same fix already used for Super Liquor's 147 branches.
 
+2026-09-01: the first chunk count (4) was sized off a single category's
+timing (Beers, 45s) — confirmed directly that badly undersold the real
+cost (Wine and Spirits are each several times bigger). A real full-branch
+timing run (all 70 categories, Havelock North) came to 1777s (~29.6 min)
+— resized to 12 chunks for real headroom (~2h/chunk instead of ~5.9h,
+which is why the 4-chunk run got cancelled right at the 6h mark instead
+of finishing).
+
 HOW TO RUN:
     python3 scrape_bigbarrel_branches.py
     # or, chunked (see scrape-branches.yml's big-barrel matrix job):
-    CHUNK_INDEX=0 CHUNK_COUNT=4 python3 scrape_bigbarrel_branches.py
+    CHUNK_INDEX=0 CHUNK_COUNT=12 python3 scrape_bigbarrel_branches.py
 """
 import csv, time, os
 import scrape_independent_stores as s

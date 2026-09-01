@@ -154,12 +154,18 @@ jobs:
     # 2026-08-28 fix: a single job covering all 47 branches (70 category
     # pages each) hit GitHub Actions' hard 6h job time limit and was
     # force-cancelled — confirmed directly this is real cumulative time,
-    # not a bug (e.g. a single real category, Beers at Havelock North,
-    # genuinely took 45s across 20 real pages). Same fix as Super Liquor:
-    # split into parallel chunks, each comfortably inside the real limit.
+    # not a bug.
+    # 2026-09-01 fix: the first chunk count (4) was sized off a single
+    # category's timing (Beers, 45s) — confirmed directly that badly
+    # undersold the real cost, since Wine (343s) and Spirits (281s) are
+    # each several times bigger. A real full-branch timing run (all 70
+    # categories, Havelock North) came to 1777s (~29.6 min) — at 4 chunks
+    # (12 branches each) that's ~5.9h per chunk, which is exactly why that
+    # run got cancelled right at the 6h mark instead of finishing. Resized
+    # to 12 chunks (~4 branches each, ~2h per chunk) for real headroom.
     strategy:
       matrix:
-        chunk: [0, 1, 2, 3]
+        chunk: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

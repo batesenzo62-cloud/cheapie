@@ -89,8 +89,21 @@ def extract_category_json(html):
     return None
 
 
+# 2026-09-01 fix: reported directly, then confirmed live — "unitprice" is
+# the field that actually responds to the site's own per-store preferred-
+# store selection (e.g. real $31.99 vs $33.99 for the same barcode at two
+# different branches, confirmed via /api/stores/preferred). "originalretail"
+# does not: it's empty ("0.00") for the large majority of real, in-stock,
+# correctly-priced items (confirmed directly: 539 of 696 real wine variants
+# sampled), and for the minority where it IS populated it stayed identical
+# across two different branches for 1065 of 1071 real matched products in a
+# direct side-by-side test — i.e. it isn't personalized by store at all, it
+# just happens to mirror unitprice for some products. Using it meant this
+# scraper was both silently dropping most of the real catalogue as "no
+# price available" AND, for whatever it kept, often not even reflecting the
+# selected store's actual price.
 def real_price(variant):
-    p = variant.get("originalretail")
+    p = variant.get("unitprice")
     if p in (None, "", 0, "0.00", 0.0):
         return None
     return p
