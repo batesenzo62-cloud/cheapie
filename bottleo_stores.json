@@ -23,7 +23,7 @@
     "name": "Ashhurst",
     "store_id_ext": "650a854e607c46710d01be60",
     "address": "62 Cambridge Avenue, Ashhurst Manawatu 4810",
-    "online": true,
+    "online": false,
     "subdomain": "ashhurst",
     "lat": -40.2926063,
     "lng": 175.7544265,
@@ -98,16 +98,6 @@
     "lat": -36.9254557,
     "lng": 174.913118,
     "store_id": "950d25ab-251d-402f-9f78-142f9129965a"
-  },
-  {
-    "name": "Bottle-O Ti Rakau",
-    "store_id_ext": "6a388b533181762cc04f922f",
-    "address": "60 D Ti Rakau Drive, Pakuranga 2010",
-    "online": true,
-    "subdomain": "bottleo-tirakau.myfoodlink.com/",
-    "lat": -36.9208977,
-    "lng": 174.8780308,
-    "store_id": "8cef20f4-f253-42dc-8d90-761743fd84bc"
   },
   {
     "name": "Brookfield",
@@ -263,7 +253,7 @@
     "name": "Dominion Road",
     "store_id_ext": "674d3f22da38d39d277205f9",
     "address": "360d Dominion Road, Mt Eden, Auckland AKL 2110",
-    "online": true,
+    "online": false,
     "subdomain": "dominionroad",
     "lat": -36.8795861,
     "lng": 174.7499916,
@@ -323,8 +313,8 @@
     "name": "Fenton Street",
     "store_id_ext": "5ea2514cf605cc1483000f7d",
     "address": "4/223 Fenton Street, Rotorua 3010",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "rotorua-fenton-street",
     "lat": -38.140968,
     "lng": 176.2533109,
     "store_id": "e9fc6091-5203-41dd-aa19-27745d17cbf2"
@@ -343,7 +333,7 @@
     "name": "Fraser Cove",
     "store_id_ext": "5ea25137f605cc1483000497",
     "address": "229 Fraser Street, Tauranga 3112",
-    "online": true,
+    "online": false,
     "subdomain": "fraser-cove",
     "lat": -37.711083,
     "lng": 176.1512547,
@@ -370,6 +360,16 @@
     "store_id": "c6d4c169-879f-4bdc-9e15-d8ba0e113bf4"
   },
   {
+    "name": "Grand Drive",
+    "store_id_ext": "6a75418d4af267c26c1e1074",
+    "address": "70 Grand Drive, Orewa Auckland 0931",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.5888667,
+    "lng": 174.6787653,
+    "store_id": "cb2f9d78-444f-40d0-95b4-09bf3fc6d436"
+  },
+  {
     "name": "Greenwood",
     "store_id_ext": "60b5b6fe60b75a45d803c922",
     "address": "91a Greenwood Street, Frankton, Hamilton 3204",
@@ -393,8 +393,8 @@
     "name": "Hamilton Central",
     "store_id_ext": "64c207970268572ab8ccf4bc",
     "address": "9 Willoughby Street, Whitiora, Hamilton 3200",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "hamiltoncentral.shop.liquor-centre.co.nz/",
     "lat": -37.7808435,
     "lng": 175.2723987,
     "store_id": "2628bfaf-a1a3-40ec-bb3a-827f5b738f75"
@@ -520,10 +520,20 @@
     "store_id": "3dc0714c-850f-4a0b-992e-a26de1739b57"
   },
   {
+    "name": "Kaiwaka",
+    "store_id_ext": "6a67f34fa7c052e9d8b74979",
+    "address": "1921 State Highway 1, Kaiwaka Northland 0542",
+    "online": false,
+    "subdomain": null,
+    "lat": -36.1651004,
+    "lng": 174.4429687,
+    "store_id": "30c0a944-0d20-4bbf-8155-5d935cd49b31"
+  },
+  {
     "name": "Karaka",
     "store_id_ext": "674d3fdecef16ebb332bfb2b",
     "address": "Unit B10/75, Hingaia Road, Karaka AKL 2113",
-    "online": true,
+    "online": false,
     "subdomain": "karaka",
     "lat": -37.0736978,
     "lng": 174.9284273,
@@ -603,7 +613,7 @@
     "name": "Mana",
     "store_id_ext": "5ea25140f605cc1483000929",
     "address": "Unit 2 107A Mana Esplanade, Paremata, Wellington 5026",
-    "online": true,
+    "online": false,
     "subdomain": "mana",
     "lat": -41.0976075,
     "lng": 174.869541,
@@ -623,7 +633,7 @@
     "name": "Mangatera",
     "store_id_ext": "5e907defec286657ab0451f9",
     "address": "391 High Street, Dannevirke, Dannevirke 4930",
-    "online": true,
+    "online": false,
     "subdomain": "mangatera",
     "lat": -40.1909861,
     "lng": 176.1126395,
@@ -673,7 +683,7 @@
     "name": "May Road",
     "store_id_ext": "671059d602d7cfe8bc570cae",
     "address": "49 May Road, Mt. Roskill, Auckland AKL 1041",
-    "online": true,
+    "online": false,
     "subdomain": "mayroad",
     "lat": -36.9080339,
     "lng": 174.7357143,
@@ -833,7 +843,7 @@
     "name": "Orakei",
     "store_id_ext": "674d4097ec1bddc7d13961fc",
     "address": "76 Coates Avenue, Orakei, Auckland AKL 1071",
-    "online": true,
+    "online": false,
     "subdomain": "orakei",
     "lat": -36.8560582,
     "lng": 174.8147599,
@@ -1000,7 +1010,7 @@
     "store_id": "862b6875-0152-4720-98c1-c1fae3b78fca"
   },
   {
-    "name": "Redwood",
+    "name": "Redwood Blenheim",
     "store_id_ext": "5e848b971db5f51f2f009bd7",
     "address": "66 Cleghorn Street, Redwood Town, Blenheim Marlborough 7201",
     "online": true,
@@ -1053,7 +1063,7 @@
     "name": "Richmond Road",
     "store_id_ext": "674d3e28cd4512b3716544f1",
     "address": "165 Richmond Road, Grey Lynn, Auckland AKL 1021",
-    "online": true,
+    "online": false,
     "subdomain": "richmondroad",
     "lat": -36.8549763,
     "lng": 174.7391413,
@@ -1073,7 +1083,7 @@
     "name": "Rosedale",
     "store_id_ext": "67105fbb96dfb2cdf6e5a338",
     "address": "4/83 Apollo Drive, Rosedale, Auckland AKL 0632",
-    "online": true,
+    "online": false,
     "subdomain": "rosedale",
     "lat": -36.7353068,
     "lng": 174.7271868,
@@ -1133,8 +1143,8 @@
     "name": "Silverdale",
     "store_id_ext": "6a587d9b0033036d026bb923",
     "address": "1F Polarity Rise, Stanmore Bay, Silverdale, Auckland 0932, New Zealand",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "bottleo-silverdale.myfoodlink.com/",
     "lat": null,
     "lng": null,
     "store_id": "4cc027c0-8a7d-4f04-8a43-20780f4f696e"
@@ -1248,6 +1258,16 @@
     "lat": -38.1455591,
     "lng": 176.2096136,
     "store_id": "dea999ed-c7dc-41ae-ac48-9626c51f6893"
+  },
+  {
+    "name": "TBO Ocean Lodge",
+    "store_id_ext": "6a8500b4da161eca98b2a94f",
+    "address": "29 Muritai Street, Tahunanui Nelson 7011",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2908268,
+    "lng": 173.2434411,
+    "store_id": "f7deb992-a66e-44c3-a2af-3224c6103a6f"
   },
   {
     "name": "Taihape",
@@ -1373,8 +1393,8 @@
     "name": "Thames",
     "store_id_ext": "68807005e7057fb501edf7b5",
     "address": "202 Sealey Street, Thames, Thames Thames 3500",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "thames",
     "lat": -37.1398865,
     "lng": 175.5432613,
     "store_id": "8710bc70-71c3-4152-b9e7-32e9d107d7bb"
@@ -1388,6 +1408,16 @@
     "lat": -36.9693169,
     "lng": 174.8615002,
     "store_id": "ed8d7b30-79ae-4fa2-8cf2-e1acff78f584"
+  },
+  {
+    "name": "Ti Rakau",
+    "store_id_ext": "6a388b533181762cc04f922f",
+    "address": "60 D Ti Rakau Drive, Pakuranga 2010",
+    "online": true,
+    "subdomain": "bottleo-tirakau.myfoodlink.com/",
+    "lat": -36.9208977,
+    "lng": 174.8780308,
+    "store_id": "8cef20f4-f253-42dc-8d90-761743fd84bc"
   },
   {
     "name": "Tikipunga",
