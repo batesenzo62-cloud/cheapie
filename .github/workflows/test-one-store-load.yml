@@ -1,0 +1,75 @@
+name: TEMP - test one-store load + upsert idempotency
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test-load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+
+      - name: Report row count BEFORE any load
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python3 -c "
+          import requests, os
+          url = os.environ['SUPABASE_URL'] + '/rest/v1/products'
+          key = os.environ['SUPABASE_KEY']
+          r = requests.get(url, headers={'apikey': key, 'Prefer': 'count=exact'},
+              params={'select': 'id', 'store_name': 'eq.Big Barrel Albert, Palmerston North'})
+          print('BEFORE any load - row count:', r.headers.get('content-range'))
+          "
+
+      - name: Write test CSV (15 real rows, one store)
+        run: python3 write_test_csv_one_store.py
+
+      - name: Load into Supabase (1st run)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
+
+      - name: Report row count AFTER 1st load
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python3 -c "
+          import requests, os
+          url = os.environ['SUPABASE_URL'] + '/rest/v1/products'
+          key = os.environ['SUPABASE_KEY']
+          r = requests.get(url, headers={'apikey': key, 'Prefer': 'count=exact'},
+              params={'select': 'id', 'store_name': 'eq.Big Barrel Albert, Palmerston North'})
+          print('AFTER 1st load - row count:', r.headers.get('content-range'))
+          "
+
+      - name: Load into Supabase AGAIN (2nd run, same data — idempotency check)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
+
+      - name: Report row count AFTER 2nd load (should match AFTER 1st load exactly)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python3 -c "
+          import requests, os
+          url = os.environ['SUPABASE_URL'] + '/rest/v1/products'
+          key = os.environ['SUPABASE_KEY']
+          r = requests.get(url, headers={'apikey': key, 'Prefer': 'count=exact'},
+              params={'select': 'id', 'store_name': 'eq.Big Barrel Albert, Palmerston North'})
+          print('AFTER 2nd load - row count:', r.headers.get('content-range'))
+          r2 = requests.get(url, headers={'apikey': key},
+              params={'select': '*', 'store_name': 'eq.Big Barrel Albert, Palmerston North', 'limit': '5'})
+          for row in r2.json():
+              print(row)
+          "
