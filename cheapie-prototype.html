@@ -1079,12 +1079,6 @@ function valueLine(r){
   return `$${r.pricePerLitre.toFixed(2)}/L` + caveat;
 }
 
-// These four chains are actually only scraped monthly per
-// scrape-chain-stores.yml (Firecrawl credits are the limiting factor) —
-// the card label below says "fortnightly" by explicit choice, not because
-// the schedule changed. Unlike everything else in the app (refreshes every
-// 4 hours), it's worth a quiet heads-up rather than labelling old data
-// "Live" the same as everything else.
 // 2026-08-26 fix: reported directly — Liquorland deals showed "updated
 // fortnightly, not live" even though it hasn't been on the monthly
 // Firecrawl schedule for a while. Confirmed directly: scrape_liquorland_
@@ -1092,7 +1086,14 @@ function valueLine(r){
 // block, no Firecrawl credits needed) and runs in scrape-branches.yml on
 // a daily cron ('0 3 * * *'), same as Black Bull/Thirsty Liquor/Bottle-O/
 // Super Liquor — this list just never got updated after that move.
-const MONTHLY_REFRESH_CHAINS = ['New World', "PAK'nSAVE"];
+// 2026-09-02: New World/PAK'nSAVE removed too — scrape_chain_stores_
+// firecrawl.py (the monthly-Firecrawl scraper this list existed for) is
+// gone, replaced by scrape_foodstuffs_products.py (api-prod.{brand}.co.nz,
+// no Cloudflare block, no Firecrawl credits, real per-branch pricing),
+// running on the same daily cron as everything else. Left empty rather
+// than deleted — isMonthlyRefreshChain() stays a one-line revert if a
+// chain ever genuinely needs this treatment again.
+const MONTHLY_REFRESH_CHAINS = [];
 
 function isMonthlyRefreshChain(storeName){
   return !!storeName && MONTHLY_REFRESH_CHAINS.some(c => storeName.startsWith(c));
@@ -1836,15 +1837,6 @@ async function ensureStoresLoaded(){
       console.error(err);
       storesCache = [];
     }
-    // 2026-08-12: PAK'nSAVE locations are real (scraped from their own
-    // store-finder), but there's genuinely zero PAK'nSAVE product/pricing
-    // data anywhere in the database — their shop pages are Cloudflare-
-    // blocked the same as New World's, and unlike New World there's no
-    // generic fallback catalogue for PAK'nSAVE either. Showing the pins
-    // anyway just leads to tapping one and finding nothing. Filtered out
-    // here (not deleted from the stores table) so it's a one-line revert
-    // once real PAK'nSAVE pricing data exists.
-    storesCache = storesCache.filter(store => !store.name.toLowerCase().includes("pak'nsave"));
     storesCache.forEach(store => {
       // Overwrites whatever (often missing or inconsistently-spelled — see
       // the note by REGION_CENTERS) region string came from the database,

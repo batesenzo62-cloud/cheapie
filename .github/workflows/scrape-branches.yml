@@ -20,6 +20,51 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  paknsave:
+    runs-on: ubuntu-latest
+    # 2026-09-02: replaces the old monthly Firecrawl scrape entirely (see
+    # scrape-chain-stores.yml, deleted) — confirmed directly that
+    # api-prod.paknsave.co.nz (the real API the site's own frontend calls)
+    # has no Cloudflare protection at all, unlike www.paknsave.co.nz's
+    # page routes, so this needs no paid service and no browser. A full
+    # branch (11 categories) took 11.3s measured directly; all 57 real
+    # branches together ran in ~11 minutes — no chunking needed.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape PAK'nSAVE branches
+        env:
+          BRAND: paknsave
+        run: python3 scrape_foodstuffs_products.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
+
+  newworld:
+    runs-on: ubuntu-latest
+    # 2026-09-02: see paknsave job above — same platform, same API shape,
+    # same result (no Cloudflare protection on api-prod.newworld.co.nz).
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape New World branches
+        env:
+          BRAND: newworld
+        run: python3 scrape_foodstuffs_products.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
+
   liquorland:
     runs-on: ubuntu-latest
     steps:
