@@ -28,8 +28,43 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Scrape Liquorland (full catalogue, no per-branch pricing — see scrape_liquorland_full.py)
+      # 2026-08-31: kept running as a fallback national catalogue for any
+      # branch scrape_liquorland_branches.py fails to reach on a given day
+      # — see that script's docstring for why per-branch pricing turned
+      # out to be necessary (Liquorland prices are NOT uniform, confirmed
+      # directly; this job's single-store scrape is no longer accurate for
+      # most of the 167 real branches on its own).
+      - name: Scrape Liquorland (national fallback catalogue — see scrape_liquorland_full.py)
         run: python3 scrape_liquorland_full.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
+
+  liquorland-branches:
+    runs-on: ubuntu-latest
+    # 2026-08-31: real per-branch pricing was confirmed necessary (see
+    # scrape_liquorland_branches.py's docstring) — one branch's full 7
+    # categories took ~6.8 minutes directly measured (672 real pages), so
+    # all 167 branches sequentially would be ~19 hours. Chunked into 8
+    # parallel jobs from the start (Big Barrel's first attempt skipped
+    # this and hit GitHub Actions' 6h ceiling unchunked — sizing this one
+    # generously up front instead of discovering the timeout the hard way).
+    strategy:
+      matrix:
+        chunk: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape Liquorland branches (chunk ${{ matrix.chunk }}/8)
+        env:
+          CHUNK_INDEX: ${{ matrix.chunk }}
+          CHUNK_COUNT: 8
+        run: python3 scrape_liquorland_branches.py
       - name: Load into Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
