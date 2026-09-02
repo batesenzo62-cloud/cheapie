@@ -13,3 +13,4 @@ jobs:
           python-version: "3.11"
       - run: pip install requests
       - run: python check_multibuy_coverage.py
+      - run: python check_multibuy_coverage2.py
