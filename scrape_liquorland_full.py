@@ -30,6 +30,7 @@ at once), not a scraping gap, so it's honest to report a real "no price
 currently available" rather than manufacture one by exhausting stores.
 """
 import requests, re, json, time, csv, os
+from load_data_to_supabase import detect_multibuy as sl_detect_multibuy
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 STORE_ID = 4  # Liquorland Parnell — arbitrary, price confirmed identical across stores when available
@@ -165,6 +166,18 @@ def scrape_category(site_slug, url, app_category):
             # missing it.
             product_url = sc.get("url")
             product_url = f"https://www.liquorland.co.nz{product_url}" if product_url else url
+            # 2026-09-02: reported directly — multi-buy detection was only
+            # ever finding Thirsty Liquor deals. Confirmed live that
+            # Liquorland genuinely runs real multi-buy promotions (e.g.
+            # wine category alone had 9 active "2 for $X" deals at check
+            # time) — they just aren't worded into the product name/description
+            # at all, so the existing name-based regex could never see them.
+            # They live in a separate structured field instead:
+            # attributes.multibuy.text (e.g. "2 for $110"), same wording
+            # shape as Thirsty Liquor's bundles, so the same regex works —
+            # just needs to be pointed at this field instead of the name.
+            multibuy_text = (item.get("attributes") or {}).get("multibuy", {}).get("text")
+            multibuy_quantity, multibuy_total_price = sl_detect_multibuy(multibuy_text) if multibuy_text else (None, None)
             rows.append({
                 "product_name": item.get("description"),
                 "price": price,
@@ -174,6 +187,8 @@ def scrape_category(site_slug, url, app_category):
                 "category": app_category,
                 "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
                 "url": product_url,
+                "multibuy_quantity": multibuy_quantity,
+                "multibuy_total_price": multibuy_total_price,
                 "_barcode": variant.get("barcode"),
             })
         fetched_so_far = page * 24
@@ -223,7 +238,7 @@ def main():
     # "file doesn't exist yet" the same as "file exists but is empty" —
     # this run's own fresh rows become the whole result either way.
     chain_path = "chain_store_prices.csv"
-    default_fieldnames = ["product_name", "price", "was_price", "in_stock", "store", "category", "fetched_at", "url"]
+    default_fieldnames = ["product_name", "price", "was_price", "in_stock", "store", "category", "fetched_at", "url", "multibuy_quantity", "multibuy_total_price"]
     if os.path.exists(chain_path):
         with open(chain_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -232,6 +247,15 @@ def main():
     else:
         chain_fieldnames = default_fieldnames
         kept = []
+
+    # 2026-09-02: the CSV's header is inherited from whatever's already on
+    # disk (shared across every scraper that writes into chain_store_prices.csv),
+    # so an older file written before multi-buy support existed would silently
+    # drop these two columns for every row — not just Liquorland's — since
+    # row_out below only keeps keys present in chain_fieldnames.
+    for col in ("multibuy_quantity", "multibuy_total_price"):
+        if col not in chain_fieldnames:
+            chain_fieldnames.append(col)
 
     for row in all_rows:
         row_out = {k: row.get(k, "") for k in chain_fieldnames}

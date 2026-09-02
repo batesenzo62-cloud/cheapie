@@ -174,9 +174,11 @@ def main():
     else:
         existing = []
 
-    fieldnames = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at", "store_id"]
+    fieldnames = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at", "store_id", "multibuy_quantity", "multibuy_total_price"]
     for row in existing:
         row.setdefault("store_id", "")
+        row.setdefault("multibuy_quantity", "")
+        row.setdefault("multibuy_total_price", "")
 
     # Drop this run's branches' old rows before appending fresh ones. The
     # generic "Liquorland" national-catalogue rows (scrape_liquorland_full.py,

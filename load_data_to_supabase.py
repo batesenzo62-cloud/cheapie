@@ -311,7 +311,13 @@ def load_chain_stores(filename):
                 "source_url": row.get("url") or None,
                 "fetched_at": row.get("fetched_at") or None,
                 "store_id": None,
-                **pack_size_fields(name, price, category),
+                **pack_size_fields(
+                    name,
+                    price,
+                    category,
+                    multibuy_quantity=parse_int(row.get("multibuy_quantity")),
+                    multibuy_total_price=parse_price(row.get("multibuy_total_price")),
+                ),
             })
     return rows
 

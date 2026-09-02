@@ -14,3 +14,8 @@ jobs:
       - run: pip install requests
       - run: python check_multibuy_coverage.py
       - run: python check_multibuy_coverage2.py
+      - run: mkdir -p banner_images && python dl_banner_images.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: banner-images
+          path: banner_images/
