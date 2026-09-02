@@ -535,6 +535,10 @@
       <div style="padding:0 20px 6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--muted); font-weight:500;">
         Real active specials across every store — not which store has the lowest everyday price, but which deal is actually the best right now.
       </div>
+      <div class="search-row" style="margin:2px 20px 10px;">
+        <span style="opacity:0.5;">⌕</span>
+        <input id="dealsSearchInput" placeholder="Search deals by product or brand" oninput="filterDealsBySearch()">
+      </div>
       <div id="dealsChips" style="display:flex; flex-wrap:wrap; gap:6px; padding:6px 20px 10px;">
         <div class="chip active" style="padding:6px 12px; font-size:11px;" onclick="loadDeals(null, this)">All</div>
         <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('beer', this)">🍺 Beer</div>
@@ -623,6 +627,12 @@ let dealsLoadToken = 0; // guards against a slower earlier load finishing after 
 // existing Deals tab already does (distance sort, store filter, chain
 // fairness cap) instead of duplicating it.
 let dealsMultibuyOnly = false;
+// 2026-09-03: the full, already-fetched, distance-sorted deals list —
+// lets the new search-within-deals box (filterDealsBySearch()) re-filter
+// instantly from what's already on screen instead of re-querying
+// Supabase on every keystroke. null until the first successful loadDeals().
+let dealsFullList = null;
+let currentDealsCategoryForEmptyState = null;
 function show(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1657,6 +1667,11 @@ async function loadDeals(category, chipEl){
     if(token === dealsLoadToken){
       document.getElementById('dealsSubtitle').textContent = 'Couldn’t reach the database';
       document.getElementById('dealsList').innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">Something went wrong loading deals. Try again in a moment.</div>`;
+      // Cleared rather than left stale — otherwise typing in the deals
+      // search box right after a failed load would silently re-render
+      // the PREVIOUS successful load's cards under a visible "couldn't
+      // reach the database" message.
+      dealsFullList = null;
     }
     return;
   }
@@ -1742,22 +1757,46 @@ async function loadDeals(category, chipEl){
     return b.discountPct - a.discountPct;
   });
 
+  // 2026-09-03: cached so a text search over the deals list (see
+  // filterDealsBySearch()) can re-filter/re-render instantly from what's
+  // already been fetched, instead of re-querying Supabase on every
+  // keystroke — this is the full, distance-sorted, pre-cap set, same as
+  // what category/store/multi-buy filtering already had to fetch anyway.
+  dealsFullList = mapped;
+  currentDealsCategoryForEmptyState = category;
+  renderDealsList();
+}
+
+// 2026-09-03: split out of loadDeals() so a text search (see
+// filterDealsBySearch()) can re-render from the already-fetched
+// dealsFullList without a network round-trip — searching "Corona" no
+// longer means re-fetching all deals, just re-filtering what's already
+// on screen.
+function renderDealsList(){
+  const category = currentDealsCategoryForEmptyState;
+  const query = (document.getElementById('dealsSearchInput').value || '').trim().toLowerCase();
+  const matched = query
+    ? dealsFullList.filter(r => (r.productName || '').toLowerCase().includes(query) || (r.store || '').toLowerCase().includes(query))
+    : dealsFullList;
+
   // Sorted by distance first, so this can only ever drop the furthest
   // deals, never hide a closer one.
   const DEALS_CAP = 500;
-  const shown = mapped.slice(0, DEALS_CAP);
+  const shown = matched.slice(0, DEALS_CAP);
 
   const storeSuffix = currentDealsStoreFilter ? ` at ${currentDealsStoreFilter}` : '';
+  const querySuffix = query ? ` matching "${query}"` : '';
   const dealsNoun = dealsMultibuyOnly ? 'multi-buy deal' : 'active special';
-  document.getElementById('dealsSubtitle').textContent = mapped.length
-    ? `${mapped.length} ${dealsNoun}${mapped.length === 1 ? '' : 's'}${storeSuffix} — closest to you first`
-    : `No ${dealsNoun}s found${category ? ' in this category' : ''}${storeSuffix} right now.`;
+  document.getElementById('dealsSubtitle').textContent = matched.length
+    ? `${matched.length} ${dealsNoun}${matched.length === 1 ? '' : 's'}${querySuffix}${storeSuffix} — closest to you first`
+    : `No ${dealsNoun}s found${querySuffix}${category ? ' in this category' : ''}${storeSuffix} right now.`;
 
   const list = document.getElementById('dealsList');
   if(!shown.length){
-    list.innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">No ${dealsNoun}s found${category ? ' in this category' : ''}${storeSuffix} right now.</div>`;
+    list.innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">No ${dealsNoun}s found${querySuffix}${category ? ' in this category' : ''}${storeSuffix} right now.</div>`;
     return;
   }
+  list.innerHTML = '';
   shown.forEach(r => {
     const freshnessTag = isMonthlyRefreshChain(r.store)
       ? '<span class="stale-tag" title="Updated fortnightly, not live — may not reflect current specials">updated fortnightly</span>'
@@ -1773,6 +1812,11 @@ async function loadDeals(category, chipEl){
     const subline = `${dealLabel} · ${r.km !== null ? r.km.toFixed(1) + ' km away · ' : 'Ships NZ-wide · '}${r.store} ${freshnessTag}`;
     list.appendChild(makeCard(r, false, subline));
   });
+}
+
+function filterDealsBySearch(){
+  if(!dealsFullList) return; // nothing fetched yet (e.g. still on first load)
+  renderDealsList();
 }
 
 function openDetail(r){
