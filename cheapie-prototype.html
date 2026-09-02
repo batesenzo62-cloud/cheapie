@@ -542,6 +542,9 @@
         <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('spirits', this)">🥃 Spirits</div>
         <div class="chip" style="padding:6px 12px; font-size:11px;" onclick="loadDeals('rtd', this)">🍹 RTD</div>
       </div>
+      <div style="padding:0 20px 6px;">
+        <div id="multibuyOnlyChip" class="chip" style="padding:6px 12px; font-size:11px; display:inline-block;" onclick="toggleDealsMultibuyOnly(this)">🎁 Multi-buy deals only</div>
+      </div>
       <select id="dealsStoreSelect" onchange="onDealsStoreChange()" style="margin:0 20px 8px; width:calc(100% - 40px); background:var(--white); border:2px solid var(--ink); border-radius:4px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:var(--ink);">
         <option value="">All stores</option>
       </select>
@@ -611,6 +614,15 @@ let dealsLoadedOnce = false;
 let currentDealsCategory = null;
 let currentDealsStoreFilter = ''; // '' = all stores, else a chain name from chainNameFor()
 let dealsLoadToken = 0; // guards against a slower earlier load finishing after a newer one and corrupting the list — same pattern as nearbyMapSearchToken
+// 2026-09-03: reported directly — multi-buy deals were only ever mixed
+// into the general Deals list with no dedicated way to see just those,
+// which isn't what "a dedicated Deals section... showing all current
+// multi-buy deals" actually asked for. A separate toggle (not one of the
+// category chips — it's a different kind of filter, independent of
+// category) rather than a whole extra tab, reusing everything the
+// existing Deals tab already does (distance sort, store filter, chain
+// fairness cap) instead of duplicating it.
+let dealsMultibuyOnly = false;
 function show(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1579,6 +1591,15 @@ function onDealsStoreChange(){
   loadDeals(currentDealsCategory);
 }
 
+// 2026-09-03: independent of the category chips above (a "show only
+// multi-buy deals" filter, not another category) — doesn't clear or get
+// cleared by them, so "Beer" + "Multi-buy only" can be active together.
+function toggleDealsMultibuyOnly(chipEl){
+  dealsMultibuyOnly = !dealsMultibuyOnly;
+  chipEl.classList.toggle('active', dealsMultibuyOnly);
+  loadDeals(currentDealsCategory);
+}
+
 async function loadDeals(category, chipEl){
   // 2026-08-26: reported indirectly while testing the new store filter —
   // show('view-deals') fires its own un-awaited loadDeals(null) on first
@@ -1618,7 +1639,14 @@ async function loadDeals(category, chipEl){
   // (one listing, one price, deal only applies at a minimum quantity),
   // but still "a real special right now" as far as this tab's whole
   // purpose is concerned.
-  let url = `${SUPABASE_URL}/rest/v1/products?select=*&or=(was_price.not.is.null,multibuy_quantity.not.is.null)`;
+  // 2026-09-03: when the multi-buy-only toggle is active, filter for
+  // that specifically at the DB level (a plain, single-column filter)
+  // rather than fetching everything and throwing most of it away client-
+  // side — smaller response, and a real query the existing multibuy_
+  // quantity/price index (once added) can actually use.
+  let url = dealsMultibuyOnly
+    ? `${SUPABASE_URL}/rest/v1/products?select=*&multibuy_quantity=not.is.null`
+    : `${SUPABASE_URL}/rest/v1/products?select=*&or=(was_price.not.is.null,multibuy_quantity.not.is.null)`;
   if(category) url += `&category=eq.${category}`;
 
   let rows;
@@ -1720,13 +1748,14 @@ async function loadDeals(category, chipEl){
   const shown = mapped.slice(0, DEALS_CAP);
 
   const storeSuffix = currentDealsStoreFilter ? ` at ${currentDealsStoreFilter}` : '';
+  const dealsNoun = dealsMultibuyOnly ? 'multi-buy deal' : 'active special';
   document.getElementById('dealsSubtitle').textContent = mapped.length
-    ? `${mapped.length} active special${mapped.length === 1 ? '' : 's'}${storeSuffix} — closest to you first`
-    : `No active specials found${category ? ' in this category' : ''}${storeSuffix} right now.`;
+    ? `${mapped.length} ${dealsNoun}${mapped.length === 1 ? '' : 's'}${storeSuffix} — closest to you first`
+    : `No ${dealsNoun}s found${category ? ' in this category' : ''}${storeSuffix} right now.`;
 
   const list = document.getElementById('dealsList');
   if(!shown.length){
-    list.innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">No active specials found${category ? ' in this category' : ''}${storeSuffix} right now.</div>`;
+    list.innerHTML = `<div style="text-align:center; padding:48px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;">No ${dealsNoun}s found${category ? ' in this category' : ''}${storeSuffix} right now.</div>`;
     return;
   }
   shown.forEach(r => {
