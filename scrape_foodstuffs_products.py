@@ -229,6 +229,25 @@ def scrape_category(token, real_store_id, category_name):
     return all_products
 
 
+# 2026-09-02: confirmed directly — each product card on the site's own
+# rendered category page links to a real product page at this exact
+# shape (e.g. /shop/product/5237762_ea_000pns), just the API's own
+# productId ("5237762-EA-000") lowercased with underscores instead of
+# hyphens, plus a brand suffix. Fetching this URL directly still hits the
+# same Cloudflare check as any other page route (confirmed: 403) — same
+# as every other page on either site — but that's fine, this is for a
+# real person clicking "View product page" in their own browser, not for
+# scraping, and a real browser passes that check without issue.
+URL_SUFFIX = {"paknsave": "pns", "newworld": "nw"}
+
+
+def build_product_url(product_id):
+    if not product_id:
+        return ""
+    slug_id = product_id.lower().replace("-", "_")
+    return f"https://www.{DOMAIN}/shop/product/{slug_id}{URL_SUFFIX[BRAND]}"
+
+
 def extract_rows(store_label, store_id, app_category, products):
     rows = []
     for p in products:
@@ -260,7 +279,7 @@ def extract_rows(store_label, store_id, app_category, products):
             "price": price_cents / 100,
             "was_price": "",
             "in_stock": bool(p.get("availability")),
-            "url": "",
+            "url": build_product_url(p.get("productId")),
             "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
             "_multibuy_quantity": multibuy_quantity,
             "_multibuy_total_price": multibuy_total_price,
