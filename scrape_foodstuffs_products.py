@@ -255,9 +255,19 @@ def extract_rows(store_label, store_id, app_category, products):
         price_cents = price_info.get("price")
         if price_cents is None:
             continue
+        # 2026-09-03 fix: reported directly — searching "Steinlager" for a
+        # real New World store found nothing, even though it's genuinely
+        # in stock there (confirmed live against the API directly). Root
+        # cause: the brand ("Steinlager", "Speight's", ...) is its own
+        # field, separate from "name" ("Classic Lager Beer Bottles") —
+        # confirmed directly across a real sample that name never already
+        # includes it. Every branded product's own brand name was missing
+        # from product_name entirely, breaking search for virtually every
+        # product across both chains, not just this one store.
+        brand = (p.get("brand") or "").strip()
         name = (p.get("name") or "").strip()
         display = (p.get("displayName") or "").strip()
-        full_name = f"{name} {display}".strip()
+        full_name = " ".join(part for part in (brand, name, display) if part).strip()
         if not full_name:
             continue
 
