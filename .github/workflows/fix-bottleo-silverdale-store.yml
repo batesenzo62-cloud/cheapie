@@ -1,0 +1,27 @@
+name: Fix Bottle-O Silverdale missing store record
+
+# One-off data-fix job (workflow_dispatch only, no schedule) — inserts the
+# store record fix_bottleo_silverdale_store.py's docstring explains was
+# missing, so scraped Bottle-O Silverdale rows stop failing the daily
+# load's foreign-key check. Safe to re-run (on_conflict=id upsert).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  fix-bottleo-silverdale-store:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fix Bottle-O Silverdale store record
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 fix_bottleo_silverdale_store.py

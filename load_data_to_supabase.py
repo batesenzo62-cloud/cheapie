@@ -270,6 +270,46 @@ def main():
         deduped[(row["store_name"], row["product_name"])] = row
     all_rows = list(deduped.values())
 
+    # 2026-09-02 fix: reported directly — bottle-o's load aborted entirely
+    # partway through (63,000 of 94,706 rows) because ONE row referenced a
+    # store_id that doesn't exist in the stores table (a genuinely real
+    # branch — Bottle-O Silverdale — whose geocoding had failed, so it was
+    # never actually inserted there, but still got a store_id assigned in
+    # bottleo_stores.json). A single bad foreign key shouldn't cost every
+    # other row in the batch its daily refresh. Rather than trying to
+    # catch and recover from the 23503 mid-upsert (which chunk it lands in
+    # depends on row order, and by then other rows in that same chunk have
+    # already failed too), invalid store_ids are dropped up front — same
+    # graceful-degradation the app already relies on for a store with no
+    # store_id at all (falls back to the generic/unconfirmed display
+    # instead of being silently dropped from the refresh).
+    # Paginated rather than a single request — PostgREST caps a response at
+    # 1000 rows by default, and the stores table (987 as of this fix) is
+    # already close enough to that that a fixed single-request assumption
+    # would silently start dropping real stores the moment it's crossed.
+    real_store_ids = set()
+    store_offset = 0
+    while True:
+        store_resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/stores?select=id",
+            headers={**HEADERS, "Range": f"{store_offset}-{store_offset + 999}"},
+            timeout=30,
+        )
+        store_resp.raise_for_status()
+        page = store_resp.json()
+        real_store_ids.update(s["id"] for s in page)
+        if len(page) < 1000:
+            break
+        store_offset += 1000
+    dropped = 0
+    for row in all_rows:
+        if row["store_id"] and row["store_id"] not in real_store_ids:
+            print(f"  dropping store_id {row['store_id']} ({row['store_name']}) — no matching row in stores table")
+            row["store_id"] = None
+            dropped += 1
+    if dropped:
+        print(f"  {dropped} row(s) had an unmatched store_id — kept as generic (store_id cleared), not dropped entirely")
+
     # A single request for the whole batch works fine up to a few tens of
     # thousands of rows (confirmed — 11K and 21K both went through as one
     # request earlier), but ~198K rows timed out entirely, even at a raised
