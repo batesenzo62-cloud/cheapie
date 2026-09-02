@@ -1,0 +1,46 @@
+name: Fix New World/PAK'nSAVE product names (brand field)
+
+# One-off fix (workflow_dispatch only) — deletes the per-branch New
+# World/PAK'nSAVE rows scraped before the brand-name fix in
+# scrape_foodstuffs_products.py, then re-scrapes both chains fresh with
+# the fix in place. See cleanup_foodstuffs_wrong_names.py's docstring.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Delete old wrongly-named New World/PAK'nSAVE rows
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 -u cleanup_foodstuffs_wrong_names.py
+
+  rescrape:
+    needs: cleanup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        brand: [paknsave, newworld]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape ${{ matrix.brand }} branches
+        env:
+          BRAND: ${{ matrix.brand }}
+        run: python3 -u scrape_foodstuffs_products.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 -u load_data_to_supabase.py
