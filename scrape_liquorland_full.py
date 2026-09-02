@@ -30,7 +30,32 @@ at once), not a scraping gap, so it's honest to report a real "no price
 currently available" rather than manufacture one by exhausting stores.
 """
 import requests, re, json, time, csv, os
-from load_data_to_supabase import detect_multibuy as sl_detect_multibuy
+
+# 2026-09-02: deliberately NOT importing load_data_to_supabase here even
+# though it already has an equivalent detect_multibuy() — that module raises
+# SystemExit at import time if SUPABASE_URL/SUPABASE_KEY aren't set (see its
+# top-level check), and this scraper's own GitHub Actions step never has
+# those set (only the separate load step does). Importing it would have
+# crashed every scheduled Liquorland scrape. Same regex, duplicated on
+# purpose to keep this scraper standalone like every other scraper file.
+_MULTIBUY_WORD_NUMS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "twelve": 12}
+_MULTIBUY_RE = re.compile(
+    r"\b(?:any\s+)?(?:(\d{1,2})|(" + "|".join(_MULTIBUY_WORD_NUMS) + r"))\s+for\s+\$\s?(\d+(?:\.\d{1,2})?)\b",
+    re.IGNORECASE,
+)
+
+
+def sl_detect_multibuy(text):
+    if not text:
+        return None, None
+    m = _MULTIBUY_RE.search(text)
+    if not m:
+        return None, None
+    digit_qty, word_qty, price_str = m.groups()
+    qty = int(digit_qty) if digit_qty else _MULTIBUY_WORD_NUMS[word_qty.lower()]
+    if qty < 2:
+        return None, None
+    return qty, float(price_str)
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 STORE_ID = 4  # Liquorland Parnell — arbitrary, price confirmed identical across stores when available
