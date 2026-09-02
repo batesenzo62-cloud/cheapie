@@ -1,0 +1,36 @@
+name: TEMP - test multi-buy columns end-to-end
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  verify-columns:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check multibuy columns exist
+        run: |
+          curl -sf "https://gkkchssgamqfavomcnoq.supabase.co/rest/v1/products?select=id,multibuy_quantity,multibuy_total_price&limit=1" \
+            -H "apikey: sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b" | tee /tmp/out.json
+          if grep -q '"code"' /tmp/out.json; then
+            echo "Columns missing or query failed"
+            exit 1
+          fi
+
+  rescrape-paknsave:
+    needs: verify-columns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape PAK'nSAVE branches
+        env:
+          BRAND: paknsave
+        run: python3 -u scrape_foodstuffs_products.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 -u load_data_to_supabase.py
