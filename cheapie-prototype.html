@@ -300,6 +300,12 @@
   .stale-tag{
     color:var(--muted); font-weight:700; letter-spacing:0.02em; cursor:help;
   }
+  .multibuy-tag{
+    display:inline-block; margin-top:4px;
+    background:var(--gold-dark); color:var(--foam);
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:800;
+    letter-spacing:0.02em; padding:2px 8px; border-radius:10px;
+  }
 
   .bottomnav{
     flex:0 0 60px;
@@ -1025,7 +1031,9 @@ function mapDbRow(row){
     productName: row.product_name,
     unitCount: row.unit_count || 1,
     unitVolumeMl: row.unit_volume_ml !== null && row.unit_volume_ml !== undefined ? Number(row.unit_volume_ml) : null,
-    pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null
+    pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null,
+    multibuyQuantity: row.multibuy_quantity !== null && row.multibuy_quantity !== undefined ? Number(row.multibuy_quantity) : null,
+    multibuyTotalPrice: row.multibuy_total_price !== null && row.multibuy_total_price !== undefined ? Number(row.multibuy_total_price) : null
   };
 }
 
@@ -1099,6 +1107,16 @@ function isMonthlyRefreshChain(storeName){
   return !!storeName && MONTHLY_REFRESH_CHAINS.some(c => storeName.startsWith(c));
 }
 
+// 2026-09-03: multi-buy deals ("2 for $32.99") are additive information,
+// not a replacement for the normal single-item price — a product with no
+// multi-buy deal renders exactly as before (this returns '' and nothing
+// changes). Store name isn't repeated here since it's already in the
+// card's subline right next to this.
+function multibuyBadge(r){
+  if(!r.multibuyQuantity || !r.multibuyTotalPrice) return '';
+  return `<div class="multibuy-tag">${r.multibuyQuantity} for $${r.multibuyTotalPrice.toFixed(2)}</div>`;
+}
+
 function cardHtml(r, isBest, sublineOverride){
   const heading = r.productName || r.store;
   const freshnessTag = isMonthlyRefreshChain(r.store)
@@ -1116,6 +1134,7 @@ function cardHtml(r, isBest, sublineOverride){
       <div style="text-align:right;">
         <div class="price" style="font-size:19px; color:var(--ink);">$${r.price.toFixed(2)}</div>
         ${r.was ? `<div class="strike" style="font-size:12px; font-weight:600;">was $${r.was.toFixed(2)}</div>` : ''}
+        ${multibuyBadge(r)}
         ${showsValueLine(r) ? `<div style="font-size:11px; color:var(--muted); font-weight:600; margin-top:2px;">${valueLine(r)}</div>` : ''}
       </div>
     </div>
@@ -1594,7 +1613,12 @@ async function loadDeals(category, chipEl){
   // smaller chains' real deals ever got a look in — same "one thing
   // dominates a capped list" shape already fixed for search and category
   // browsing, fixed the same way below (cap per chain, not by price).
-  let url = `${SUPABASE_URL}/rest/v1/products?select=*&was_price=not.is.null`;
+  // 2026-09-03: broadened to also fetch multi-buy deals ("2 for $20") —
+  // a genuinely different pricing pattern from a was_price/price markdown
+  // (one listing, one price, deal only applies at a minimum quantity),
+  // but still "a real special right now" as far as this tab's whole
+  // purpose is concerned.
+  let url = `${SUPABASE_URL}/rest/v1/products?select=*&or=(was_price.not.is.null,multibuy_quantity.not.is.null)`;
   if(category) url += `&category=eq.${category}`;
 
   let rows;
@@ -1613,7 +1637,13 @@ async function loadDeals(category, chipEl){
   // was_price present but not actually higher than price is a data
   // artifact (e.g. a since-ended special the scrape caught mid-transition),
   // not a real deal — same "is this genuinely real" bar as everywhere else.
-  let discounted = rows.filter(r => r.was_price !== null && Number(r.was_price) > Number(r.price));
+  // A multi-buy row counts as real on its own terms (quantity + total
+  // price both present) — it doesn't need a was_price too.
+  let discounted = rows.filter(r => {
+    const hasMarkdown = r.was_price !== null && Number(r.was_price) > Number(r.price);
+    const hasMultibuy = r.multibuy_quantity !== null && r.multibuy_total_price !== null;
+    return hasMarkdown || hasMultibuy;
+  });
 
   // 2026-08-26: "what store do you want to see deals from" — populated
   // from whichever chains genuinely have deals right now (not a static
@@ -1668,7 +1698,10 @@ async function loadDeals(category, chipEl){
   // the best deals right now", and seeing the same generic deal repeated
   // for every branch of a chain is noise, not signal.
   const mapped = discounted.map(r => mapRegionSearchRow(r, r.store_id));
-  mapped.forEach(r => { r.discountPct = (r.was - r.price) / r.was; });
+  // Multi-buy-only rows (no was_price) have nothing to compute a % off
+  // from — 0 rather than NaN, so they don't break the no-distance sort
+  // fallback below or the subline's Math.round() further down.
+  mapped.forEach(r => { r.discountPct = (r.was !== null) ? (r.was - r.price) / r.was : 0; });
   // 2026-08-13: made first priority — sort by distance (closest first)
   // rather than discount size, without dropping any of them. Ships-
   // NZ-wide rows (no real km) can't be ranked by distance at all, so they
@@ -1697,11 +1730,18 @@ async function loadDeals(category, chipEl){
     return;
   }
   shown.forEach(r => {
-    const pct = Math.round(r.discountPct * 100);
     const freshnessTag = isMonthlyRefreshChain(r.store)
       ? '<span class="stale-tag" title="Updated fortnightly, not live — may not reflect current specials">updated fortnightly</span>'
       : '<span class="live-tag">Live</span>';
-    const subline = `${pct}% off · ${r.km !== null ? r.km.toFixed(1) + ' km away · ' : 'Ships NZ-wide · '}${r.store} ${freshnessTag}`;
+    // Multi-buy deals lead with their own terms ("2 for $32.99") instead
+    // of a % off figure that doesn't really apply to them — a row with
+    // both a markdown AND a multi-buy deal shows the multi-buy terms
+    // here (the price-area badge from cardHtml/multibuyBadge() shows the
+    // same), since that's the more specific, more actionable one.
+    const dealLabel = (r.multibuyQuantity && r.multibuyTotalPrice)
+      ? `${r.multibuyQuantity} for $${r.multibuyTotalPrice.toFixed(2)}`
+      : `${Math.round(r.discountPct * 100)}% off`;
+    const subline = `${dealLabel} · ${r.km !== null ? r.km.toFixed(1) + ' km away · ' : 'Ships NZ-wide · '}${r.store} ${freshnessTag}`;
     list.appendChild(makeCard(r, false, subline));
   });
 }
@@ -1715,6 +1755,7 @@ function openDetail(r){
   document.getElementById('detailBody').innerHTML = `
     <div class="price" style="font-size:24px; color:var(--ink); margin-bottom:4px;">$${r.price.toFixed(2)}</div>
     ${r.was ? `<div style="color:var(--muted); text-decoration:line-through; margin-bottom:10px; font-weight:600;">was $${r.was.toFixed(2)}, per store catalogue</div>` : '<div style="margin-bottom:10px;"></div>'}
+    ${multibuyBadge(r) ? `<div style="margin-bottom:10px;">${multibuyBadge(r)}</div>` : ''}
     ${r.productName ? `<div style="margin-bottom:4px;"><strong>Product:</strong> ${r.productName}</div>` : ''}
     ${distanceLine}
     <div style="margin-bottom:4px;"><strong>Availability:</strong> Live price</div>
@@ -2318,6 +2359,8 @@ function mapRegionSearchRow(row, storeId){
     unitCount: row.unit_count || 1,
     unitVolumeMl: row.unit_volume_ml !== null && row.unit_volume_ml !== undefined ? Number(row.unit_volume_ml) : null,
     pricePerLitre: row.price_per_litre !== null && row.price_per_litre !== undefined ? Number(row.price_per_litre) : null,
+    multibuyQuantity: row.multibuy_quantity !== null && row.multibuy_quantity !== undefined ? Number(row.multibuy_quantity) : null,
+    multibuyTotalPrice: row.multibuy_total_price !== null && row.multibuy_total_price !== undefined ? Number(row.multibuy_total_price) : null,
     // 2026-08-13: reported directly — "Black Bull Liquor Napier"'s product
     // page link actually opened Hawera's site. Root cause: an unconfirmed
     // row (no real store_id of its own) fanned out to a real branch still

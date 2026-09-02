@@ -271,11 +271,15 @@ def extract_rows(store_label, store_id, app_category, products):
         if not full_name:
             continue
 
-        # Not written to the CSV yet (products table has no multibuy_*
-        # columns) — kept here so wiring in the multi-buy deals feature
-        # later only means adding these two keys to the output dict.
-        multibuy_quantity = None
-        multibuy_total_price = None
+        # 2026-09-03: now written to the CSV — products table has
+        # multibuy_quantity/multibuy_total_price columns (add_multibuy_
+        # columns.sql). This is real structured multi-buy data straight
+        # from the source, so load_data_to_supabase.py uses it directly
+        # rather than falling back to regex-detecting it from product_name
+        # text (the only option for chains that don't expose it this
+        # cleanly, e.g. Thirsty Liquor's bundle deals).
+        multibuy_quantity = ""
+        multibuy_total_price = ""
         for promo in p.get("promotions", []):
             if promo.get("multiProducts") and (promo.get("threshold") or 1) > 1:
                 multibuy_quantity = promo["threshold"]
@@ -291,8 +295,8 @@ def extract_rows(store_label, store_id, app_category, products):
             "in_stock": bool(p.get("availability")),
             "url": build_product_url(p.get("productId")),
             "fetched_at": time.strftime("%Y-%m-%d %H:%M"),
-            "_multibuy_quantity": multibuy_quantity,
-            "_multibuy_total_price": multibuy_total_price,
+            "multibuy_quantity": multibuy_quantity,
+            "multibuy_total_price": multibuy_total_price,
         })
     return rows
 
@@ -345,9 +349,11 @@ def main():
     else:
         existing = []
 
-    fieldnames = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at", "store_id"]
+    fieldnames = ["store", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at", "store_id", "multibuy_quantity", "multibuy_total_price"]
     for row in existing:
         row.setdefault("store_id", "")
+        row.setdefault("multibuy_quantity", "")
+        row.setdefault("multibuy_total_price", "")
 
     kept = [row for row in existing if row["store"] not in scraped_labels]
     all_rows_out = kept + [{k: r.get(k, "") for k in fieldnames} for r in new_rows]

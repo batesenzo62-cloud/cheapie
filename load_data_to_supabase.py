@@ -145,7 +145,49 @@ def parse_bool(raw):
     return str(raw).strip().lower() in ("true", "1", "yes")
 
 
-def pack_size_fields(product_name, price, category=None):
+def parse_int(raw):
+    if raw is None or str(raw).strip() == "":
+        return None
+    try:
+        return int(float(raw))
+    except ValueError:
+        return None
+
+
+# 2026-09-03: multi-buy deals ("2 for $20", "Any 3 For $30") are a
+# genuinely different pricing pattern from a plain was_price/price
+# markdown — one listing, one price, but the deal only applies at a
+# minimum quantity. Thirsty Liquor's real bundle deals already landed in
+# this app back on 2026-08-26 with the terms baked into product_name
+# text (e.g. "Any Two For $99") since there was nowhere structured to put
+# them — this is that structured home. Word-form quantities ("Two",
+# "Three") are matched alongside digits since that's the exact real
+# wording Thirsty Liquor's own bundle pages use; digit forms cover
+# everything else (New World/PAK'nSAVE's own API returns structured
+# multibuy_quantity/multibuy_total_price directly instead — passed
+# through as-is in load_independent_stores() below rather than
+# re-detected from text, since the source is already authoritative).
+_MULTIBUY_WORD_NUMS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "twelve": 12}
+_MULTIBUY_RE = re.compile(
+    r"\b(?:any\s+)?(?:(\d{1,2})|(" + "|".join(_MULTIBUY_WORD_NUMS) + r"))\s+for\s+\$\s?(\d+(?:\.\d{1,2})?)\b",
+    re.IGNORECASE,
+)
+
+
+def detect_multibuy(product_name):
+    if not product_name:
+        return None, None
+    m = _MULTIBUY_RE.search(product_name)
+    if not m:
+        return None, None
+    digit_qty, word_qty, price_str = m.groups()
+    qty = int(digit_qty) if digit_qty else _MULTIBUY_WORD_NUMS[word_qty.lower()]
+    if qty < 2:
+        return None, None
+    return qty, float(price_str)
+
+
+def pack_size_fields(product_name, price, category=None, multibuy_quantity=None, multibuy_total_price=None):
     # unit_volume_ml is None whenever the name doesn't state a size at all
     # (see parse_pack_size.py) — price_per_litre stays None in that case
     # too, rather than guessing a size. unit_count is still recorded even
@@ -164,15 +206,36 @@ def pack_size_fields(product_name, price, category=None):
     # shows a caveat instead (see MIN_PLAUSIBLE_PRICE_PER_UNIT's use in
     # cheapie-prototype.html) rather than hiding the number here.
     unit_count, unit_volume_ml = parse_pack_size(product_name, category)
+
+    if multibuy_quantity is None:
+        multibuy_quantity, multibuy_total_price = detect_multibuy(product_name)
+
+    # 2026-09-03: price-per-litre (the figure the app actually ranks
+    # "best value" by — see byValue()/usablePpl() in cheapie-prototype.html)
+    # now reflects a genuine multi-buy deal's real per-unit rate when it's
+    # actually cheaper than the single-item price, not just the sticker
+    # price a shopper only buying one would pay. price itself is left
+    # untouched — still the real single-item price, still what's actually
+    # shown as "the" price on the card; the multi-buy terms surface
+    # separately (multibuy_quantity/multibuy_total_price) so the UI can
+    # show both rather than silently substituting one for the other.
+    effective_price = price
+    if multibuy_quantity and multibuy_total_price and price is not None:
+        per_unit_price = multibuy_total_price / multibuy_quantity
+        if per_unit_price < price:
+            effective_price = per_unit_price
+
     price_per_litre = None
-    if price is not None and unit_volume_ml:
+    if effective_price is not None and unit_volume_ml:
         litres = (unit_count * unit_volume_ml) / 1000
         if litres > 0:
-            price_per_litre = round(price / litres, 4)
+            price_per_litre = round(effective_price / litres, 4)
     return {
         "unit_count": unit_count,
         "unit_volume_ml": unit_volume_ml,
         "price_per_litre": price_per_litre,
+        "multibuy_quantity": multibuy_quantity,
+        "multibuy_total_price": multibuy_total_price,
     }
 
 
@@ -199,7 +262,11 @@ def load_independent_stores(filename):
                 "is_online": True,
                 "source_url": row.get("url"),
                 "fetched_at": row.get("fetched_at") or None,
-                **pack_size_fields(name, price, category),
+                **pack_size_fields(
+                    name, price, category,
+                    multibuy_quantity=parse_int(row.get("multibuy_quantity")),
+                    multibuy_total_price=parse_price(row.get("multibuy_total_price")),
+                ),
             }
             # store_id ties a row to one confirmed physical branch (added
             # 2026-07-27 for per-branch deals scraping) — most rows still
