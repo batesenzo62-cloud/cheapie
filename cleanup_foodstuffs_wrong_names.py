@@ -29,6 +29,7 @@ HOW TO RUN:
     python3 cleanup_foodstuffs_wrong_names.py
 """
 import os
+import time
 import requests
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -56,25 +57,44 @@ def get_store_ids(name_filter):
 
 def delete_store(store_id, store_name):
     for attempt in range(3):
-        r = requests.delete(
-            f"{SUPABASE_URL}/rest/v1/products",
-            headers=HEADERS,
-            params={"store_id": f"eq.{store_id}"},
-            timeout=30,
-        )
+        try:
+            r = requests.delete(
+                f"{SUPABASE_URL}/rest/v1/products",
+                headers=HEADERS,
+                params={"store_id": f"eq.{store_id}"},
+                timeout=45,
+            )
+        except requests.RequestException as e:
+            print(f"    attempt {attempt + 1} for {store_name} ({store_id}): {e}")
+            time.sleep(5)
+            continue
         if r.status_code in (200, 204):
-            return
+            return True
         print(f"    attempt {attempt + 1} for {store_name} ({store_id}): status {r.status_code} {r.text[:150]}")
-    raise SystemExit(f"Delete failed for {store_name} ({store_id}) after 3 attempts")
+        time.sleep(5)
+    return False
 
 
 def main():
+    failed = []
     for name_filter in ["New World", "PAK*SAVE"]:
         stores = get_store_ids(name_filter)
         print(f"Deleting old wrongly-named rows for {len(stores)} {name_filter} stores...")
         for s in stores:
-            delete_store(s["id"], s["name"])
-        print(f"  done: {len(stores)} stores cleared")
+            # 2026-09-03 fix: reported directly — this used to raise
+            # SystemExit on the first store whose delete failed after 3
+            # attempts, abandoning every other store's cleanup too (one
+            # slow/contended delete shouldn't block ~200 otherwise-fine
+            # ones). Logged and skipped instead — a failed store just
+            # keeps its old wrongly-named rows a little longer, picked up
+            # on a re-run of this same script, rather than blocking
+            # everything.
+            if not delete_store(s["id"], s["name"]):
+                failed.append(s["name"])
+        print(f"  done: {len(stores)} {name_filter} stores processed")
+
+    if failed:
+        print(f"\n{len(failed)} store(s) failed to clean up (re-run this script to retry): {failed}")
 
 
 if __name__ == "__main__":
