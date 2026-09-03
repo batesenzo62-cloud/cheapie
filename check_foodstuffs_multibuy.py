@@ -8,7 +8,7 @@ import scrape_foodstuffs_products as fs
 print("BRAND:", fs.BRAND)
 token = fs.get_token()
 stores = fs.get_real_stores(token)
-store = stores["stores"][0]
+store = stores[0]
 print("store:", store.get("name"), store.get("id"))
 
 for cat_name, app_cat in fs.CATEGORIES:
