@@ -816,12 +816,17 @@ function expandGenericChainMatches(rows){
   // instead of always the same fixed one — a genuinely closer, more
   // plausible approximation, still honestly labeled "different branch"
   // since it's real data from somewhere else, not this store's own.
-  // Liquorland is the opposite case — it never has per-branch data
-  // because prices are genuinely identical at every store (confirmed
-  // directly, see showStoreSheet's own Liquorland disclaimer) — fanning
-  // its generic rows out to every branch there is accurate, not a guess,
-  // so a product with zero confirmed rows anywhere in this batch is
-  // unaffected and still fans out to every branch directly.
+  // 2026-09-03 correction: this used to claim Liquorland was a special
+  // "opposite case" — genuinely identical prices everywhere, so fanning out
+  // was said to be accurate rather than a guess. Reported directly (a
+  // "prices are the same nationwide" claim shown for Liquorland Lincoln)
+  // that this was wrong: scrape_liquorland_full.py's real_price() fix
+  // proved genuine branch-to-branch variance exists. No code change needed
+  // here though — this function was already chain-agnostic (no Liquorland-
+  // specific branch), so Liquorland's real per-branch rows (from
+  // scrape_liquorland_branches.py) already correctly take priority over
+  // the generic fallback via the same branchesWithOwnCatalog check every
+  // other chain uses. Only the reasoning in this comment was stale.
   // 2026-08-14 fourth fix: reported directly — "Steinlager Ultra Low Carb
   // Bottles 24 x 330mL" showed as Bottle-O Onekawa, but its link opened
   // Hastings' site — even though Onekawa genuinely stocks that exact
@@ -835,9 +840,10 @@ function expandGenericChainMatches(rows){
   // request rather than patch matching further — a branch with no
   // catalogue of its own simply won't show a product it hasn't
   // confirmed, instead of guessing at another branch's price for it.
-  // Liquorland is unaffected — it's not a guess, prices are genuinely
-  // identical at every store (confirmed directly), so a product with no
-  // confirmed store_id anywhere is still fanned out to every branch.
+  // (See the 2026-09-03 correction above the fan-out loop below — the old
+  // "Liquorland prices are identical everywhere" claim this comment used
+  // to repeat here was wrong; Liquorland is treated the same as every
+  // other chain, no exemption needed.)
   const confirmedIdsByChainProduct = {}; // "<chain>||<product_name>" -> Set(storeId) of every branch that's confirmed it
   // 2026-08-24 sixth fix: reported directly — searching "Steinlager" on
   // the Nearby map marked most of the country grey ("out of stock"), 626
@@ -1856,11 +1862,15 @@ function openDetail(r){
   // link when its store sheet fell back to the chain's generic catalogue,
   // which opens whichever branch that catalogue actually belongs to, not
   // this one — the same wrong-branch confusion the substitution removal
-  // was meant to fix. Hidden too, except Liquorland: its generic catalogue
-  // genuinely IS the same real price/page at every store (confirmed
-  // directly), so that link is accurate regardless of which branch you're
-  // looking at.
-  const isUnconfirmedNonUniform = r.confirmedBranch === false && chainNameFor(r.store || '') !== 'Liquorland';
+  // was meant to fix.
+  // 2026-09-03 fix: this used to exempt Liquorland on the theory that its
+  // generic catalogue was "the same real price/page at every store" —
+  // reported directly (Liquorland Lincoln) that this claim is wrong.
+  // scrape_liquorland_full.py's real_price() fix proved genuine branch-to-
+  // branch price variance exists, so an unconfirmed Liquorland row's link
+  // is exactly as likely to be the wrong branch's price as any other
+  // chain's — no more exemption.
+  const isUnconfirmedNonUniform = r.confirmedBranch === false;
   const hideProductLink = isDoorDashUrl || isUnconfirmedNonUniform;
   const hasCoords = r.lat !== null && r.lat !== undefined && r.lng !== null && r.lng !== undefined;
   if(hasCoords){
@@ -2955,11 +2965,9 @@ async function showStoreSheet(store){
       // branch's own real listing plus a wrongly-attributed "gap fill"
       // stacked on top of it. Removed per direct request rather than
       // patch the matching further: a branch with no catalogue of its
-      // own just shows the chain's generic/bare-name catalogue (Liquorland
-      // -style uniform pricing where that's genuinely accurate, or
-      // whatever representative data exists) with the honest "not
-      // confirmed for this store" disclaimer below — no per-branch
-      // guessing.
+      // own just shows the chain's generic/bare-name catalogue (whatever
+      // representative data exists) with the honest "not confirmed for
+      // this store" disclaimer below — no per-branch guessing.
       const chain = chainNameFor(store.name);
       rows = await fetchAllRows(`${SUPABASE_URL}/rest/v1/products?select=*&store_name=eq.${encodeURIComponent(chain)}&order=price.asc`);
     } catch(err){
@@ -2975,14 +2983,16 @@ async function showStoreSheet(store){
   // in the middle of that range rather than right on either edge.
   currentStoreFuse = new Fuse(rows, { keys: ['product_name'], threshold: 0.25, ignoreLocation: true });
 
-  // 2026-08-13: Liquorland genuinely is a special case here, not just an
-  // unverified assumption — scrape_liquorland_full.py's own comments
-  // document testing this directly: prices came back identical regardless
-  // of which real store was selected (checked against several, including
-  // a deliberately-niche long-tail SKU page). The generic "not confirmed"
-  // wording is actually less accurate for this one chain than saying so
-  // plainly — everyone else here (New World, PAK'nSAVE, ...) has no such
-  // confirmation, so keeps the honest "can't confirm" version.
+  // 2026-08-13: Liquorland used to be special-cased here as "prices are the
+  // same at every store nationwide" — reported directly (Liquorland Lincoln
+  // showing this exact claim) that this is now WRONG. 2026-09-02's
+  // real_price() fix (see scrape_liquorland_full.py) proved the opposite:
+  // Liquorland's per-store pricing API (unitprice) genuinely varies branch
+  // to branch — the 2026-08-13 "identical everywhere" finding was reading
+  // the wrong, unpersonalized field (originalretail) the whole time.
+  // Liquorland no longer gets special-cased at all — an unconfirmed branch
+  // falling back to the generic catalogue gets the same honest "can't
+  // confirm, branches often differ" wording as every other chain.
   // 2026-08-24 fix: reported directly — a $15.99 Steinlager shown for
   // Bottle-O Mt Eden (no confirmed data of its own) turned out to be
   // Bottle-O Kingsland's own real, specific price, misread as if it were
@@ -3001,9 +3011,7 @@ async function showStoreSheet(store){
   // here."
   const chain = chainNameFor(store.name);
   const disclaimer = (!confirmedBranch && rows.length)
-    ? (chain === 'Liquorland'
-        ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">Liquorland prices are the same at every store nationwide (confirmed directly) — this isn't a generic fallback, just not tied to this specific branch in the data.</div>`
-        : `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chain} catalogue prices — not confirmed for this specific store, and branches often charge differently, so don't expect this exact price here.</div>`)
+    ? `<div style="font-size:11px; color:var(--muted); margin-bottom:10px; font-style:italic;">${chain} catalogue prices — not confirmed for this specific store, and branches often charge differently, so don't expect this exact price here.</div>`
     : '';
 
   body.innerHTML = `
