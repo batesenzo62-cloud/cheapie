@@ -201,7 +201,13 @@ def scrape_category(site_slug, url, app_category):
             # attributes.multibuy.text (e.g. "2 for $110"), same wording
             # shape as Thirsty Liquor's bundles, so the same regex works —
             # just needs to be pointed at this field instead of the name.
-            multibuy_text = (item.get("attributes") or {}).get("multibuy", {}).get("text")
+            # 2026-09-02: it's stylecolour.attributes.multibuy.text, not
+            # item.attributes — confirmed directly this initial version
+            # read the wrong nesting level and silently found 0 multibuy
+            # rows against the live site despite the field genuinely being
+            # there (caught by a live end-to-end test before this ever
+            # reached the scheduled pipeline).
+            multibuy_text = (sc.get("attributes") or {}).get("multibuy", {}).get("text")
             multibuy_quantity, multibuy_total_price = sl_detect_multibuy(multibuy_text) if multibuy_text else (None, None)
             rows.append({
                 "product_name": item.get("description"),
