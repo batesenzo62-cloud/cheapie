@@ -16,6 +16,8 @@ jobs:
       - run: python check_multibuy_coverage2.py
       - run: mkdir -p banner_images && python dl_banner_images.py
       - run: python check_bottleo_multibuy.py
+      - run: BRAND=paknsave python check_foodstuffs_multibuy.py
+      - run: BRAND=newworld python check_foodstuffs_multibuy.py
       - uses: actions/upload-artifact@v4
         with:
           name: banner-images
