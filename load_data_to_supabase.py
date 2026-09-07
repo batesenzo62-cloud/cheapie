@@ -398,14 +398,30 @@ def main():
         # A transient 5xx (seen for real: a one-off Cloudflare 520) shouldn't
         # abort ~65 otherwise-successful chunks — retry a couple of times
         # with a short backoff before giving up on this chunk for good.
+        #
+        # 2026-09-07: 3 attempts / flat 5s backoff wasn't enough — reported
+        # directly, confirmed live: manually triggering scrape-branches.yml
+        # ran all 8 Liquorland branch chunks' load steps in parallel, and 5
+        # of 8 hit repeated real statement timeouts (57014) on the same
+        # products table and exhausted all 3 attempts. This is lock/
+        # scheduler contention from several large concurrent upserts, not a
+        # one-off blip — a short fixed backoff gives the contending
+        # transactions no real chance to clear before retrying into the same
+        # wall. More attempts with a longer exponential backoff (giving
+        # concurrent chunks time to actually finish and release contention)
+        # is the fix, not a shorter/smaller chunk size — the timeouts were on
+        # otherwise-normal 3000-row chunks that succeed fine outside of
+        # concurrent load.
+        MAX_ATTEMPTS = 6
         response = None
-        for attempt in (1, 2, 3):
+        for attempt in range(1, MAX_ATTEMPTS + 1):
             response = requests.post(TABLE_ENDPOINT, headers=HEADERS, json=chunk, timeout=120)
             if response.status_code in (200, 201):
                 break
-            if response.status_code >= 500 and attempt < 3:
-                print(f"  chunk {chunk_num}/{total_chunks} attempt {attempt} got {response.status_code}, retrying...")
-                time.sleep(5)
+            if response.status_code >= 500 and attempt < MAX_ATTEMPTS:
+                backoff = min(5 * (2 ** (attempt - 1)), 60)
+                print(f"  chunk {chunk_num}/{total_chunks} attempt {attempt} got {response.status_code}, retrying in {backoff}s...")
+                time.sleep(backoff)
         if response.status_code not in (200, 201):
             # Must actually fail the process (not just print) — otherwise this
             # error is invisible to anything checking the exit code, including
