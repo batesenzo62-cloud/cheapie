@@ -73,13 +73,34 @@ def fetch_liquorland_stores():
 
 
 def fetch_db_store_ids():
-    r = requests.get(
-        f"{SUPABASE_URL}/rest/v1/stores",
-        headers={"apikey": SUPABASE_KEY},
-        params={"select": "id,name", "name": "ilike.*Liquorland*", "limit": "1000"},
-        timeout=20,
-    )
-    return {s["name"]: s["id"] for s in r.json()}
+    # 2026-09-07 fix: reported directly — retrying just 5 of the 8 branch
+    # chunks (after the other 5 hit Supabase upsert timeouts) still failed,
+    # all 5 within seconds of each other, with a confusing TypeError deep in
+    # the dict comprehension below. Root cause: this had no status check or
+    # retry at all — when Supabase returned an error body (another real
+    # statement timeout, this time on the small `stores` table, from all 5
+    # chunks' near-simultaneous first request), r.json() still parsed fine
+    # (it's valid JSON, just an error dict like {"code": "57014", ...} not a
+    # list of rows), and iterating a dict yields its string keys, so
+    # s["name"] on the string "code" threw exactly this TypeError instead of
+    # a clear "the stores fetch failed" error. Added the same retry/backoff
+    # pattern already used by set_preferred_store() below, plus a status
+    # check so a real failure raises a legible error instead of a confusing
+    # crash three lines removed from the actual cause.
+    for attempt in (1, 2, 3):
+        try:
+            r = requests.get(
+                f"{SUPABASE_URL}/rest/v1/stores",
+                headers={"apikey": SUPABASE_KEY},
+                params={"select": "id,name", "name": "ilike.*Liquorland*", "limit": "1000"},
+                timeout=20,
+            )
+            r.raise_for_status()
+            return {s["name"]: s["id"] for s in r.json()}
+        except Exception as e:
+            print(f"  fetch_db_store_ids attempt {attempt} error: {e}")
+            time.sleep(5)
+    raise RuntimeError("Could not fetch stores from Supabase after 3 attempts")
 
 
 def build_branch_list():
