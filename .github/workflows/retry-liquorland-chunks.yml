@@ -1,0 +1,37 @@
+name: Retry - Liquorland branch chunks (temporary)
+
+# One-off: 5 of the 8 liquorland-branches chunks (0, 1, 4, 5, 7) failed
+# their Supabase load step with real statement timeouts (57014) when all 8
+# ran their upserts concurrently in the 2026-09-07 manual scrape-branches.yml
+# run. Retries just those 5 chunk indices (same CHUNK_COUNT=8 split, so
+# branch assignment matches exactly what the original job would have
+# scraped) with the newly-hardened retry/backoff in load_data_to_supabase.py,
+# and with less concurrent write pressure since only 5 (not 8) run at once.
+# Delete this workflow once the retry succeeds.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: [0, 1, 4, 5, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape Liquorland branches (chunk ${{ matrix.chunk }}/8)
+        env:
+          CHUNK_INDEX: ${{ matrix.chunk }}
+          CHUNK_COUNT: 8
+        run: python3 scrape_liquorland_branches.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
