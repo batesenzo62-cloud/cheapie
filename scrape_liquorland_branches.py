@@ -45,8 +45,8 @@ import csv, time, os, json
 import requests
 import scrape_liquorland_full as sl
 
-SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co"
-SUPABASE_KEY = "sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b"
+SUPABASE_URL = "https://ipeehclwjsmiykyyythc.supabase.co"
+SUPABASE_KEY = "sb_publishable_-sFams7w7fCnQbVWt0UCaw_RzIlJ-Iu"
 
 CHUNK_INDEX = int(os.environ.get("CHUNK_INDEX", "0"))
 CHUNK_COUNT = int(os.environ.get("CHUNK_COUNT", "1"))

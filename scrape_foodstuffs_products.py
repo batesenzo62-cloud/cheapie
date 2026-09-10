@@ -59,8 +59,8 @@ import unicodedata
 
 import requests
 
-SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co"
-SUPABASE_KEY = "sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b"
+SUPABASE_URL = "https://ipeehclwjsmiykyyythc.supabase.co"
+SUPABASE_KEY = "sb_publishable_-sFams7w7fCnQbVWt0UCaw_RzIlJ-Iu"
 
 BRAND = os.environ.get("BRAND", "paknsave")
 if BRAND not in ("paknsave", "newworld"):

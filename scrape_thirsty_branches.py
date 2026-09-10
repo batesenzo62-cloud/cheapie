@@ -19,8 +19,8 @@ HOW TO RUN:
 import csv, time, requests, os
 import scrape_independent_stores as s
 
-SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co"
-SUPABASE_KEY = "sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b"
+SUPABASE_URL = "https://ipeehclwjsmiykyyythc.supabase.co"
+SUPABASE_KEY = "sb_publishable_-sFams7w7fCnQbVWt0UCaw_RzIlJ-Iu"
 
 r = requests.get(f"{SUPABASE_URL}/rest/v1/stores?select=id,name&name=ilike.*Thirsty*",
                   headers={"apikey": SUPABASE_KEY})

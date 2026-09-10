@@ -20,8 +20,8 @@ HOW TO RUN:
 import csv, time, requests, os
 import scrape_independent_stores as s
 
-SUPABASE_URL = "https://gkkchssgamqfavomcnoq.supabase.co"
-SUPABASE_KEY = "sb_publishable_0D5UFWvifa2lI9o5lPbK8Q_iOsnLW8b"
+SUPABASE_URL = "https://ipeehclwjsmiykyyythc.supabase.co"
+SUPABASE_KEY = "sb_publishable_-sFams7w7fCnQbVWt0UCaw_RzIlJ-Iu"
 CSV_PATH = "independent_store_prices.csv"
 CATEGORIES = {"beer": "beer", "rtd": "premix", "wine": "wine", "spirits": "spirits"}
 DEFAULT_FIELDNAMES = ["store", "store_id", "category", "product_name", "price", "was_price", "in_stock", "url", "fetched_at"]
