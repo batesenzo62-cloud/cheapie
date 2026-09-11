@@ -1,0 +1,49 @@
+name: Scrape supermarkets only (temporary, new-project backfill)
+
+# One-off: the Sep 1 backup predates scrape_foodstuffs_products.py's first
+# real load, so New World/PAK'nSAVE have no real per-branch data on the
+# new project (New World has stale generic-catalog rows, PAK'nSAVE has
+# none at all). Deliberately scoped to just these 2 jobs rather than
+# triggering the full scrape-branches.yml (~25 parallel jobs) — that's
+# the exact pattern that caused the original project's disk-full crash.
+# Delete this workflow once the backfill is confirmed complete.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  paknsave:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape PAK'nSAVE branches
+        env:
+          BRAND: paknsave
+        run: python3 scrape_foodstuffs_products.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
+
+  newworld:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Scrape New World branches
+        env:
+          BRAND: newworld
+        run: python3 scrape_foodstuffs_products.py
+      - name: Load into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 load_data_to_supabase.py
