@@ -243,8 +243,8 @@
     "name": "Dixon Street",
     "store_id_ext": "66a6fe4a02685732555d4ef2",
     "address": "94 Dixon Street, Te Aro, Wellington 6011",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "dixon-st",
     "lat": -41.2908596,
     "lng": 174.77478,
     "store_id": "0bc54872-0277-4b22-b4ed-0bc146430dfe"
@@ -523,8 +523,8 @@
     "name": "Kaiwaka",
     "store_id_ext": "6a67f34fa7c052e9d8b74979",
     "address": "1921 State Highway 1, Kaiwaka Northland 0542",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "bottleo-kaiwaka.myfoodlink.com/",
     "lat": -36.1651004,
     "lng": 174.4429687,
     "store_id": "30c0a944-0d20-4bbf-8155-5d935cd49b31"
@@ -558,16 +558,6 @@
     "lat": -41.3198076,
     "lng": 174.7945411,
     "store_id": "0b5b44ca-cec8-4250-8dba-606d533d97a4"
-  },
-  {
-    "name": "Kingsland",
-    "store_id_ext": "5ea2513ff605cc1483000875",
-    "address": "509 New North Road, Kingsland, Auckland 1021",
-    "online": true,
-    "subdomain": "kingsland",
-    "lat": -36.8722165,
-    "lng": 174.7432573,
-    "store_id": "6afc404a-6211-4a74-a2ec-996b6b89d90b"
   },
   {
     "name": "Leamington",
@@ -680,10 +670,20 @@
     "store_id": "e5a35194-f7aa-4b50-9da7-9e04266d0ad9"
   },
   {
+    "name": "Maungaraki",
+    "store_id_ext": "60864f4c60b75a3abb028b60",
+    "address": "169 Dowse Drive, Maungaraki, Lower Hutt 5010",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2080622,
+    "lng": 174.8783088,
+    "store_id": "21ed58e8-76fa-4cc8-91ab-577e338af056"
+  },
+  {
     "name": "May Road",
     "store_id_ext": "671059d602d7cfe8bc570cae",
     "address": "49 May Road, Mt. Roskill, Auckland AKL 1041",
-    "online": false,
+    "online": true,
     "subdomain": "mayroad",
     "lat": -36.9080339,
     "lng": 174.7357143,
@@ -703,8 +703,8 @@
     "name": "Morrinsville",
     "store_id_ext": "619b169fd74776215c0081be",
     "address": "40 Studholme Street, Morrinsville, 3300",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "morrinsville",
     "lat": -37.6590407,
     "lng": 175.5291952,
     "store_id": "18560b32-8626-4b73-8716-5df14de6d8bd"
@@ -830,6 +830,16 @@
     "store_id": "e5e632a0-3a51-486e-8356-982deed1ceaa"
   },
   {
+    "name": "Ocean Lodge",
+    "store_id_ext": "6a8500b4da161eca98b2a94f",
+    "address": "29 Muritai Street, Tahunanui Nelson 7011",
+    "online": false,
+    "subdomain": null,
+    "lat": -41.2908268,
+    "lng": 173.2434411,
+    "store_id": "f7deb992-a66e-44c3-a2af-3224c6103a6f"
+  },
+  {
     "name": "Onekawa",
     "store_id_ext": "62cfaf6b04015f0c5b5623be",
     "address": "78 Taradale Road, Onekawa, Napier 4110",
@@ -863,8 +873,8 @@
     "name": "Papakura",
     "store_id_ext": "66a6fa4e02685732515d59d3",
     "address": "29 O'Shannessey Street, Papakura, Auckland AKL 2110",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "papakura",
     "lat": -37.0606723,
     "lng": 174.942451,
     "store_id": "ea614f5a-6dd5-4db6-972b-78da347e65e2"
@@ -1080,6 +1090,16 @@
     "store_id": "9550b676-55d7-4e5b-95da-4350748d2458"
   },
   {
+    "name": "Roscommon",
+    "store_id_ext": "6997a4f8c4bff4e7ceb21222",
+    "address": "7/275 BROWNS ROAD, MANUREWA, Auckland 2102",
+    "online": false,
+    "subdomain": null,
+    "lat": -37.0095851,
+    "lng": 174.8894539,
+    "store_id": "bba85d2f-d6c2-41ca-8dfd-6bcac4f39d56"
+  },
+  {
     "name": "Rosedale",
     "store_id_ext": "67105fbb96dfb2cdf6e5a338",
     "address": "4/83 Apollo Drive, Rosedale, Auckland AKL 0632",
@@ -1253,21 +1273,11 @@
     "name": "Sunset Road",
     "store_id_ext": "5ea2514df605cc1483001031",
     "address": "23-29 Sunset Road, Rotorua 3015",
-    "online": false,
-    "subdomain": null,
+    "online": true,
+    "subdomain": "rotorua-sunset-road",
     "lat": -38.1455591,
     "lng": 176.2096136,
     "store_id": "dea999ed-c7dc-41ae-ac48-9626c51f6893"
-  },
-  {
-    "name": "TBO Ocean Lodge",
-    "store_id_ext": "6a8500b4da161eca98b2a94f",
-    "address": "29 Muritai Street, Tahunanui Nelson 7011",
-    "online": false,
-    "subdomain": null,
-    "lat": -41.2908268,
-    "lng": 173.2434411,
-    "store_id": "f7deb992-a66e-44c3-a2af-3224c6103a6f"
   },
   {
     "name": "Taihape",
