@@ -76,13 +76,58 @@ def restore_products():
         for k, v in list(row.items()):
             if v == "":
                 row[k] = None
-    print(f"Restoring {len(rows)} products...")
+
+    # 2026-09-11 fix: hit a real 23505 duplicate-key error partway through
+    # (chunk 14/195, "Jacob Creek Shiraz" at Black Bull Liquor Porirua) —
+    # the backup CSV itself has duplicate (store_name, product_name) pairs.
+    # load_data_to_supabase.py already dedupes the exact same way before
+    # ever sending a request; this one-off script skipped that step.
+    # Deduping here, keeping the last occurrence (same tie-break as the
+    # main loader), then switching from a plain insert to an upsert
+    # (on_conflict + merge-duplicates) so this script is safely re-runnable
+    # from scratch regardless of how much of a previous attempt already
+    # landed — a plain insert would otherwise fail on every row that made
+    # it through last time.
+    deduped = {}
+    for row in rows:
+        deduped[(row["store_name"], row["product_name"])] = row
+    rows = list(deduped.values())
+
+    endpoint = f"{SUPABASE_URL}/rest/v1/products?on_conflict=store_name,product_name"
+    upsert_headers = {**HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal"}
+
+    print(f"Restoring {len(rows)} products (deduped)...")
     total = 0
     total_chunks = (len(rows) + CHUNK_SIZE - 1) // CHUNK_SIZE
     for i in range(0, len(rows), CHUNK_SIZE):
         chunk = rows[i:i + CHUNK_SIZE]
         chunk_num = i // CHUNK_SIZE + 1
-        post_chunk(f"{SUPABASE_URL}/rest/v1/products", chunk, f"products chunk {chunk_num}/{total_chunks}")
+        # 2026-09-11 fix: crashed outright on chunk 4 with an unhandled
+        # requests.exceptions.ConnectionError (DNS resolution failure) —
+        # this loop only retried on a real HTTP 5xx *response*, not a
+        # connection-level failure that never got a response at all. Same
+        # class of gap already fixed elsewhere this session (fetch_page,
+        # set_preferred_store) — wrapping the request itself in try/except
+        # so a transient local network blip doesn't abort a 242K-row restore
+        # 119 chunks from the end.
+        for attempt in range(1, 6):
+            try:
+                r = requests.post(endpoint, headers=upsert_headers, json=chunk, timeout=120)
+            except requests.exceptions.RequestException as e:
+                if attempt < 5:
+                    backoff = min(5 * (2 ** (attempt - 1)), 60)
+                    print(f"    products chunk {chunk_num} attempt {attempt} connection error ({e}), retrying in {backoff}s...")
+                    time.sleep(backoff)
+                    continue
+                raise SystemExit(f"products chunk {chunk_num}/{total_chunks} failed after 5 attempts: {e}")
+            if r.status_code in (200, 201):
+                break
+            if r.status_code >= 500 and attempt < 5:
+                backoff = min(5 * (2 ** (attempt - 1)), 60)
+                print(f"    products chunk {chunk_num} attempt {attempt} got {r.status_code}, retrying in {backoff}s...")
+                time.sleep(backoff)
+                continue
+            raise SystemExit(f"products chunk {chunk_num}/{total_chunks} failed (status {r.status_code}): {r.text[:500]}")
         total += len(chunk)
         print(f"  chunk {chunk_num}/{total_chunks} done ({total}/{len(rows)} products)")
         time.sleep(DELAY_BETWEEN_CHUNKS)
@@ -90,7 +135,8 @@ def restore_products():
 
 
 def main():
-    restore_stores()
+    # stores already fully restored (987/987) in the previous run — skipping
+    # to avoid a primary-key conflict re-inserting them as plain inserts.
     restore_products()
     print("\nDone. Backup fully restored to the new project.")
 
